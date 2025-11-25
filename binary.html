@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二進制與二補碼互動學習工具</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --light: #f3f4f6;
+            --bit-on: #fbbf24;
+            --bit-off: #4b5563;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2 { text-align: center; color: var(--dark); }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .bit-display {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .bit {
+            width: 40px;
+            height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bit-off);
+            color: white;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .bit.on {
+            background-color: var(--bit-on);
+            color: black;
+            box-shadow: 0 0 10px var(--bit-on);
+        }
+
+        .bit.sign-bit {
+            border: 2px solid var(--danger);
+        }
+
+        .bit-label {
+            font-size: 0.7rem;
+            margin-top: 4px;
+            color: #666;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.95); }
+        
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-secondary { background-color: var(--secondary); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+
+        .number-display {
+            font-size: 2.5rem;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Part 2 Specifics */
+        .step-container {
+            border-left: 4px solid var(--primary);
+            padding-left: 15px;
+            margin: 15px 0;
+            background: #f8fafc;
+            padding: 15px;
+        }
+
+        .arrow-down {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #9ca3af;
+            margin: 10px 0;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            font-size: 1rem;
+            width: 80px;
+            text-align: center;
+        }
+
+        /* Part 3 Specifics */
+        input[type=range] {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .explanation {
+            font-size: 0.9rem;
+            color: #555;
+            background-color: #eef2ff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ICT 二進制與二補碼實驗室</h1>
+
+    <div class="card">
+        <h2>1. 二進制計數器 (Unsigned 8-bit)</h2>
+        <p class="explanation">觀察十進制數字如何轉換為二進制開關狀態。</p>
+        
+        <div class="number-display" id="p1-decimal">0</div>
+        
+        <div class="bit-display" id="p1-bits">
+            </div>
+
+        <div class="controls">
+            <button class="btn-danger" onclick="updateP1(-1)">-1</button>
+            <button class="btn-primary" onclick="updateP1(1)">+1</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. 負數轉換流程 (Two's Complement)</h2>
+        <p class="explanation">輸入一個正整數，學習如何將其轉換為負數表達式。</p>
+        
+        <div style="text-align: center; margin: 20px;">
+            <label>輸入正整數 (0-127): </label>
+            <input type="number" id="p2-input" value="5" min="0" max="127">
+            <button class="btn-primary" onclick="startP2()">開始轉換</button>
+            <button class="btn-secondary" onclick="resetP2()">重設</button>
+        </div>
+
+        <div id="p2-steps" style="display:none;">
+            <div class="step-container">
+                <h3>步驟 1: 原始正數二進制 (原碼)</h3>
+                <div class="bit-display" id="p2-step1-bits"></div>
+            </div>
+
+            <div class="arrow-down">⬇️ 反轉位元 (1變0, 0變1)</div>
+
+            <div class="step-container">
+                <h3>步驟 2: 反碼 (One's Complement)</h3>
+                <div class="bit-display" id="p2-step2-bits"></div>
+                <button class="btn-secondary" id="btn-flip" onclick="animateFlip()">執行反轉</button>
+            </div>
+
+            <div class="arrow-down">⬇️ 加 1</div>
+
+            <div class="step-container">
+                <h3>步驟 3: 二補碼 (Two's Complement)</h3>
+                <div class="bit-display" id="p2-step3-bits"></div>
+                <button class="btn-secondary" id="btn-add" onclick="animateAdd()" disabled>執行 +1</button>
+            </div>
+
+            <div class="explanation">
+                <strong>結果：</strong> <span id="p2-result-text"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>3. 8-bit 範圍滑桿 (-128 至 127)</h2>
+        <p class="explanation">拖動滑桿，觀察最高有效位 (MSB) 如何作為符號位元 (Sign Bit)。紅色邊框代表 MSB。</p>
+
+        <div class="number-display" id="p3-decimal">0</div>
+        
+        <div class="bit-display" id="p3-bits">
+            </div>
+
+        <input type="range" id="p3-slider" min="-128" max="127" value="0" oninput="updateP3(this.value)">
+        
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666;">
+            <span>-128 (10000000)</span>
+            <span>0 (00000000)</span>
+            <span>127 (01111111)</span>
+        </div>
+    </div>
+
+    <script>
+        // 工具函數：產生 8-bit HTML
+        function generateBitHTML(elementId, val, isSigned = false) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+            
+            // 處理負數以獲得二補碼二進制字串
+            let binaryStr = (val >>> 0).toString(2);
+            // 補齊 8 位
+            while (binaryStr.length < 8) binaryStr = "0" + binaryStr;
+            if (binaryStr.length > 8) binaryStr = binaryStr.slice(-8);
+
+            for (let i = 0; i < 8; i++) {
+                const bitVal = binaryStr[i];
+                const isSignBit = isSigned && i === 0;
+                const power = 7 - i;
+                
+                const bitDiv = document.createElement('div');
+                bitDiv.className = `bit ${bitVal === '1' ? 'on' : ''} ${isSignBit ? 'sign-bit' : ''}`;
+                bitDiv.innerHTML = `
+                    <span>${bitVal}</span>
+                    <span class="bit-label">2<sup>${power}</sup></span>
+                `;
+                container.appendChild(bitDiv);
+            }
+            return binaryStr;
+        }
+
+        /* --- Part 1: Counter --- */
+        let p1Value = 0;
+        function updateP1(change) {
+            p1Value += change;
+            if (p1Value > 255) p1Value = 0;
+            if (p1Value < 0) p1Value = 255;
+            
+            document.getElementById('p1-decimal').innerText = p1Value;
+            generateBitHTML('p1-bits', p1Value);
+        }
+        // Init Part 1
+        updateP1(0);
+
+
+        /* --- Part 2: Two's Complement Steps --- */
+        let p2Value = 0;
+
+        function startP2() {
+            const input = document.getElementById('p2-input');
+            p2Value = parseInt(input.value);
+            
+            if (isNaN(p2Value) || p2Value < 0 || p2Value > 127) {
+                alert("請輸入 0 到 127 之間的正整數");
+                return;
+            }
+
+            document.getElementById('p2-steps').style.display = 'block';
+            document.getElementById('btn-flip').disabled = false;
+            document.getElementById('btn-add').disabled = true;
+            document.getElementById('p2-step2-bits').innerHTML = '<div style="padding:15px; color:#666">等待操作...</div>';
+            document.getElementById('p2-step3-bits').innerHTML = '<div style="padding:15px; color:#666">等待操作...</div>';
+            document.getElementById('p2-result-text').innerText = '';
+
+            // Render Step 1
+            generateBitHTML('p2-step1-bits', p2Value);
+        }
+
+        function animateFlip() {
+            // Calculate One's Complement (Invert bits)
+            // In JS bitwise NOT is ~, but we need to mask to 8 bits
+            let inverted = (~p2Value) & 0xFF; 
+            generateBitHTML('p2-step2-bits', inverted);
+            
+            document.getElementById('btn-flip').disabled = true;
+            document.getElementById('btn-add').disabled = false;
+        }
+
+        function animateAdd() {
+            let inverted = (~p2Value) & 0xFF;
+            let twosComp = (inverted + 1) & 0xFF;
+            
+            generateBitHTML('p2-step3-bits', twosComp, true); // true adds sign bit border
+            
+            document.getElementById('btn-add').disabled = true;
+            document.getElementById('p2-result-text').innerText = 
+                `十進制 -${p2Value} 的二補碼表示為 ${(twosComp >>> 0).toString(2).padStart(8,'0')}`;
+        }
+
+        function resetP2() {
+            document.getElementById('p2-steps').style.display = 'none';
+            document.getElementById('p2-input').value = 5;
+        }
+
+
+        /* --- Part 3: Slider --- */
+        function updateP3(val) {
+            val = parseInt(val);
+            document.getElementById('p3-decimal').innerText = val;
+            // Pass true to highlight sign bit
+            generateBitHTML('p3-bits', val, true);
+            
+            // Color change based on positive/negative
+            const display = document.getElementById('p3-decimal');
+            if(val < 0) display.style.color = 'var(--danger)';
+            else display.style.color = 'var(--primary)';
+        }
+        // Init Part 3
+        updateP3(0);
+
+    </script>
+</body>
+</html>
