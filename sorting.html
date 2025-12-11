@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Algorithms Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        
+        h1, h2 {
+            color: #2c3e50;
+        }
+        
+        .algorithm-container {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .array-display {
+            display: flex;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .array-element {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #3498db;
+            border-radius: 5px;
+            background-color: #ecf0f1;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .array-index {
+            font-size: 0.8em;
+            color: #7f8c8d;
+            margin-bottom: 3px;
+        }
+        
+        .array-value {
+            font-size: 1.1em;
+        }
+        
+        .highlight {
+            background-color: #f1c40f;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.7);
+        }
+        
+        .key-highlight {
+            background-color: #e74c3c;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.7);
+        }
+        
+        .controls {
+            margin: 15px 0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+        
+        .code-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.5s ease-out;
+        }
+        
+        .code-container.expanded {
+            max-height: 500px;
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .toggle-code {
+            background-color: #27ae60;
+        }
+        
+        .toggle-code:hover {
+            background-color: #219653;
+        }
+        
+        .status {
+            margin-top: 10px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        
+        .algorithm-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sorting Algorithms Visualization</h1>
+    
+    <div class="algorithm-container" id="bubble-sort">
+        <div class="algorithm-title">
+            <h2>Bubble Sort</h2>
+            <button class="toggle-code">Show Python Code</button>
+        </div>
+        <div class="array-display" id="bubble-array"></div>
+        <div class="controls">
+            <button id="bubble-next">Next Step</button>
+            <button id="bubble-auto">Auto</button>
+            <button id="bubble-reset">Reset</button>
+            <div class="speed-control">
+                <label for="bubble-speed">Speed:</label>
+                <input type="range" id="bubble-speed" min="100" max="2000" value="500">
+            </div>
+        </div>
+        <div class="status" id="bubble-status">Initial array</div>
+        <div class="code-container">
+            <pre>
+def bubble_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        for j in range(0, n-i-1):
+            if arr[j] > arr[j+1]:
+                arr[j], arr[j+1] = arr[j+1], arr[j]
+    return arr</pre>
+        </div>
+    </div>
+    
+    <div class="algorithm-container" id="selection-sort">
+        <div class="algorithm-title">
+            <h2>Selection Sort</h2>
+            <button class="toggle-code">Show Python Code</button>
+        </div>
+        <div class="array-display" id="selection-array"></div>
+        <div class="controls">
+            <button id="selection-next">Next Step</button>
+            <button id="selection-auto">Auto</button>
+            <button id="selection-reset">Reset</button>
+            <div class="speed-control">
+                <label for="selection-speed">Speed:</label>
+                <input type="range" id="selection-speed" min="100" max="2000" value="500">
+            </div>
+        </div>
+        <div class="status" id="selection-status">Initial array</div>
+        <div class="code-container">
+            <pre>
+def selection_sort(arr):
+    for i in range(len(arr)):
+        min_idx = i
+        for j in range(i+1, len(arr)):
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+    return arr</pre>
+        </div>
+    </div>
+    
+    <div class="algorithm-container" id="insertion-sort">
+        <div class="algorithm-title">
+            <h2>Insertion Sort</h2>
+            <button class="toggle-code">Show Python Code</button>
+        </div>
+        <div class="array-display" id="insertion-array"></div>
+        <div class="controls">
+            <button id="insertion-next">Next Step</button>
+            <button id="insertion-auto">Auto</button>
+            <button id="insertion-reset">Reset</button>
+            <div class="speed-control">
+                <label for="insertion-speed">Speed:</label>
+                <input type="range" id="insertion-speed" min="100" max="2000" value="500">
+            </div>
+        </div>
+        <div class="status" id="insertion-status">Initial array</div>
+        <div class="code-container">
+            <pre>
+def insertion_sort(arr):
+    for i in range(1, len(arr)):
+        key = arr[i]
+        j = i-1
+        while j >= 0 and key < arr[j]:
+            arr[j+1] = arr[j]
+            j -= 1
+        arr[j+1] = key
+    return arr</pre>
+        </div>
+    </div>
+    
+    <div class="algorithm-container" id="array-merge">
+        <div class="algorithm-title">
+            <h2>Array Merging</h2>
+            <button class="toggle-code">Show Python Code</button>
+        </div>
+        <div class="array-display" id="array-a"></div>
+        <div class="array-display" id="array-b"></div>
+        <div class="array-display" id="merged-array"></div>
+        <div class="controls">
+            <button id="merge-next">Next Step</button>
+            <button id="merge-auto">Auto</button>
+            <button id="merge-reset">Reset</button>
+            <div class="speed-control">
+                <label for="merge-speed">Speed:</label>
+                <input type="range" id="merge-speed" min="100" max="2000" value="500">
+            </div>
+        </div>
+        <div class="status" id="merge-status">Initial arrays</div>
+        <div class="code-container">
+            <pre>
+def merge_sorted_arrays(A, B):
+    i = j = 0
+    C = []
+    while i < len(A) and j < len(B):
+        if A[i] < B[j]:
+            C.append(A[i])
+            i += 1
+        else:
+            C.append(B[j])
+            j += 1
+    C.extend(A[i:])
+    C.extend(B[j:])
+    return C</pre>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial arrays
+            const initialArray = [45, 32, 16, 88, 20, 11, 55, 78];
+            const arrayA = [10, 16, 20, 32, 55, 78, 88];
+            const arrayB = [2, 9, 11, 35, 37];
+            
+            // Algorithm implementations
+            const algorithms = {
+                bubble: {
+                    array: [...initialArray],
+                    i: 0,
+                    j: 0,
+                    n: initialArray.length,
+                    isComplete: false,
+                    autoInterval: null,
+                    statusElement: document.getElementById('bubble-status'),
+                    displayElement: document.getElementById('bubble-array'),
+                    nextButton: document.getElementById('bubble-next'),
+                    autoButton: document.getElementById('bubble-auto'),
+                    resetButton: document.getElementById('bubble-reset'),
+                    speedControl: document.getElementById('bubble-speed'),
+                    updateDisplay: function() {
+                        this.displayElement.innerHTML = '';
+                        for (let idx = 0; idx < this.array.length; idx++) {
+                            const element = document.createElement('div');
+                            element.className = 'array-element';
+                            if (idx === this.j || idx === this.j + 1) {
+                                element.classList.add('highlight');
+                            }
+                            
+                            element.innerHTML = `
+                                <div class="array-index">${idx}</div>
+                                <div class="array-value">${this.array[idx]}</div>
+                            `;
+                            this.displayElement.appendChild(element);
+                        }
+                        
+                        if (this.isComplete) {
+                            this.statusElement.textContent = 'Sorting complete!';
+                        } else {
+                            this.statusElement.textContent = `i = ${this.i}, j = ${this.j}, comparing ${this.array[this.j]} and ${this.array[this.j + 1]}`;
+                        }
+                    },
+                    nextStep: function() {
+                        if (this.isComplete) return;
+                        
+                        if (this.array[this.j] > this.array[this.j + 1]) {
+                            // Swap elements
+                            [this.array[this.j], this.array[this.j + 1]] = [this.array[this.j + 1], this.array[this.j]];
+                        }
+                        
+                        this.j++;
+                        
+                        if (this.j >= this.n - this.i - 1) {
+                            this.j = 0;
+                            this.i++;
+                            
+                            if (this.i >= this.n - 1) {
+                                this.isComplete = true;
+                                this.autoButton.textContent = 'Auto';
+                                if (this.autoInterval) {
+                                    clearInterval(this.autoInterval);
+                                    this.autoInterval = null;
+                                }
+                            }
+                        }
+                        
+                        this.updateDisplay();
+                    },
+                    reset: function() {
+                        this.array = [...initialArray];
+                        this.i = 0;
+                        this.j = 0;
+                        this.isComplete = false;
+                        this.updateDisplay();
+                    },
+                    toggleAuto: function() {
+                        if (this.autoInterval) {
+                            clearInterval(this.autoInterval);
+                            this.autoInterval = null;
+                            this.autoButton.textContent = 'Auto';
+                        } else {
+                            this.autoButton.textContent = 'Stop';
+                            this.autoInterval = setInterval(() => {
+                                this.nextStep();
+                                if (this.isComplete) {
+                                    clearInterval(this.autoInterval);
+                                    this.autoInterval = null;
+                                    this.autoButton.textContent = 'Auto';
+                                }
+                            }, this.speedControl.value);
+                        }
+                    }
+                },
+                
+                selection: {
+                    array: [...initialArray],
+                    i: 0,
+                    minIdx: 0,
+                    j: 1,
+                    isComplete: false,
+                    autoInterval: null,
+                    statusElement: document.getElementById('selection-status'),
+                    displayElement: document.getElementById('selection-array'),
+                    nextButton: document.getElementById('selection-next'),
+                    autoButton: document.getElementById('selection-auto'),
+                    resetButton: document.getElementById('selection-reset'),
+                    speedControl: document.getElementById('selection-speed'),
+                    updateDisplay: function() {
+                        this.displayElement.innerHTML = '';
+                        for (let idx = 0; idx < this.array.length; idx++) {
+                            const element = document.createElement('div');
+                            element.className = 'array-element';
+                            if (idx === this.i) {
+                                element.classList.add('highlight');
+                            }
+                            if (idx === this.minIdx) {
+                                element.classList.add('key-highlight');
+                            }
+                            
+                            element.innerHTML = `
+                                <div class="array-index">${idx}</div>
+                                <div class="array-value">${this.array[idx]}</div>
+                            `;
+                            this.displayElement.appendChild(element);
+                        }
+                        
+                        if (this.isComplete) {
+                            this.statusElement.textContent = 'Sorting complete!';
+                        } else {
+                            this.statusElement.textContent = `i = ${this.i}, minIdx = ${this.minIdx} (value = ${this.array[this.minIdx]}), j = ${this.j}`;
+                        }
+                    },
+                    nextStep: function() {
+                        if (this.isComplete) return;
+                        
+                        if (this.array[this.j] < this.array[this.minIdx]) {
+                            this.minIdx = this.j;
+                        }
+                        
+                        this.j++;
+                        
+                        if (this.j >= this.array.length) {
+                            // Swap with the minimum element
+                            [this.array[this.i], this.array[this.minIdx]] = [this.array[this.minIdx], this.array[this.i]];
+                            
+                            this.i++;
+                            this.minIdx = this.i;
+                            this.j = this.i + 1;
+                            
+                            if (this.i >= this.array.length - 1) {
+                                this.isComplete = true;
+                                this.autoButton.textContent = 'Auto';
+                                if (this.autoInterval) {
+                                    clearInterval(this.autoInterval);
+                                    this.autoInterval = null;
+                                }
+                            }
+                        }
+                        
+                        this.updateDisplay();
+                    },
+                    reset: function() {
+                        this.array = [...initialArray];
+                        this.i = 0;
+                        this.minIdx = 0;
+                        this.j = 1;
+                        this.isComplete = false;
+                        this.updateDisplay();
+                    },
+                    toggleAuto: function() {
+                        if (this.autoInterval) {
+                            clearInterval(this.autoInterval);
+                            this.autoInterval = null;
+                            this.autoButton.textContent = 'Auto';
+                        } else {
+                            this.autoButton.textContent = 'Stop';
+                            this.autoInterval = setInterval(() => {
+                                this.nextStep();
+                                if (this.isComplete) {
+                                    clearInterval(this.autoInterval);
+                                    this.autoInterval = null;
+                                    this.autoButton.textContent = 'Auto';
+                                }
+                            }, this.speedControl.value);
+                        }
+                    }
+                },
+                
+                insertion: {
+                    array: [...initialArray],
+                    i: 1,
+                    key: initialArray[1],
+                    j: 0,
+                    isComplete: false,
+                    autoInterval: null,
+                    statusElement: document.getElementById('insertion-status'),
+                    displayElement: document.getElementById('insertion-array'),
+                    nextButton: document.getElementById('insertion-next'),
+                    autoButton: document.getElementById('insertion-auto'),
+                    resetButton: document.getElementById('insertion-reset'),
+                    speedControl: document.getElementById('insertion-speed'),
+                    updateDisplay: function() {
+                        this.displayElement.innerHTML = '';
+                        for (let idx = 0; idx < this.array.length; idx++) {
+                            const element = document.createElement('div');
+                            element.className = 'array-element';
+                            if (idx === this.i) {
+                                element.classList.add('highlight');
+                            }
+                            if (idx === this.j && this.j >= 0) {
+                                element.classList.add('key-highlight');
+                            }
+                            
+                            element.innerHTML = `
+                                <div class="array-index">${idx}</div>
+                                <div class="array-value">${this.array[idx]}</div>
+                            `;
+                            this.displayElement.appendChild(element);
+                        }
+                        
+                        if (this.isComplete) {
+                            this.statusElement.textContent = 'Sorting complete!';
+                        } else {
+                            this.statusElement.textContent = `i = ${this.i}, key = ${this.key}, j = ${this.j}`;
+                        }
+                    },
+                    nextStep: function() {
+                        if (this.isComplete) return;
+                        
+                        if (this.j >= 0 && this.key < this.array[this.j]) {
+                            this.array[this.j + 1] = this.array[this.j];
+                            this.j--;
+                        } else {
+                            this.array[this.j + 1] = this.key;
+                            this.i++;
+                            if (this.i < this.array.length) {
+                                this.key = this.array[this.i];
+                                this.j = this.i - 1;
+                            } else {
+                                this.isComplete = true;
+                                this.autoButton.textContent = 'Auto';
+                                if (this.autoInterval) {
+                                    clearInterval(this.autoInterval);
+                                    this.autoInterval = null;
+                                }
+                            }
+                        }
+                        
+                        this.updateDisplay();
+                    },
+                    reset: function() {
+                        this.array = [...initialArray];
+                        this.i = 1;
+                        this.key = initialArray[1];
+                        this.j = 0;
+                        this.isComplete = false;
+                        this.updateDisplay();
+                    },
+                    toggleAuto: function() {
+                        if (this.autoInterval) {
+                            clearInterval(this.autoInterval);
+                            this.autoInterval = null;
+                            this.autoButton.textContent = 'Auto';
+                        } else {
+                            this.autoButton.textContent = 'Stop';
+                            this.autoInterval = setInterval(() => {
+                                this.nextStep();
+                                if (this.isComplete) {
+                                    clearInterval(this.autoInterval);
+                                    this.autoInterval = null;
+                                    this.autoButton.textContent = 'Auto';
+                                }
+                            }, this.speedControl.value);
+                        }
+                    }
+                },
+                
+                merge: {
+                    arrayA: [...arrayA],
+                    arrayB: [...arrayB],
+                    mergedArray: [],
+                    i: 0,
+                    j: 0,
+                    isComplete: false,
+                    autoInterval: null,
+                    statusElement: document.getElementById('merge-status'),
+                    displayA: document.getElementById('array-a'),
+                    displayB: document.getElementById('array-b'),
+                    displayMerged: document.getElementById('merged-array'),
+                    nextButton: document.getElementById('merge-next'),
+                    autoButton: document.getElementById('merge-auto'),
+                    resetButton: document.getElementById('merge-reset'),
+                    speedControl: document.getElementById('merge-speed'),
+                    updateDisplay: function() {
+                        // Display array A
+                        this.displayA.innerHTML = '';
+                        for (let idx = 0; idx < this.arrayA.length; idx++) {
+                            const element = document.createElement('div');
+                            element.className = 'array-element';
+                            if (idx === this.i && this.i < this.arrayA.length) {
+                                element.classList.add('highlight');
+                            }
+                            
+                            element.innerHTML = `
+                                <div class="array-index">${idx}</div>
+                                <div class="array-value">${this.arrayA[idx]}</div>
+                            `;
+                            this.displayA.appendChild(element);
+                        }
+                        
+                        // Display array B
+                        this.displayB.innerHTML = '';
+                        for (let idx = 0; idx < this.arrayB.length; idx++) {
+                            const element = document.createElement('div');
+                            element.className = 'array-element';
+                            if (idx === this.j && this.j < this.arrayB.length) {
+                                element.classList.add('highlight');
+                            }
+                            
+                            element.innerHTML = `
+                                <div class="array-index">${idx}</div>
+                                <div class="array-value">${this.arrayB[idx]}</div>
+                            `;
+                            this.displayB.appendChild(element);
+                        }
+                        
+                        // Display merged array
+                        this.displayMerged.innerHTML = '';
+                        for (let idx = 0; idx < this.mergedArray.length; idx++) {
+                            const element = document.createElement('div');
+                            element.className = 'array-element';
+                            element.innerHTML = `
+                                <div class="array-index">${idx}</div>
+                                <div class="array-value">${this.mergedArray[idx]}</div>
+                            `;
+                            this.displayMerged.appendChild(element);
+                        }
+                        
+                        if (this.isComplete) {
+                            this.statusElement.textContent = 'Merging complete!';
+                        } else {
+                            this.statusElement.textContent = `i = ${this.i}, j = ${this.j}`;
+                        }
+                    },
+                    nextStep: function() {
+                        if (this.isComplete) return;
+                        
+                        if (this.i < this.arrayA.length && (this.j >= this.arrayB.length || this.arrayA[this.i] < this.arrayB[this.j])) {
+                            this.mergedArray.push(this.arrayA[this.i]);
+                            this.i++;
+                        } else if (this.j < this.arrayB.length) {
+                            this.mergedArray.push(this.arrayB[this.j]);
+                            this.j++;
+                        }
+                        
+                        if (this.i >= this.arrayA.length && this.j >= this.arrayB.length) {
+                            this.isComplete = true;
+                            this.autoButton.textContent = 'Auto';
+                            if (this.autoInterval) {
+                                clearInterval(this.autoInterval);
+                                this.autoInterval = null;
+                            }
+                        }
+                        
+                        this.updateDisplay();
+                    },
+                    reset: function() {
+                        this.arrayA = [...arrayA];
+                        this.arrayB = [...arrayB];
+                        this.mergedArray = [];
+                        this.i = 0;
+                        this.j = 0;
+                        this.isComplete = false;
+                        this.updateDisplay();
+                    },
+                    toggleAuto: function() {
+                        if (this.autoInterval) {
+                            clearInterval(this.autoInterval);
+                            this.autoInterval = null;
+                            this.autoButton.textContent = 'Auto';
+                        } else {
+                            this.autoButton.textContent = 'Stop';
+                            this.autoInterval = setInterval(() => {
+                                this.nextStep();
+                                if (this.isComplete) {
+                                    clearInterval(this.autoInterval);
+                                    this.autoInterval = null;
+                                    this.autoButton.textContent = 'Auto';
+                                }
+                            }, this.speedControl.value);
+                        }
+                    }
+                }
+            };
+            
+            // Initialize displays
+            algorithms.bubble.updateDisplay();
+            algorithms.selection.updateDisplay();
+            algorithms.insertion.updateDisplay();
+            algorithms.merge.updateDisplay();
+            
+            // Event listeners for buttons
+            document.getElementById('bubble-next').addEventListener('click', () => algorithms.bubble.nextStep());
+            document.getElementById('bubble-auto').addEventListener('click', () => algorithms.bubble.toggleAuto());
+            document.getElementById('bubble-reset').addEventListener('click', () => algorithms.bubble.reset());
+            
+            document.getElementById('selection-next').addEventListener('click', () => algorithms.selection.nextStep());
+            document.getElementById('selection-auto').addEventListener('click', () => algorithms.selection.toggleAuto());
+            document.getElementById('selection-reset').addEventListener('click', () => algorithms.selection.reset());
+            
+            document.getElementById('insertion-next').addEventListener('click', () => algorithms.insertion.nextStep());
+            document.getElementById('insertion-auto').addEventListener('click', () => algorithms.insertion.toggleAuto());
+            document.getElementById('insertion-reset').addEventListener('click', () => algorithms.insertion.reset());
+            
+            document.getElementById('merge-next').addEventListener('click', () => algorithms.merge.nextStep());
+            document.getElementById('merge-auto').addEventListener('click', () => algorithms.merge.toggleAuto());
+            document.getElementById('merge-reset').addEventListener('click', () => algorithms.merge.reset());
+            
+            // Speed control event listeners
+            document.getElementById('bubble-speed').addEventListener('input', function() {
+                if (algorithms.bubble.autoInterval) {
+                    clearInterval(algorithms.bubble.autoInterval);
+                    algorithms.bubble.autoInterval = setInterval(() => {
+                        algorithms.bubble.nextStep();
+                        if (algorithms.bubble.isComplete) {
+                            clearInterval(algorithms.bubble.autoInterval);
+                            algorithms.bubble.autoInterval = null;
+                            algorithms.bubble.autoButton.textContent = 'Auto';
+                        }
+                    }, this.value);
+                }
+            });
+            
+            document.getElementById('selection-speed').addEventListener('input', function() {
+                if (algorithms.selection.autoInterval) {
+                    clearInterval(algorithms.selection.autoInterval);
+                    algorithms.selection.autoInterval = setInterval(() => {
+                        algorithms.selection.nextStep();
+                        if (algorithms.selection.isComplete) {
+                            clearInterval(algorithms.selection.autoInterval);
+                            algorithms.selection.autoInterval = null;
+                            algorithms.selection.autoButton.textContent = 'Auto';
+                        }
+                    }, this.value);
+                }
+            });
+            
+            document.getElementById('insertion-speed').addEventListener('input', function() {
+                if (algorithms.insertion.autoInterval) {
+                    clearInterval(algorithms.insertion.autoInterval);
+                    algorithms.insertion.autoInterval = setInterval(() => {
+                        algorithms.insertion.nextStep();
+                        if (algorithms.insertion.isComplete) {
+                            clearInterval(algorithms.insertion.autoInterval);
+                            algorithms.insertion.autoInterval = null;
+                            algorithms.insertion.autoButton.textContent = 'Auto';
+                        }
+                    }, this.value);
+                }
+            });
+            
+            document.getElementById('merge-speed').addEventListener('input', function() {
+                if (algorithms.merge.autoInterval) {
+                    clearInterval(algorithms.merge.autoInterval);
+                    algorithms.merge.autoInterval = setInterval(() => {
+                        algorithms.merge.nextStep();
+                        if (algorithms.merge.isComplete) {
+                            clearInterval(algorithms.merge.autoInterval);
+                            algorithms.merge.autoInterval = null;
+                            algorithms.merge.autoButton.textContent = 'Auto';
+                        }
+                    }, this.value);
+                }
+            });
+            
+            // Code toggle buttons
+            document.querySelectorAll('.toggle-code').forEach(button => {
+                button.addEventListener('click', function() {
+                    const container = this.parentElement.parentElement.querySelector('.code-container');
+                    container.classList.toggle('expanded');
+                    this.textContent = container.classList.contains('expanded') ? 'Hide Python Code' : 'Show Python Code';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

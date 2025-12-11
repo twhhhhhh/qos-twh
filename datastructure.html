@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數據結構測試平台</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: #337ab7; border-bottom: 2px solid #337ab7; padding-bottom: 5px;}
+        h3 { color: #555; }
+        input[type="text"], input[type="number"] { padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 8px 15px; background-color: #337ab7; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+        button:hover { background-color: #286090; }
+        .output { margin-top: 15px; padding: 10px; background-color: #e9e9e9; border: 1px solid #ccc; border-radius: 4px; min-height: 50px; white-space: pre-wrap; font-family: monospace; }
+        .visualization { display: flex; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+        .node { border: 1px solid #333; padding: 10px; margin: 5px; background-color: #f9f9f9; border-radius: 4px; text-align: center; min-width: 30px;}
+        .pointer { margin: 0 5px; }
+        hr { margin-top: 30px; margin-bottom: 30px; border: 0; border-top: 1px solid #eee; }
+
+        /* --- Circular Queue Specific Styles --- */
+        .queue-container {
+            display: flex;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            min-height: 100px; /* Adjusted for arrows */
+            align-items: flex-start; /* Align items (cell + arrow) at the top */
+            padding: 5px;
+            background-color: #fff; /* Background for the container itself */
+        }
+        .queue-item-container { /* Wraps each cell and its arrow */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 2px; /* Spacing between queue items */
+        }
+        .queue-cell {
+            border: 1px dashed #aaa;
+            padding: 10px;
+            min-width: 45px; /* Slightly wider for content and label */
+            min-height: 20px; /* Ensure a minimum height for the cell content part */
+            text-align: center;
+            background-color: #f9f9f9;
+            position: relative; /* Crucial for the absolute positioned label */
+            margin-bottom: 5px; /* Space between cell and arrow-indicator */
+        }
+        .queue-cell .label {
+            font-size: 0.8em;
+            color: #555; /* Darker gray for better readability */
+            position: absolute;
+            top: -20px;      /* Position above the cell */
+            left: 0;
+            right: 0;
+            text-align: center;
+            white-space: nowrap; /* Prevent (Head, Tail) from wrapping */
+        }
+        .queue-cell .label .pointer-text { /* Class for (Head), (Tail), (Head, Tail) */
+            font-weight: bold;
+            color: red;
+        }
+        .arrow-indicator {
+            min-height: 20px; /* Space for arrows */
+            font-size: 1.1em;  /* Size of arrow characters */
+            line-height: 1;    /* Compact line height */
+            text-align: center;
+            width: 100%; /* Ensure it spans the width of the item container for centering */
+        }
+        .arrow-indicator .head-arrow { color: #d9534f; /* Bootstrap's danger red */ margin: 0 1px;}
+        .arrow-indicator .tail-arrow { color: #337ab7; /* Bootstrap's primary blue */ margin: 0 1px;}
+
+    </style>
+</head>
+<body>
+
+    <h1>數據結構互動測試 🧪</h1>
+
+    <div class="container">
+        <h2>1. 堆疊 (Stack) - First In Last Out (FILO)</h2>
+        <div>
+            <input type="text" id="stackValue" placeholder="輸入數值">
+            <button onclick="pushStack()">Push (推入)</button>
+            <button onclick="popStack()">Pop (彈出)</button>
+            <button onclick="peekStack()">Peek (查看頂部)</button>
+            <button onclick="clearStackDisplay()">清除顯示</button>
+        </div>
+        <h3>堆疊狀態:</h3>
+        <div id="stackOutput" class="output"></div>
+        <div id="stackVisualization" class="visualization"></div>
+    </div>
+
+    <hr>
+
+    <div class="container">
+        <h2>2. 循環隊列 (Circular Queue)</h2>
+        <div>
+            <input type="number" id="queueSize" placeholder="設定隊列大小 (預設 5)" value="5" min="1">
+            <button onclick="initializeQueue()">初始化/重設隊列</button>
+        </div>
+        <br>
+        <div>
+            <input type="text" id="cqValue" placeholder="輸入數值">
+            <button onclick="enqueueCircular()">Enqueue (入隊)</button>
+            <button onclick="dequeueCircular()">Dequeue (出隊)</button>
+            <button onclick="peekCircular()">Peek (查看頭部)</button>
+            <button onclick="clearQueueDisplay()">清除顯示</button>
+        </div>
+        <h3>隊列狀態:</h3>
+        <p>Head: <span id="cqHead">-</span> | Tail: <span id="cqTail">-</span> | Size: <span id="cqCurrentSize">-</span> | MaxSize: <span id="cqMaxSize">-</span></p>
+        <div id="cqOutput" class="output"></div>
+        <div id="cqVisualization" class="queue-container"></div>
+    </div>
+
+    <hr>
+
+    <div class="container">
+        <h2>3. 鏈表 (Linked List)</h2>
+        <div>
+            <input type="text" id="llValue" placeholder="輸入數值">
+            <input type="number" id="llIndex" placeholder="索引 (可選)">
+            <button onclick="insertNode()">插入節點</button>
+        </div>
+        <br>
+        <div>
+            <input type="text" id="llDeleteValue" placeholder="輸入要刪除的數值">
+            <button onclick="deleteNodeByValue()">刪除節點 (按數值)</button>
+        </div>
+        <div>
+            <input type="number" id="llDeleteIndex" placeholder="輸入要刪除的索引">
+            <button onclick="deleteNodeByIndex()">刪除節點 (按索引)</button>
+             <button onclick="clearLinkedListDisplay()">清除顯示</button>
+        </div>
+        <h3>鏈表狀態:</h3>
+        <div id="llOutput" class="output"></div>
+        <div id="llVisualization" class="visualization"></div>
+    </div>
+
+    <script>
+        // --- 堆疊 (Stack) ---
+        let stack = [];
+        const stackOutput = document.getElementById('stackOutput');
+        const stackVisualization = document.getElementById('stackVisualization');
+
+        function updateStackVisual() {
+            stackVisualization.innerHTML = '';
+            if (stack.length === 0) {
+                stackVisualization.innerHTML = '堆疊為空';
+                return;
+            }
+            for (let i = 0; i < stack.length; i++) {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'node';
+                nodeDiv.textContent = stack[i];
+                if (i === stack.length - 1) {
+                    nodeDiv.innerHTML += ' <span style="color: green; font-weight: bold;">&lt;-- TOP</span>';
+                }
+                stackVisualization.prepend(nodeDiv);
+            }
+        }
+
+        function pushStack() {
+            const value = document.getElementById('stackValue').value;
+            if (value === "") {
+                stackOutput.textContent = "請輸入一個值。";
+                return;
+            }
+            stack.push(value);
+            stackOutput.textContent = `Push: ${value}\n目前堆疊: [${stack.join(', ')}] (頂部在右)`;
+            document.getElementById('stackValue').value = "";
+            updateStackVisual();
+        }
+
+        function popStack() {
+            if (stack.length === 0) {
+                stackOutput.textContent = "堆疊已空，無法 Pop。";
+                updateStackVisual();
+                return;
+            }
+            const value = stack.pop();
+            stackOutput.textContent = `Pop: ${value}\n目前堆疊: [${stack.join(', ')}] (頂部在右)`;
+            updateStackVisual();
+        }
+
+        function peekStack() {
+            if (stack.length === 0) {
+                stackOutput.textContent = "堆疊已空。";
+                return;
+            }
+            stackOutput.textContent = `Peek (頂部元素): ${stack[stack.length - 1]}`;
+        }
+
+        function clearStackDisplay() {
+            stack = [];
+            stackOutput.textContent = "";
+            updateStackVisual();
+        }
+        updateStackVisual();
+
+        // --- 循環隊列 (Circular Queue) ---
+        let cq = [];
+        let cqHead = -1;
+        let cqTail = -1;
+        let cqCurrentSize = 0;
+        let cqMaxSize = 5;
+
+        const cqOutput = document.getElementById('cqOutput');
+        const cqVisualization = document.getElementById('cqVisualization');
+        const cqHeadEl = document.getElementById('cqHead');
+        const cqTailEl = document.getElementById('cqTail');
+        const cqCurrentSizeEl = document.getElementById('cqCurrentSize');
+        const cqMaxSizeEl = document.getElementById('cqMaxSize');
+
+        function updateCQVisual() {
+            cqVisualization.innerHTML = '';
+            cqHeadEl.textContent = cqHead === -1 ? '-' : cqHead;
+            cqTailEl.textContent = cqTail === -1 ? '-' : cqTail;
+            cqCurrentSizeEl.textContent = cqCurrentSize;
+            cqMaxSizeEl.textContent = cqMaxSize;
+
+            if (cqMaxSize <= 0 || cq.length !== cqMaxSize) {
+                 cqVisualization.innerHTML = '隊列未正確初始化或大小無效。請設定大小並點擊初始化。';
+                return;
+            }
+
+            for (let i = 0; i < cqMaxSize; i++) {
+                const itemContainer = document.createElement('div');
+                itemContainer.className = 'queue-item-container';
+
+                const cell = document.createElement('div');
+                cell.className = 'queue-cell';
+                cell.textContent = cq[i] !== undefined ? cq[i] : '空';
+                if (cq[i] === undefined) cell.style.color = '#aaa';
+
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'label';
+                let labelTextContent = `Index: ${i}`;
+                let pointerAnnotations = [];
+                if (i === cqHead && cqCurrentSize > 0) {
+                    pointerAnnotations.push("Head");
+                }
+                if (i === cqTail && cqCurrentSize > 0) {
+                    pointerAnnotations.push("Tail");
+                }
+
+                if (pointerAnnotations.length > 0) {
+                    labelTextContent += ` <span class="pointer-text">(${pointerAnnotations.join(', ')})</span>`;
+                }
+                labelDiv.innerHTML = labelTextContent;
+                cell.appendChild(labelDiv);
+                itemContainer.appendChild(cell);
+
+                const arrowDiv = document.createElement('div');
+                arrowDiv.className = 'arrow-indicator';
+                let arrowsHTML = "";
+                if (i === cqHead && i === cqTail && cqCurrentSize > 0) {
+                    arrowsHTML = '<span class="head-arrow">↑H</span> <span class="tail-arrow">↑T</span>';
+                } else if (i === cqHead && cqCurrentSize > 0) {
+                    arrowsHTML = '<span class="head-arrow">↑H</span>';
+                } else if (i === cqTail && cqCurrentSize > 0) {
+                    arrowsHTML = '<span class="tail-arrow">↑T</span>';
+                } else {
+                    arrowsHTML = '&nbsp;'; // Keep space for alignment
+                }
+                arrowDiv.innerHTML = arrowsHTML;
+                itemContainer.appendChild(arrowDiv);
+
+                cqVisualization.appendChild(itemContainer);
+            }
+        }
+
+        function initializeQueue() {
+            const sizeInput = parseInt(document.getElementById('queueSize').value);
+            if (isNaN(sizeInput) || sizeInput <= 0) {
+                cqOutput.textContent = "請輸入有效的隊列大小 (正整數)。";
+                cqMaxSize = 0; // Mark as invalid
+                cq = [];
+                updateCQVisual(); // Update visual to show error or empty state
+                return;
+            }
+            cqMaxSize = sizeInput;
+            cq = new Array(cqMaxSize); // Initialize with undefined values
+            cqHead = -1;
+            cqTail = -1;
+            cqCurrentSize = 0;
+            cqOutput.textContent = `循環隊列已初始化，大小為 ${cqMaxSize}。`;
+            updateCQVisual();
+        }
+
+        function enqueueCircular() {
+            if (cqMaxSize <= 0) {
+                cqOutput.textContent = "隊列未初始化或大小無效。請先設定大小並初始化。";
+                return;
+            }
+            if (cqCurrentSize === cqMaxSize) {
+                cqOutput.textContent = "隊列已滿，無法 Enqueue。";
+                return;
+            }
+            const value = document.getElementById('cqValue').value;
+            if (value === "") {
+                cqOutput.textContent = "請輸入一個值。";
+                return;
+            }
+
+            if (cqHead === -1) {
+                cqHead = 0;
+                cqTail = 0;
+            } else {
+                cqTail = (cqTail + 1) % cqMaxSize;
+            }
+            cq[cqTail] = value;
+            cqCurrentSize++;
+            cqOutput.textContent = `Enqueue: ${value} 到索引 ${cqTail}\n目前隊列: Head=${cqHead}, Tail=${cqTail}, Size=${cqCurrentSize}`;
+            document.getElementById('cqValue').value = "";
+            updateCQVisual();
+        }
+
+        function dequeueCircular() {
+            if (cqMaxSize <= 0) {
+                cqOutput.textContent = "隊列未初始化或大小無效。";
+                return;
+            }
+            if (cqCurrentSize === 0) {
+                cqOutput.textContent = "隊列已空，無法 Dequeue。";
+                // updateCQVisual(); // Already called at the end if needed
+                return;
+            }
+            const oldHeadIndex = cqHead; // Store old head for message
+            const value = cq[oldHeadIndex];
+            cq[oldHeadIndex] = undefined;
+            cqCurrentSize--;
+
+            if (cqCurrentSize === 0) {
+                cqHead = -1;
+                cqTail = -1;
+            } else {
+                cqHead = (cqHead + 1) % cqMaxSize;
+            }
+            cqOutput.textContent = `Dequeue: ${value} 從索引 ${oldHeadIndex}\n目前隊列: Head=${cqHead === -1 ? '-' : cqHead}, Tail=${cqTail === -1 ? '-' : cqTail}, Size=${cqCurrentSize}`;
+            updateCQVisual();
+        }
+
+        function peekCircular() {
+            if (cqMaxSize <= 0) {
+                cqOutput.textContent = "隊列未初始化或大小無效。";
+                return;
+            }
+            if (cqCurrentSize === 0) {
+                cqOutput.textContent = "隊列已空。";
+                return;
+            }
+            cqOutput.textContent = `Peek (頭部元素): ${cq[cqHead]} (在索引 ${cqHead})`;
+        }
+
+        function clearQueueDisplay() {
+            // Get current size setting or default to 5 if input is invalid
+            let currentSizeSetting = parseInt(document.getElementById('queueSize').value);
+            if (isNaN(currentSizeSetting) || currentSizeSetting <= 0) {
+                document.getElementById('queueSize').value = 5; // Reset input to default
+            }
+            initializeQueue();
+            cqOutput.textContent = "隊列已清除並重設。";
+        }
+
+        initializeQueue(); // Initialize queue on load
+
+        // --- 鏈表 (Linked List) ---
+        class LLNode {
+            constructor(data) {
+                this.data = data;
+                this.next = null;
+            }
+        }
+
+        let llHead = null;
+        const llOutput = document.getElementById('llOutput');
+        const llVisualization = document.getElementById('llVisualization');
+
+        function updateLLVisual() {
+            llVisualization.innerHTML = '';
+            if (!llHead) {
+                llVisualization.textContent = '鏈表為空';
+                return;
+            }
+            let current = llHead;
+            while (current) {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'node';
+                nodeDiv.textContent = current.data;
+                llVisualization.appendChild(nodeDiv);
+                if (current.next) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'pointer';
+                    arrow.textContent = '➔';
+                    llVisualization.appendChild(arrow);
+                }
+                current = current.next;
+            }
+        }
+
+        function insertNode() {
+            const value = document.getElementById('llValue').value;
+            const indexStr = document.getElementById('llIndex').value;
+            let index = indexStr === "" ? -1 : parseInt(indexStr);
+
+            if (value === "") {
+                llOutput.textContent = "請輸入節點數值。";
+                return;
+            }
+
+            const newNode = new LLNode(value);
+
+            if (index === 0 || (index === -1 && !llHead)) {
+                newNode.next = llHead;
+                llHead = newNode;
+                llOutput.textContent = `插入節點: ${value} 到頭部 (索引 0)。`;
+            }
+            else if (index === -1) {
+                if (!llHead) {
+                    llHead = newNode;
+                } else {
+                    let current = llHead;
+                    while (current.next) {
+                        current = current.next;
+                    }
+                    current.next = newNode;
+                }
+                llOutput.textContent = `插入節點: ${value} 到尾部。`;
+            }
+            else {
+                if (index < 0) {
+                    llOutput.textContent = "索引不能為負數。預設插入到尾部。";
+                     let current = llHead;
+                    if (!current) {
+                        llHead = newNode;
+                         llOutput.textContent = `鏈表為空，插入節點: ${value} 到頭部。`;
+                    } else {
+                        while (current.next) {
+                            current = current.next;
+                        }
+                        current.next = newNode;
+                    }
+                } else {
+                    let current = llHead;
+                    let prev = null;
+                    let count = 0;
+                    while (current && count < index) {
+                        prev = current;
+                        current = current.next;
+                        count++;
+                    }
+                    if (count === index) {
+                        if (prev) {
+                            prev.next = newNode;
+                        } else {
+                            llHead = newNode;
+                        }
+                        newNode.next = current;
+                        llOutput.textContent = `插入節點: ${value} 到索引 ${index}。`;
+                    } else {
+                        if (!llHead) {
+                           llHead = newNode;
+                           llOutput.textContent = `鏈表為空，插入節點: ${value} 到頭部。`;
+                        } else {
+                            current = llHead;
+                             while (current.next) {
+                                current = current.next;
+                            }
+                            current.next = newNode;
+                            llOutput.textContent = `索引 ${index} 超出範圍，已插入節點: ${value} 到尾部。`;
+                        }
+                    }
+                }
+            }
+            document.getElementById('llValue').value = "";
+            document.getElementById('llIndex').value = "";
+            updateLLVisual();
+        }
+
+        function deleteNodeByValue() {
+            const value = document.getElementById('llDeleteValue').value;
+            if (value === "") {
+                llOutput.textContent = "請輸入要刪除的數值。";
+                return;
+            }
+            if (!llHead) {
+                llOutput.textContent = "鏈表已空，無法刪除。";
+                return;
+            }
+
+            if (llHead.data === value) {
+                llHead = llHead.next;
+                llOutput.textContent = `刪除頭部節點，數值為: ${value}。`;
+                updateLLVisual();
+                document.getElementById('llDeleteValue').value = "";
+                return;
+            }
+
+            let current = llHead;
+            let prev = null;
+            while (current && current.data !== value) {
+                prev = current;
+                current = current.next;
+            }
+
+            if (current) {
+                prev.next = current.next;
+                llOutput.textContent = `刪除數值為 ${value} 的節點。`;
+            } else {
+                llOutput.textContent = `鏈表中未找到數值為 ${value} 的節點。`;
+            }
+            updateLLVisual();
+            document.getElementById('llDeleteValue').value = "";
+        }
+
+        function deleteNodeByIndex() {
+            const indexStr = document.getElementById('llDeleteIndex').value;
+            if (indexStr === "") {
+                llOutput.textContent = "請輸入要刪除的索引。";
+                return;
+            }
+            const index = parseInt(indexStr);
+
+            if (isNaN(index) || index < 0) {
+                llOutput.textContent = "請輸入有效的非負索引。";
+                return;
+            }
+            if (!llHead) {
+                llOutput.textContent = "鏈表已空，無法刪除。";
+                return;
+            }
+
+            if (index === 0) {
+                const deletedData = llHead.data;
+                llHead = llHead.next;
+                llOutput.textContent = `刪除索引 ${index} 的節點 (數值: ${deletedData})。`;
+                updateLLVisual();
+                document.getElementById('llDeleteIndex').value = "";
+                return;
+            }
+
+            let current = llHead;
+            let prev = null;
+            let count = 0;
+            while (current && count < index) {
+                prev = current;
+                current = current.next;
+                count++;
+            }
+
+            if (current && count === index) {
+                const deletedData = current.data;
+                prev.next = current.next;
+                llOutput.textContent = `刪除索引 ${index} 的節點 (數值: ${deletedData})。`;
+            } else {
+                llOutput.textContent = `索引 ${index} 超出範圍或鏈表不夠長。`;
+            }
+            updateLLVisual();
+            document.getElementById('llDeleteIndex').value = "";
+        }
+
+        function clearLinkedListDisplay() {
+            llHead = null;
+            llOutput.textContent = "";
+            updateLLVisual();
+        }
+        updateLLVisual();
+
+    </script>
+</body>
+</html>
