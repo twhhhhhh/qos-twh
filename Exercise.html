@@ -29,6 +29,7 @@
         .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; color: var(--primary); }
         h3 { color: #555; margin-top: 0; }
+        h4 { color: var(--accent); margin-bottom: 5px;}
 
         /* Inputs & Buttons */
         input[type="text"], input[type="number"] { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100px; }
@@ -45,22 +46,25 @@
         .correct { color: var(--success); }
         .incorrect { color: #c0392b; }
 
-        /* Visualization Elements (Imported Styles) */
-        .array-display { display: flex; gap: 5px; margin: 10px 0; justify-content: center; flex-wrap: wrap; }
-        .array-item { width: 40px; height: 40px; border: 1px solid #999; display: flex; align-items: center; justify-content: center; background: #eee; font-weight: bold; border-radius: 4px; position: relative; }
-        .array-item .idx { position: absolute; bottom: -18px; font-size: 0.7em; color: #666; }
-        
-        .stack-container { display: flex; flex-direction: column-reverse; width: 60px; border: 2px solid #333; border-top: none; min-height: 100px; margin: 0 auto; padding: 5px; background: #fff;}
-        .stack-item { background: var(--accent); color: white; text-align: center; padding: 5px; margin-bottom: 2px; border-radius: 2px; animation: popIn 0.3s; }
+        /* Visualization Elements */
+        .stack-wrapper { display: flex; gap: 50px; justify-content: center; align-items: flex-end; margin-top: 20px;}
+        .stack-box { text-align: center; }
+        .stack-container { display: flex; flex-direction: column-reverse; width: 70px; border: 3px solid #333; border-top: none; min-height: 150px; margin: 0 auto; padding: 5px; background: #fff;}
+        .stack-item { background: var(--accent); color: white; text-align: center; padding: 8px; margin-bottom: 2px; border-radius: 2px; font-weight: bold; border: 1px solid rgba(0,0,0,0.2); }
+        .stack-label { font-weight: bold; margin-top: 5px; display: block;}
 
-        .queue-viz { display: flex; gap: 2px; border: 1px dashed #ccc; padding: 10px; justify-content: center; }
+        .ll-viz-container { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 20px; overflow-x: auto;}
+        .ll-node { display: flex; border: 2px solid #333; border-radius: 6px; background: #fff; overflow: hidden; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        .ll-data { padding: 10px 15px; font-weight: bold; font-size: 1.1em; color: var(--primary); border-right: 1px solid #999; }
+        .ll-ptr { padding: 10px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 0.8em; color: #666; min-width: 20px;}
+        .ll-arrow { font-size: 1.5em; color: var(--accent); font-weight: bold; margin: 0 5px; }
+        .ll-null { font-weight: bold; color: #c0392b; font-family: monospace; font-size: 1.2em;}
+
+        .diff-selector { margin-bottom: 15px; padding: 10px; background: #ecf0f1; border-radius: 5px; border-left: 5px solid var(--warning); }
+        
+        .queue-viz { display: flex; gap: 2px; border: 1px dashed #ccc; padding: 10px; justify-content: center; margin-top: 10px; }
         .queue-cell { width: 50px; height: 50px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; background: #fff; }
         .queue-label { font-size: 0.7em; color: red; position: absolute; top: -15px; width: 100%; text-align: center; font-weight: bold; }
-        
-        .ll-node { display: inline-flex; align-items: center; margin: 5px; padding: 8px; border: 1px solid #333; background: #fff; border-radius: 4px; }
-        .ll-arrow { margin: 0 5px; font-weight: bold; color: var(--accent); }
-
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -78,15 +82,9 @@
 
     <div id="sorting" class="module active">
         <div class="card">
-            <h2>課題學習目標</h2>
-            <ul>
-                <li>理解冒泡、選擇及插入排序的 Python 實作細節。</li>
-                <li>能夠追蹤算法執行過程，預測第 $i$ 次循環後的陣列狀態。</li>
-            </ul>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-            <select id="sortAlgoSelect" onchange="loadSortExercise()" style="padding: 8px; font-size: 1rem;">
+            <h2>課題 1: 排序算法</h2>
+            <p>請選擇算法進行 Python 程式碼填空與乾跑 (Dry Run) 練習。</p>
+            <select id="sortAlgoSelect" onchange="loadSortExercise()" style="padding: 8px; font-size: 1rem; margin-bottom: 10px;">
                 <option value="bubble">冒泡排序 (Bubble Sort)</option>
                 <option value="selection">選擇排序 (Selection Sort)</option>
                 <option value="insertion">插入排序 (Insertion Sort)</option>
@@ -95,7 +93,6 @@
 
         <div class="card">
             <h3>練習 A: Python 程式碼填空</h3>
-            <p>請填入正確的變數、運算符或邊界值。</p>
             <div id="codeExerciseContainer"></div>
             <button class="action-btn check-btn" onclick="checkCode()">檢查答案</button>
             <div id="codeFeedback" class="feedback"></div>
@@ -103,11 +100,11 @@
 
         <div class="card">
             <h3>練習 B: 算法追蹤 (Dry Run)</h3>
-            <p>觀察初始陣列，並寫出指定循環次數後的陣列狀態 (以逗號分隔，例如: 1, 2, 3, 4)。</p>
+            <p>點擊「下一題」可生成新的隨機陣列。</p>
             <div style="background: #eee; padding: 10px; border-radius: 4px; text-align: center; margin-bottom: 15px;">
-                <strong>初始陣列: </strong> <span id="traceInitialArray" style="font-family: monospace; font-size: 1.2em;"></span>
+                <strong>初始陣列: </strong> <span id="traceInitialArray" style="font-family: monospace; font-size: 1.2em; color: blue;"></span>
             </div>
-            <p id="traceQuestionText"></p>
+            <p id="traceQuestionText" style="font-weight: bold;"></p>
             <input type="text" id="traceInput" placeholder="例如: 10, 20, 5, 8" style="width: 300px;">
             <button class="action-btn check-btn" onclick="checkTrace()">提交</button>
             <button class="action-btn" onclick="generateNewTrace()" style="margin-left: 5px; background-color: #7f8c8d;">下一題</button>
@@ -117,88 +114,96 @@
 
     <div id="ds" class="module">
         <div class="card">
-            <h2>課題學習目標</h2>
-            <ul>
-                <li>堆疊 (Stack): 預測 Push/Pop 操作後的內容。</li>
-                <li>循環隊列 (Circular Queue): 追蹤 Head 與 Tail 指標的位置。</li>
-                <li>鏈表 (Linked List): 理解插入與刪除節點後的結構變化。</li>
-            </ul>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-            <button class="action-btn" onclick="loadDS('stack')">堆疊 (Stack)</button>
-            <button class="action-btn" onclick="loadDS('queue')">循環隊列 (Queue)</button>
-            <button class="action-btn" onclick="loadDS('ll')">鏈表 (Linked List)</button>
+            <h2>課題 2: 數據結構</h2>
+            <div style="margin-bottom: 15px;">
+                <button class="action-btn" onclick="loadDS('stack')">堆疊 (Stack)</button>
+                <button class="action-btn" onclick="loadDS('ll')">鏈表 (Linked List)</button>
+                <button class="action-btn" onclick="loadDS('queue')">循環隊列 (Queue)</button>
+            </div>
         </div>
 
         <div id="ds-content-stack" class="ds-section" style="display:none;">
             <div class="card">
-                <h3>堆疊狀態預測</h3>
-                <p>執行以下操作後，堆疊由下至上的內容是什麼？(Top 在最右邊，以逗號分隔)</p>
-                <div style="background: #e8f6f3; padding: 15px; border-left: 5px solid var(--accent);">
-                    <strong>操作序列:</strong> <span id="stackOps"></span>
+                <h3>堆疊算法挑戰</h3>
+                
+                <div class="diff-selector">
+                    <strong>選擇難度：</strong>
+                    <select id="stackDiffSelect" onchange="genStackQuiz()">
+                        <option value="1">Level 1: 基礎 Push/Pop 狀態預測</option>
+                        <option value="2">Level 2: 雙堆疊傳送 (Two Stacks)</option>
+                        <option value="3">Level 3: 堆疊過濾算法 (Stack Algorithm)</option>
+                    </select>
                 </div>
-                <br>
-                <input type="text" id="stackAns" placeholder="例如: 5, 10">
+
+                <div style="background: #e8f6f3; padding: 15px; border-left: 5px solid var(--accent); margin-bottom: 15px;">
+                    <h4 id="stackQTitle">題目說明</h4>
+                    <p id="stackQText">題目內容...</p>
+                    <div id="stackInitState" style="margin-top:10px; font-family: monospace;"></div>
+                </div>
+
+                <label>你的答案 (由 Stack <strong>底部至頂部</strong>，逗號分隔):</label><br>
+                <input type="text" id="stackAns" placeholder="例如: 5, 10, 20" style="width: 250px;">
                 <button class="action-btn check-btn" onclick="checkStack()">檢查</button>
-                <button class="action-btn" onclick="genStackQuiz()" style="background-color: #7f8c8d;">新題目</button>
+                <button class="action-btn" onclick="genStackQuiz()" style="background-color: #7f8c8d;">下一題 (刷新數值)</button>
+                
                 <div id="stackFeedback" class="feedback"></div>
                 
                 <hr>
-                <h4>視覺化驗證區</h4>
-                <div class="stack-container" id="stackViz"></div>
-            </div>
-        </div>
-
-        <div id="ds-content-queue" class="ds-section" style="display:none;">
-            <div class="card">
-                <h3>循環隊列指針追蹤</h3>
-                <p>隊列大小 (Max Size) 為 <strong>5</strong>。初始為空 (Head=-1, Tail=-1)。</p>
-                <div style="background: #e8f6f3; padding: 15px; border-left: 5px solid var(--accent);">
-                    <strong>操作序列:</strong> <span id="queueOps"></span>
-                </div>
-                <br>
-                Head 索引: <input type="number" id="qHeadAns" style="width: 60px;"> 
-                Tail 索引: <input type="number" id="qTailAns" style="width: 60px;">
-                <button class="action-btn check-btn" onclick="checkQueue()">檢查</button>
-                <button class="action-btn" onclick="genQueueQuiz()" style="background-color: #7f8c8d;">新題目</button>
-                <div id="queueFeedback" class="feedback"></div>
-
-                <hr>
-                <h4>視覺化驗證區</h4>
-                <div id="queueViz" class="queue-viz"></div>
+                <h4>視覺化結果 (Answer Visualization)</h4>
+                <div class="stack-wrapper" id="stackViz"></div>
             </div>
         </div>
 
         <div id="ds-content-ll" class="ds-section" style="display:none;">
             <div class="card">
-                <h3>鏈表操作預測</h3>
-                <p>觀察下圖鏈表，回答操作後的問題。</p>
-                <div id="llVizInit" style="margin: 20px 0;"></div>
-                <div style="background: #e8f6f3; padding: 15px; border-left: 5px solid var(--accent);">
-                    <strong>操作:</strong> <span id="llOp"></span>
+                <h3>鏈表操作 (無索引概念)</h3>
+                <p>請根據節點數值 (Data) 與指示標 (Next Pointer) 的變化回答問題。</p>
+
+                <div style="margin: 20px 0;">
+                    <strong>當前鏈表狀態：</strong>
+                    <div id="llVizInit" class="ll-viz-container"></div>
+                </div>
+
+                <div style="background: #fff8e1; padding: 15px; border-left: 5px solid var(--warning);">
+                    <strong>執行操作:</strong> <span id="llOp" style="font-weight: bold; color: #d35400;"></span>
                 </div>
                 <br>
-                <span id="llQuestion">結果鏈表順序為 (逗號分隔):</span>
-                <input type="text" id="llAns" placeholder="例如: 10, 30" style="width: 200px;">
+                <p>操作完成後，鏈表的順序為何？ (請只輸入數值，用逗號分隔)</p>
+                <input type="text" id="llAns" placeholder="例如: 10, 30, 50" style="width: 250px;">
                 <button class="action-btn check-btn" onclick="checkLL()">檢查</button>
-                <button class="action-btn" onclick="genLLQuiz()" style="background-color: #7f8c8d;">新題目</button>
+                <button class="action-btn" onclick="genLLQuiz()" style="background-color: #7f8c8d;">下一題 (刷新數值)</button>
                 <div id="llFeedback" class="feedback"></div>
             </div>
         </div>
 
-    </div>
+        <div id="ds-content-queue" class="ds-section" style="display:none;">
+             <div class="card">
+                <h3>循環隊列</h3>
+                <p>隊列大小 (Max Size) = 5。初始 Head=-1, Tail=-1 (空)。</p>
+                <div style="background: #e8f6f3; padding: 15px; border-left: 5px solid var(--accent); margin-bottom: 15px;">
+                    <strong>操作序列:</strong> <span id="queueOps"></span>
+                </div>
+                Head 指標: <input type="number" id="qHead" style="width:50px"> 
+                Tail 指標: <input type="number" id="qTail" style="width:50px">
+                <button class="action-btn check-btn" onclick="checkQueue()">檢查</button>
+                <button class="action-btn" onclick="genQueueQuiz()" style="background-color: #7f8c8d;">下一題 (刷新數值)</button>
+                <div id="queueFeedback" class="feedback"></div>
+                <hr>
+                <h4>視覺化結果</h4>
+                <div id="queueViz" class="queue-viz"></div>
+             </div>
+        </div>
 
+    </div>
 </div>
 
 <script>
-    // --- Navigation Logic ---
+    // --- Navigation ---
     function switchModule(modId) {
         document.querySelectorAll('.module').forEach(el => el.classList.remove('active'));
         document.getElementById(modId).classList.add('active');
         document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
         event.target.classList.add('active');
-        
         if(modId === 'sorting') loadSortExercise();
         if(modId === 'ds') loadDS('stack');
     }
@@ -207,27 +212,18 @@
         document.querySelectorAll('.ds-section').forEach(el => el.style.display = 'none');
         document.getElementById('ds-content-' + type).style.display = 'block';
         if(type === 'stack') genStackQuiz();
-        if(type === 'queue') genQueueQuiz();
         if(type === 'll') genLLQuiz();
+        if(type === 'queue') genQueueQuiz();
     }
 
     // ==========================================
-    // MODULE 1: SORTING LOGIC
+    // MODULE 1: SORTING LOGIC (With Real Randomness)
     // ==========================================
-    
     const sortData = {
-        bubble: {
-            code: `def bubble_sort(arr):
-   #將陣列由小至大排列
-    n = len(arr)
-    for i in range(<input class="code-input" data-ans="n" id="c1">):
-        # 優化: 每次內層循環後，最大的元素已就位
-        for j in range(0, <input class="code-input" data-ans="n-i-1" id="c2">):
-            # 比較相鄰元素
-            if arr[j] <input class="code-input" data-ans=">" id="c3"> arr[j+1]:
-                # 交換位置
-                arr[j], arr[j+1] = arr[j+1], arr[j]`,
-            traceFunc: (arr, passes) => {
+        bubble: { 
+            code: `def bubble_sort(arr):\n    #將陣列由小至大排列\n    n = len(arr)\n    for i in range(<input class="code-input" data-ans="n" id="c1">):\n        for j in range(0, <input class="code-input" data-ans="n-i-1" id="c2">):\n            if arr[j] <input class="code-input" data-ans=">" id="c3"> arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]`, 
+            name: "冒泡排序",
+            run: (arr, passes) => {
                 let a = [...arr];
                 let n = a.length;
                 for(let i=0; i<passes; i++) {
@@ -236,20 +232,12 @@
                     }
                 }
                 return a;
-            },
-            name: "冒泡排序"
+            }
         },
-        selection: {
-            code: `def selection_sort(arr):
-    for i in range(len(arr)):
-        min_idx = i
-        # 在未排序區間尋找最小值的索引
-        for j in range(<input class="code-input" data-ans="i+1" id="c1">, len(arr)):
-            if arr[j] <input class="code-input" data-ans="<" id="c2"> arr[min_idx]:
-                min_idx = <input class="code-input" data-ans="j" id="c3">
-        # 將找到的最小值交換到當前位置 i
-        arr[i], arr[min_idx] = arr[min_idx], arr[i]`,
-            traceFunc: (arr, passes) => {
+        selection: { 
+            code: `def selection_sort(arr):\n    for i in range(len(arr)):\n        min_idx = i\n        for j in range(<input class="code-input" data-ans="i+1" id="c1">, len(arr)):\n            if arr[j] <input class="code-input" data-ans="<" id="c2"> arr[min_idx]:\n                min_idx = <input class="code-input" data-ans="j" id="c3">\n        arr[i], arr[min_idx] = arr[min_idx], arr[i]`, 
+            name: "選擇排序",
+            run: (arr, passes) => {
                 let a = [...arr];
                 for(let i=0; i<passes; i++) {
                     let min_idx = i;
@@ -259,24 +247,15 @@
                     [a[i], a[min_idx]] = [a[min_idx], a[i]];
                 }
                 return a;
-            },
-            name: "選擇排序"
+            }
         },
-        insertion: {
-            code: `def insertion_sort(arr):
-    # 從第二個元素開始
-    for i in range(1, len(arr)):
-        key = arr[i]
-        j = i - 1
-        # 將大於 key 的元素向右移動
-        while j >= 0 and key <input class="code-input" data-ans="<" id="c1"> arr[j]:
-            arr[<input class="code-input" data-ans="j+1" id="c2">] = arr[j]
-            j -= 1
-        # 插入 key
-        arr[j+1] = <input class="code-input" data-ans="key" id="c3">`,
-            traceFunc: (arr, passes) => {
-                // Passes in insertion sort usually correspond to the outer loop iterations
+        insertion: { 
+            code: `def insertion_sort(arr):\n\n    #將陣列由小至大排列    for i in range(1, len(arr)):\n        key = arr[i]\n        j = i - 1\n        while j >= 0 and key <input class="code-input" data-ans="<" id="c1"> arr[j]:\n            arr[<input class="code-input" data-ans="j+1" id="c2">] = arr[j]\n            j -= 1\n        arr[j+1] = <input class="code-input" data-ans="key" id="c3">`, 
+            name: "插入排序",
+            run: (arr, passes) => {
                 let a = [...arr];
+                // Insertion Sort Loop starts at 1. 
+                // "Passes" here will simulate execution of outer loop count
                 for (let i = 1; i <= passes && i < a.length; i++) {
                     let key = a[i];
                     let j = i - 1;
@@ -287,52 +266,43 @@
                     a[j + 1] = key;
                 }
                 return a;
-            },
-            name: "插入排序"
+            }
         }
     };
 
-    let currentSortTrace = { arr: [], answer: [] };
+    let currentSortTrace = { arr: [], ans: [] };
 
     function loadSortExercise() {
         const type = document.getElementById('sortAlgoSelect').value;
-        const data = sortData[type];
-        
-        // Load Code
-        document.getElementById('codeExerciseContainer').innerHTML = `<pre>${data.code}</pre>`;
+        document.getElementById('codeExerciseContainer').innerHTML = `<pre>${sortData[type].code}</pre>`;
         document.getElementById('codeFeedback').textContent = "";
-        
-        // Load Trace
         generateNewTrace();
     }
 
     function checkCode() {
         let correct = true;
         document.querySelectorAll('.code-input').forEach(input => {
-            const userVal = input.value.replace(/\s/g, ''); // remove spaces
-            const ans = input.dataset.ans;
-            if(userVal !== ans) {
-                input.style.borderColor = "red";
-                correct = false;
-            } else {
-                input.style.borderColor = "#27ae60";
-            }
+            if(input.value.replace(/\s/g, '') !== input.dataset.ans) {
+                input.style.borderColor = "red"; correct = false;
+            } else input.style.borderColor = "#27ae60";
         });
         const fb = document.getElementById('codeFeedback');
-        fb.textContent = correct ? "全對！做得好！" : "部分答案不正確，請檢查紅框處。";
+        fb.textContent = correct ? "全對！" : "有錯誤，請檢查。";
         fb.className = correct ? "feedback correct" : "feedback incorrect";
     }
 
     function generateNewTrace() {
         const type = document.getElementById('sortAlgoSelect').value;
+        // 1. Generate Random Array
         const arr = Array.from({length: 6}, () => Math.floor(Math.random() * 50) + 1);
         const passes = Math.floor(Math.random() * 2) + 2; // Random 2 or 3 passes
 
-        currentSortTrace.arr = [...arr];
-        currentSortTrace.answer = sortData[type].traceFunc(arr, passes);
+        // 2. Calculate Answer
+        const ans = sortData[type].run(arr, passes);
+        currentSortTrace = { arr: arr, ans: ans };
 
+        // 3. Update UI
         document.getElementById('traceInitialArray').textContent = `[${arr.join(', ')}]`;
-        
         let qText = "";
         if(type === 'insertion') {
              qText = `當外部迴圈執行了 ${passes} 次後 (即處理完第 ${passes+1} 個元素後)，陣列內容為何？`;
@@ -343,52 +313,101 @@
         document.getElementById('traceInput').value = "";
         document.getElementById('traceFeedback').textContent = "";
     }
-
+    
     function checkTrace() {
-        const input = document.getElementById('traceInput').value;
-        const userArr = input.split(/,| /).filter(x => x !== '').map(Number);
-        
+        const userArr = document.getElementById('traceInput').value.split(/,| /).filter(x=>x).map(Number);
         const fb = document.getElementById('traceFeedback');
-        // Simple array comparison
-        if (JSON.stringify(userArr) === JSON.stringify(currentSortTrace.answer)) {
-            fb.textContent = "正確！你完全掌握了算法的流程。";
-            fb.className = "feedback correct";
+        if(JSON.stringify(userArr) === JSON.stringify(currentSortTrace.ans)) {
+            fb.textContent = "正確!"; fb.className = "feedback correct";
         } else {
-            fb.textContent = `不正確。正確答案應該是: ${currentSortTrace.answer.join(', ')}`;
+            fb.textContent = `錯誤。正確答案應為: ${currentSortTrace.ans.join(', ')}`; 
             fb.className = "feedback incorrect";
         }
     }
 
 
     // ==========================================
-    // MODULE 2: DATA STRUCTURES LOGIC
+    // MODULE 2: DATA STRUCTURES (With Real Randomness)
     // ==========================================
 
-    // --- STACK ---
     let stackQuizData = {};
-    function genStackQuiz() {
-        let stack = [];
-        let ops = [];
-        let opsDesc = [];
-        const numOps = 5;
 
-        for(let i=0; i<numOps; i++) {
-            if(stack.length > 0 && Math.random() > 0.6) {
-                stack.pop();
-                ops.push("Pop");
-                opsDesc.push("Pop");
-            } else {
-                let val = Math.floor(Math.random() * 20) + 1;
-                stack.push(val);
-                ops.push(`Push(${val})`);
-                opsDesc.push(`Push ${val}`);
-            }
-        }
-        stackQuizData = { finalStack: stack, ops: ops };
-        document.getElementById('stackOps').innerHTML = opsDesc.join(' <span style="color:#aaa">➔</span> ');
+    function genStackQuiz() {
+        const level = document.getElementById('stackDiffSelect').value;
+        const qTitle = document.getElementById('stackQTitle');
+        const qText = document.getElementById('stackQText');
+        const initState = document.getElementById('stackInitState');
+        
+        // Generate NEW Random Stack
+        let stackA = Array.from({length: Math.floor(Math.random()*3)+3}, () => Math.floor(Math.random() * 20) + 1);
+        let ansStack = [];
+        let finalViz = []; 
+
         document.getElementById('stackAns').value = "";
         document.getElementById('stackFeedback').textContent = "";
-        document.getElementById('stackViz').innerHTML = ""; // Clear viz
+        document.getElementById('stackViz').innerHTML = "";
+
+        if (level === "1") {
+            // Level 1: Basic Push/Pop
+            qTitle.textContent = "Level 1: 單一堆疊操作";
+            let ops = [];
+            ansStack = [...stackA];
+            
+            for(let i=0; i<3; i++) {
+                if(ansStack.length > 0 && Math.random() > 0.5) {
+                    ansStack.pop();
+                    ops.push("Pop()");
+                } else {
+                    let v = Math.floor(Math.random()*10);
+                    ansStack.push(v);
+                    ops.push(`Push(${v})`);
+                }
+            }
+            qText.innerHTML = `初始堆疊 (Bottom -> Top): [${stackA.join(', ')}]<br>請依序執行以下操作: <strong>${ops.join(' ➔ ')}</strong>`;
+            initState.textContent = "";
+            finalViz = [{label: "Stack", data: ansStack}];
+
+        } else if (level === "2") {
+            // Level 2: Two Stacks Transfer
+            qTitle.textContent = "Level 2: 雙堆疊轉移 (LIFO 特性)";
+            qText.innerHTML = `有兩個堆疊: <strong>Stack 1</strong> 與 <strong>Stack 2</strong>。<br>
+                               Stack 1 初始內容: [${stackA.join(', ')}] (Top 在右)<br>
+                               Stack 2 初始為空。<br><br>
+                               <strong>算法操作:</strong><br>
+                               <code style="background:#eee; padding:5px; display:block; margin:5px 0;">
+                               while (Stack 1 不是空的):<br>
+                               &nbsp;&nbsp;temp = Stack 1.Pop()<br>
+                               &nbsp;&nbsp;Stack 2.Push(temp)
+                               </code>
+                               請問程式結束後，<strong>Stack 2</strong> 的內容為何？`;
+            initState.textContent = "";
+            
+            // Logic: Reverse A into B
+            ansStack = [...stackA].reverse(); 
+            finalViz = [
+                {label: "Stack 1 (Empty)", data: []},
+                {label: "Stack 2", data: ansStack}
+            ];
+
+        } else if (level === "3") {
+            // Level 3: Algorithm (Keep Max)
+            qTitle.textContent = "Level 3: 堆疊算法";
+            qText.innerHTML = `堆疊初始內容: [${stackA.join(', ')}] (Top 在右)<br><br>
+                               <strong>算法邏輯:</strong><br>
+                               1. 宣告變數 X = 0<br>
+                               2. 當堆疊不是空的時，重複執行:<br>
+                               &nbsp;&nbsp; a. 取出元素 item = Pop()<br>
+                               &nbsp;&nbsp; b. 如果 item > X，則 X = item<br>
+                               3. 清空後的堆疊，執行 Push(X)<br><br>
+                               請問最終堆疊內剩下什麼？`;
+            initState.textContent = "";
+
+            let max = Math.max(...stackA);
+            ansStack = [max];
+            finalViz = [{label: "Stack", data: ansStack}];
+        }
+
+        stackQuizData = { ans: ansStack, vizData: finalViz };
     }
 
     function checkStack() {
@@ -396,21 +415,103 @@
         const userArr = input.split(/,| /).filter(x => x !== '').map(Number);
         const fb = document.getElementById('stackFeedback');
         
-        // Viz
-        const viz = document.getElementById('stackViz');
-        viz.innerHTML = "";
-        stackQuizData.finalStack.forEach(val => {
-            let d = document.createElement('div');
-            d.className = 'stack-item';
-            d.textContent = val;
-            viz.appendChild(d);
+        // Render Viz
+        const wrapper = document.getElementById('stackViz');
+        wrapper.innerHTML = "";
+        
+        stackQuizData.vizData.forEach(stackObj => {
+            let box = document.createElement('div');
+            box.className = 'stack-box';
+            let container = document.createElement('div');
+            container.className = 'stack-container';
+            if (stackObj.data.length === 0) {
+                container.innerHTML = "<div style='color:#ccc; font-size:0.8em; margin:auto;'>Empty</div>";
+            } else {
+                stackObj.data.forEach(val => {
+                    let div = document.createElement('div');
+                    div.className = 'stack-item';
+                    div.textContent = val;
+                    container.appendChild(div);
+                });
+            }
+            box.appendChild(container);
+            box.appendChild(document.createElement('span')).className = 'stack-label';
+            box.lastChild.textContent = stackObj.label;
+            wrapper.appendChild(box);
         });
 
-        if (JSON.stringify(userArr) === JSON.stringify(stackQuizData.finalStack)) {
+        if (JSON.stringify(userArr) === JSON.stringify(stackQuizData.ans)) {
             fb.textContent = "正確！";
             fb.className = "feedback correct";
         } else {
-            fb.textContent = `錯誤。正確堆疊狀態為: [${stackQuizData.finalStack.join(', ')}]`;
+            fb.textContent = `錯誤。正確答案是: ${stackQuizData.ans.join(', ')}`;
+            fb.className = "feedback incorrect";
+        }
+    }
+
+    // --- LINKED LIST (NO INDEX) ---
+    let llQuizData = {};
+
+    function renderLL(arr, containerId) {
+        const con = document.getElementById(containerId);
+        con.innerHTML = "";
+        arr.forEach(val => {
+            let node = document.createElement('div');
+            node.className = 'll-node';
+            node.innerHTML = `<div class="ll-data">${val}</div><div class="ll-ptr">&bull;</div>`;
+            con.appendChild(node);
+            let arrow = document.createElement('div');
+            arrow.className = 'll-arrow';
+            arrow.innerHTML = "&rarr;";
+            con.appendChild(arrow);
+        });
+        let nullTerm = document.createElement('div');
+        nullTerm.className = 'll-null';
+        nullTerm.textContent = "NULL";
+        con.appendChild(nullTerm);
+    }
+
+    function genLLQuiz() {
+        // Generate Random Linked List
+        let len = Math.floor(Math.random() * 3) + 3; // 3 to 5 nodes
+        let arr = [];
+        for(let k=0; k<len; k++) arr.push(Math.floor(Math.random()*90)+10);
+        
+        renderLL(arr, 'llVizInit');
+        
+        const type = Math.random() > 0.5 ? 'insert' : 'delete';
+        let question = "", ans = [];
+
+        if (type === 'delete') {
+            const target = arr[Math.floor(Math.random() * arr.length)];
+            question = `從鏈表中移走數值為 ${target} 的節點`;
+            ans = arr.filter(x => x !== target);
+        } else {
+            const target = arr[Math.floor(Math.random() * arr.length)];
+            const newVal = 99;
+            question = `在包含數值 ${target} 的節點後方，插入新節點 (數值: ${newVal})`;
+            ans = [];
+            for(let x of arr) {
+                ans.push(x);
+                if(x === target) ans.push(newVal);
+            }
+        }
+
+        llQuizData = { ans: ans };
+        document.getElementById('llOp').textContent = question;
+        document.getElementById('llAns').value = "";
+        document.getElementById('llFeedback').textContent = "";
+    }
+
+    function checkLL() {
+        const userArr = document.getElementById('llAns').value.split(/,| /).filter(x => x).map(Number);
+        const fb = document.getElementById('llFeedback');
+        
+        if (JSON.stringify(userArr) === JSON.stringify(llQuizData.ans)) {
+            fb.textContent = "正確！";
+            fb.className = "feedback correct";
+        } else {
+            fb.textContent = `錯誤。正確順序應為: ${llQuizData.ans.join(' -> ')}`;
             fb.className = "feedback incorrect";
         }
     }
@@ -424,7 +525,7 @@
         let opsDesc = [];
         let q = new Array(size).fill(null);
 
-        // Simulate
+        // Simulation Loop
         for(let i=0; i<6; i++) {
             let isEnqueue = Math.random() > 0.4;
             if (isEnqueue && count < size) {
@@ -445,15 +546,15 @@
 
         queueQuizData = { h: head, t: tail, q: q, size: size };
         document.getElementById('queueOps').innerHTML = opsDesc.join(' <span style="color:#aaa">➔</span> ');
-        document.getElementById('qHeadAns').value = "";
-        document.getElementById('qTailAns').value = "";
+        document.getElementById('qHead').value = "";
+        document.getElementById('qTail').value = "";
         document.getElementById('queueFeedback').textContent = "";
         document.getElementById('queueViz').innerHTML = "";
     }
 
     function checkQueue() {
-        const uH = parseInt(document.getElementById('qHeadAns').value);
-        const uT = parseInt(document.getElementById('qTailAns').value);
+        const uH = parseInt(document.getElementById('qHead').value);
+        const uT = parseInt(document.getElementById('qTail').value);
         const fb = document.getElementById('queueFeedback');
 
         // Draw Viz
@@ -463,8 +564,6 @@
             let cell = document.createElement('div');
             cell.className = 'queue-cell';
             cell.textContent = queueQuizData.q[i] !== null ? queueQuizData.q[i] : "";
-            
-            // Add grey background for empty
             if(queueQuizData.q[i] === null) cell.style.background = "#f4f4f4";
 
             let lbl = "";
@@ -476,57 +575,17 @@
             viz.appendChild(cell);
         }
 
-        if (uH === queueQuizData.h && uT === queueQuizData.t) {
-            fb.textContent = "正確！你清楚指針的移動規則。";
-            fb.className = "feedback correct";
-        } else {
-            fb.textContent = `錯誤。Head 應為 ${queueQuizData.h}，Tail 應為 ${queueQuizData.t}。`;
-            if(queueQuizData.h === -1) fb.textContent += " (隊列為空)";
-            fb.className = "feedback incorrect";
-        }
-    }
+        // Logic check: handle empty case where both are -1 (user might input -1 or leave blank)
+        let uhVal = isNaN(uH) ? -1 : uH;
+        let utVal = isNaN(uT) ? -1 : uT;
 
-    // --- LINKED LIST ---
-    let llQuizData = {};
-    function genLLQuiz() {
-        let arr = [10, 20, 30, 40, 50];
-        // Render Initial Viz
-        const viz = document.getElementById('llVizInit');
-        viz.innerHTML = arr.map(v => `<div class="ll-node">${v}</div>`).join('<span class="ll-arrow">➔</span>');
-
-        let opType = Math.random() > 0.5 ? 'del' : 'ins';
-        let question = "", ans = [];
-
-        if (opType === 'del') {
-            const delVal = arr[Math.floor(Math.random() * arr.length)];
-            question = `刪除數值為 ${delVal} 的節點`;
-            ans = arr.filter(x => x !== delVal);
-        } else {
-            const insVal = 99;
-            const idx = Math.floor(Math.random() * (arr.length + 1));
-            // simplified logic: insert at index
-            question = `在索引 ${idx} (第 ${idx+1} 個位置) 插入數值 99`;
-            let temp = [...arr];
-            temp.splice(idx, 0, 99);
-            ans = temp;
-        }
-
-        llQuizData = { ans: ans };
-        document.getElementById('llOp').textContent = question;
-        document.getElementById('llAns').value = "";
-        document.getElementById('llFeedback').textContent = "";
-    }
-
-    function checkLL() {
-        const input = document.getElementById('llAns').value;
-        const userArr = input.split(/,| /).filter(x => x !== '').map(Number);
-        const fb = document.getElementById('llFeedback');
-
-        if (JSON.stringify(userArr) === JSON.stringify(llQuizData.ans)) {
+        if (uhVal === queueQuizData.h && utVal === queueQuizData.t) {
             fb.textContent = "正確！";
             fb.className = "feedback correct";
         } else {
-            fb.textContent = `錯誤。正確鏈表: ${llQuizData.ans.join(' ➔ ')}`;
+            let hText = queueQuizData.h === -1 ? "-1 (空)" : queueQuizData.h;
+            let tText = queueQuizData.t === -1 ? "-1 (空)" : queueQuizData.t;
+            fb.textContent = `錯誤。Head: ${hText}, Tail: ${tText}`;
             fb.className = "feedback incorrect";
         }
     }
