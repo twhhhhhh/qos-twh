@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU 機器周期互動學習平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0f4f8;
+            user-select: none;
+            padding-bottom: 180px; /* 增加底部內距，防止被固定底欄遮擋內容 */
+        }
+
+        .component-slot {
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .component-slot.hovered {
+            background-color: #e0e7ff;
+            border-color: #4f46e5;
+            border-style: solid;
+        }
+
+        .component-slot.filled {
+            background-color: #dcfce7;
+            border-color: #16a34a;
+            border-style: solid;
+            box-shadow: none;
+        }
+
+        .draggable-item {
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .draggable-item:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        .draggable-item.dragging {
+            opacity: 0.5;
+        }
+
+        .draggable-item.placed {
+            cursor: default;
+            transform: none;
+        }
+
+        /* Bus Animation Lines */
+        .bus-line {
+            stroke-width: 4;
+            fill: none;
+            stroke-linecap: round;
+            transition: color 0.3s;
+            stroke: currentColor;
+            color: #cbd5e1; /* Default Slate-300 inactive */
+        }
+
+        .bus-line.active-address {
+            color: #ef4444; /* Red */
+            animation: pulse-line 1s infinite;
+        }
+
+        .bus-line.active-data {
+            color: #3b82f6; /* Blue */
+            animation: pulse-line 1s infinite;
+        }
+        
+        .bus-line.active-control {
+            color: #eab308; /* Yellow */
+            animation: pulse-line 1s infinite;
+        }
+
+        @keyframes pulse-line {
+            0% { opacity: 0.4; stroke-width: 4; }
+            50% { opacity: 1; stroke-width: 6; }
+            100% { opacity: 0.4; stroke-width: 4; }
+        }
+
+        /* Fixed Footer Styles */
+        #status-box {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 50;
+            transform: translateY(100%); /* Initially hidden */
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        #status-box.visible {
+            transform: translateY(0);
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-6">
+
+    <header class="w-full max-w-6xl px-4 mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800">電腦硬件：CPU 機器周期運作</h1>
+            <p class="text-slate-600 mt-1">拖放部件以組裝 CPU，並觀察提取-譯碼-執行周期。</p>
+        </div>
+        <button onclick="resetSim()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg font-medium transition">
+            重設頁面
+        </button>
+    </header>
+
+    <main class="w-full max-w-6xl px-4 flex flex-col lg:flex-row gap-6">
+        
+        <!-- Left Column: The Motherboard (Drop Zones) -->
+        <div class="flex-grow bg-white p-6 rounded-2xl shadow-lg relative border-2 border-slate-200 min-h-[600px]">
+            <h2 class="text-xl font-bold text-slate-700 mb-4 absolute top-4 left-6">主機板與 CPU 架構</h2>
+            
+            <!-- SVG Layer for Buses -->
+            <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" id="bus-canvas">
+                <defs>
+                    <!-- Define arrow marker that inherits color -->
+                    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
+                        markerWidth="6" markerHeight="6"
+                        orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+                    </marker>
+                </defs>
+
+                <!-- PC to MAR -->
+                <path id="bus-pc-mar" class="bus-line" d="M200 130 L200 170" marker-end="url(#arrow)" />
+                <!-- MAR to RAM (Address Bus) -->
+                <path id="bus-mar-ram" class="bus-line" d="M250 210 L540 210" marker-end="url(#arrow)" />
+                <!-- RAM to MDR (Data Bus) -->
+                <path id="bus-ram-mdr" class="bus-line" d="M550 310 L260 310" marker-end="url(#arrow)" />
+                <!-- MDR to CIR -->
+                <path id="bus-mdr-cir" class="bus-line" d="M200 340 L200 380" marker-end="url(#arrow)" />
+                <!-- CIR to CU -->
+                <path id="bus-cir-cu" class="bus-line" d="M250 420 L380 420 L380 470" marker-end="url(#arrow)" />
+                <!-- CU to ALU (Control Signal) -->
+                <path id="bus-cu-alu" class="bus-line" d="M350 510 L290 510" marker-end="url(#arrow)" />
+                <!-- ALU to ACC -->
+                <path id="bus-alu-acc" class="bus-line" d="M200 540 L200 570" marker-end="url(#arrow)" />
+            </svg>
+
+            <!-- CPU Container Box -->
+            <div class="absolute top-16 left-16 w-[350px] h-[550px] border-4 border-slate-300 rounded-xl bg-slate-50/50 z-0">
+                <span class="absolute top-2 left-2 text-slate-400 font-bold text-2xl opacity-20">CPU (中央處理器)</span>
+            </div>
+
+            <!-- Slots -->
+            
+            <!-- PC -->
+            <div class="absolute top-20 left-[150px] w-32">
+                <div id="slot-pc" data-accept="pc" class="component-slot w-full h-16 border-2 border-dashed border-slate-400 rounded-lg flex items-center justify-center bg-white/80 relative z-10"></div>
+            </div>
+
+            <!-- MAR -->
+            <div class="absolute top-[180px] left-[150px] w-32">
+                <div id="slot-mar" data-accept="mar" class="component-slot w-full h-16 border-2 border-dashed border-slate-400 rounded-lg flex items-center justify-center bg-white/80 relative z-10"></div>
+            </div>
+
+            <!-- MDR -->
+            <div class="absolute top-[280px] left-[150px] w-32">
+                <div id="slot-mdr" data-accept="mdr" class="component-slot w-full h-16 border-2 border-dashed border-slate-400 rounded-lg flex items-center justify-center bg-white/80 relative z-10"></div>
+            </div>
+
+            <!-- CIR -->
+            <div class="absolute top-[390px] left-[150px] w-32">
+                <div id="slot-cir" data-accept="cir" class="component-slot w-full h-16 border-2 border-dashed border-slate-400 rounded-lg flex items-center justify-center bg-white/80 relative z-10"></div>
+            </div>
+
+            <!-- ALU -->
+            <div class="absolute top-[480px] left-[150px] w-32">
+                <div id="slot-alu" data-accept="alu" class="component-slot w-full h-16 border-2 border-dashed border-slate-400 rounded-lg flex items-center justify-center bg-white/80 relative z-10"></div>
+            </div>
+
+            <!-- CU -->
+            <div class="absolute top-[480px] left-[320px] w-32">
+                <div id="slot-cu" data-accept="cu" class="component-slot w-full h-16 border-2 border-dashed border-slate-400 rounded-lg flex items-center justify-center bg-white/80 relative z-10"></div>
+            </div>
+
+             <!-- ACC -->
+             <div class="absolute top-[580px] left-[150px] w-32">
+                <div id="slot-acc" data-accept="acc" class="component-slot w-full h-16 border-2 border-dashed border-slate-400 rounded-lg flex items-center justify-center bg-white/80 relative z-10"></div>
+            </div>
+
+            <!-- RAM Container -->
+            <div class="absolute top-[150px] right-[50px] w-48 h-[300px] border-4 border-slate-300 rounded-xl bg-slate-50/50 z-0">
+                <span class="absolute top-2 left-2 text-slate-400 font-bold text-2xl opacity-20">Memory</span>
+            </div>
+
+            <!-- RAM Slot -->
+            <div class="absolute top-[200px] right-[60px] w-40">
+                <div id="slot-ram" data-accept="ram" class="component-slot w-full h-48 border-2 border-dashed border-slate-400 rounded-lg flex items-center justify-center bg-white/80 relative z-10"></div>
+            </div>
+
+            <!-- Bus Labels -->
+            <div class="absolute top-[190px] left-[350px] text-xs text-red-500 font-bold bg-white px-1">位址匯流排 (Address)</div>
+            <div class="absolute top-[290px] left-[350px] text-xs text-blue-500 font-bold bg-white px-1">數據匯流排 (Data)</div>
+
+        </div>
+
+        <!-- Right Column: Toolbox & Controls -->
+        <div class="w-full lg:w-64 flex flex-col gap-4">
+            
+            <!-- Toolbox -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                <h2 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2">部件庫 (Toolbox)</h2>
+                <p class="text-xs text-slate-500 mb-4">請將下列部件拖曳至左圖正確位置。</p>
+                
+                <div class="grid grid-cols-2 lg:grid-cols-1 gap-3" id="toolbox">
+                    <!-- Components -->
+                    <div id="item-pc" draggable="true" class="draggable-item bg-indigo-500 text-white p-3 rounded shadow-md text-center text-sm font-bold" data-id="pc">
+                        程式計數器<br>(PC)
+                    </div>
+                    <div id="item-mar" draggable="true" class="draggable-item bg-indigo-500 text-white p-3 rounded shadow-md text-center text-sm font-bold" data-id="mar">
+                        記憶體位址寄存器<br>(MAR)
+                    </div>
+                    <div id="item-mdr" draggable="true" class="draggable-item bg-indigo-500 text-white p-3 rounded shadow-md text-center text-sm font-bold" data-id="mdr">
+                        記憶體數據寄存器<br>(MDR)
+                    </div>
+                    <!-- RAM Visual -->
+                    <div id="item-ram" draggable="true" class="draggable-item bg-green-600 text-white p-1 rounded shadow-md text-center text-xs font-bold h-24 flex flex-col items-center justify-center overflow-hidden" data-id="ram">
+                        <div class="w-full text-center border-b border-green-500 pb-1 mb-1">主記憶體 (RAM)</div>
+                        <table class="w-full text-[10px] bg-green-700 rounded">
+                            <tr class="border-b border-green-600"><th>位址</th><th>內容</th></tr>
+                            <tr class="bg-green-800"><td>1000</td><td>ADD 1001</td></tr>
+                            <tr><td>1001</td><td>0005 (Data)</td></tr>
+                        </table>
+                    </div>
+                    <div id="item-cir" draggable="true" class="draggable-item bg-indigo-500 text-white p-3 rounded shadow-md text-center text-sm font-bold" data-id="cir">
+                        現行指令寄存器<br>(CIR)
+                    </div>
+                    <div id="item-cu" draggable="true" class="draggable-item bg-amber-600 text-white p-3 rounded shadow-md text-center text-sm font-bold" data-id="cu">
+                        控制部件<br>(CU)
+                    </div>
+                    <div id="item-alu" draggable="true" class="draggable-item bg-purple-600 text-white p-3 rounded shadow-md text-center text-sm font-bold" data-id="alu">
+                        算術及邏輯<br>運算部件 (ALU)
+                    </div>
+                    <div id="item-acc" draggable="true" class="draggable-item bg-indigo-500 text-white p-3 rounded shadow-md text-center text-sm font-bold" data-id="acc">
+                        累加器<br>(AX)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel (Initially Hidden/Disabled) -->
+            <div id="control-panel" class="bg-slate-800 text-white p-4 rounded-2xl shadow-lg border border-slate-600 opacity-50 pointer-events-none transition-opacity">
+                <h3 class="text-sm font-bold text-yellow-400 mb-3 border-b border-slate-600 pb-2">機器周期控制</h3>
+                <div class="flex flex-col gap-2">
+                    <button id="next-step-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
+                        <span>▶</span> 下一步 (Next)
+                    </button>
+                    <button id="reset-cycle-btn" class="bg-slate-600 hover:bg-slate-500 text-gray-200 font-bold py-2 rounded-lg text-sm transition-colors">
+                        ↺ 重置周期
+                    </button>
+                </div>
+                <div class="mt-3 text-xs text-center text-gray-400">
+                    進度: <span id="step-counter">0</span> / 7
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Fixed Footer Status Box -->
+    <div id="status-box" class="bg-slate-900 border-t-4 border-yellow-500 p-6">
+        <div class="max-w-6xl mx-auto flex items-start gap-4">
+            <div class="bg-yellow-500/20 p-2 rounded-full hidden sm:block">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-yellow-400 mb-1" id="status-title">歡迎</h3>
+                <p id="status-text" class="text-slate-200 text-base leading-relaxed">請將右側部件庫中的部件拖放到主機板上正確的虛線框中以開始。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Game State ---
+        const totalItems = 8;
+        let placedItems = 0;
+        let currentStepIndex = 0;
+        let isSimulating = false;
+
+        // --- Data: Simulation Steps ---
+        const simulationSteps = [
+            {
+                title: "步驟 1: 提取 (Fetch)",
+                text: "程式計數器 (PC) 將下一個指令的記憶體位址 [1000] 傳送至記憶體位址寄存器 (MAR)。",
+                activeBus: "bus-pc-mar",
+                busType: "active-address"
+            },
+            {
+                title: "步驟 2: 提取 (Fetch)",
+                text: "MAR 透過位址匯流排，向主記憶體 (RAM) 發出讀取位址 [1000] 的請求。",
+                activeBus: "bus-mar-ram",
+                busType: "active-address"
+            },
+            {
+                title: "步驟 3: 提取 (Fetch)",
+                text: "RAM 響應請求，將位址 [1000] 內的指令數據 [ADD 1001] 透過數據匯流排傳送至 MDR。",
+                activeBus: "bus-ram-mdr",
+                busType: "active-data"
+            },
+            {
+                title: "步驟 4: 提取完成",
+                text: "指令 [ADD 1001] 由 MDR 複製到現行指令寄存器 (CIR)，準備進行譯碼。",
+                activeBus: "bus-mdr-cir",
+                busType: "active-data"
+            },
+            {
+                title: "步驟 5: 譯碼 (Decode)",
+                text: "控制部件 (CU) 讀取 CIR 中的指令並進行解碼。CU 識別出這是加法指令，需要數據 [1001]。同時 PC 數值加 1。",
+                activeBus: "bus-cir-cu",
+                busType: "active-control"
+            },
+            {
+                title: "步驟 6: 執行 (Execute)",
+                text: "CU 發出控制訊號給 ALU。ALU 從位址 [1001] 讀取數據 [0005] 並執行加法運算。",
+                activeBus: "bus-cu-alu",
+                busType: "active-control"
+            },
+            {
+                title: "步驟 7: 儲存 (Store)",
+                text: "運算結果被寫入累加器 (AX/ACC)。機器周期結束，準備處理下一個指令。",
+                activeBus: "bus-alu-acc",
+                busType: "active-data"
+            }
+        ];
+
+        // --- Drag and Drop Logic ---
+        const draggables = document.querySelectorAll('.draggable-item');
+        const slots = document.querySelectorAll('.component-slot');
+        const controlPanel = document.getElementById('control-panel');
+        const nextStepBtn = document.getElementById('next-step-btn');
+        const resetCycleBtn = document.getElementById('reset-cycle-btn');
+        const stepCounter = document.getElementById('step-counter');
+
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', () => {
+                draggable.classList.add('dragging');
+            });
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('dragging');
+            });
+        });
+
+        slots.forEach(slot => {
+            slot.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if(!slot.hasChildNodes()) {
+                    slot.classList.add('hovered');
+                }
+            });
+
+            slot.addEventListener('dragleave', () => {
+                slot.classList.remove('hovered');
+            });
+
+            slot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                slot.classList.remove('hovered');
+
+                const draggable = document.querySelector('.dragging');
+                if (!draggable) return;
+
+                const expectedId = slot.getAttribute('data-accept');
+                const itemId = draggable.getAttribute('data-id');
+
+                if (expectedId === itemId) {
+                    slot.appendChild(draggable);
+                    slot.classList.add('filled');
+                    draggable.setAttribute('draggable', 'false');
+                    draggable.classList.add('placed');
+                    draggable.classList.remove('bg-indigo-500', 'bg-green-600', 'bg-amber-600', 'bg-purple-600');
+                    draggable.classList.add('bg-slate-700');
+                    
+                    placedItems++;
+                    checkCompletion();
+                    showStatus("安裝成功", getComponentDescription(itemId), "green");
+                } else {
+                    showStatus("位置錯誤", "這個部件不屬於這裡，請參考筆記重新嘗試。", "red");
+                }
+            });
+        });
+
+        function checkCompletion() {
+            if (placedItems === totalItems) {
+                // Enable Control Panel
+                controlPanel.classList.remove('opacity-50', 'pointer-events-none');
+                controlPanel.classList.add('opacity-100', 'animate-pulse'); // Pulse once to draw attention
+                setTimeout(() => controlPanel.classList.remove('animate-pulse'), 2000);
+                
+                showStatus("組裝完成！", "所有部件已就位。請使用右側控制面板的「下一步」按鈕開始逐步觀察機器周期。", "blue");
+            }
+        }
+
+        // --- Control Logic ---
+        
+        nextStepBtn.addEventListener('click', () => {
+            if (currentStepIndex >= simulationSteps.length) {
+                // Cycle finished
+                return;
+            }
+
+            // Perform Step
+            const stepData = simulationSteps[currentStepIndex];
+            
+            // 1. Clear previous highlights
+            document.querySelectorAll('.bus-line').forEach(el => el.classList.remove('active-address', 'active-data', 'active-control'));
+            
+            // 2. Highlight current bus
+            const busEl = document.getElementById(stepData.activeBus);
+            if (busEl) busEl.classList.add(stepData.busType);
+
+            // 3. Show Status
+            showStatus(stepData.title, stepData.text, "blue");
+
+            // 4. Update index and UI
+            currentStepIndex++;
+            stepCounter.innerText = currentStepIndex;
+
+            // 5. Check if finished
+            if (currentStepIndex >= simulationSteps.length) {
+                nextStepBtn.innerHTML = "<span>✓</span> 演示完成";
+                nextStepBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+                nextStepBtn.classList.add('bg-green-600', 'hover:bg-green-500');
+                showStatus("演示完成", "你已完成整個機器周期的觀察。點擊「重置周期」可重新開始。", "green");
+            }
+        });
+
+        resetCycleBtn.addEventListener('click', () => {
+            // Reset Logic
+            currentStepIndex = 0;
+            stepCounter.innerText = "0";
+            
+            // Reset Button Style
+            nextStepBtn.innerHTML = "<span>▶</span> 下一步 (Next)";
+            nextStepBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+            nextStepBtn.classList.remove('bg-green-600', 'hover:bg-green-500');
+            
+            // Clear Lines
+            document.querySelectorAll('.bus-line').forEach(el => el.classList.remove('active-address', 'active-data', 'active-control'));
+            
+            showStatus("已重置", "請點擊「下一步」重新開始演示。", "blue");
+        });
+
+        // --- Helper Functions ---
+
+        function getComponentDescription(id) {
+            const descriptions = {
+                'pc': '程式計數器 (PC)：儲存下一個要執行指令的記憶體位址。',
+                'mar': '記憶體位址寄存器 (MAR)：儲存須讀取或寫入數據的記憶體位址。',
+                'mdr': '記憶體數據寄存器 (MDR)：暫存從 MAR 位址讀取或準備寫入的數據。',
+                'ram': '主記憶體 (RAM)：儲存執行中的程式指令和數據。',
+                'cir': '現行指令寄存器 (CIR)：儲存目前正在處理/執行的指令。',
+                'cu': '控制部件 (CU)：負責解碼指令，並向 ALU 及其他設備發出控制訊號。',
+                'alu': '算術及邏輯運算部件 (ALU)：負責所有算術運算及邏輯判斷。',
+                'acc': '累加器 (AX)：暫時儲存 ALU 的運算結果。'
+            };
+            return descriptions[id] || "";
+        }
+
+        const statusBox = document.getElementById('status-box');
+        const statusTitle = document.getElementById('status-title');
+        const statusText = document.getElementById('status-text');
+
+        // Initial show
+        setTimeout(() => {
+            statusBox.classList.add('visible');
+        }, 500);
+
+        function showStatus(title, text, colorType) {
+            statusTitle.innerText = title;
+            statusText.innerText = text;
+            
+            // Update Border Color & Title Color
+            statusBox.classList.remove('border-yellow-500', 'border-green-500', 'border-red-500', 'border-blue-500');
+            statusTitle.classList.remove('text-yellow-400', 'text-green-400', 'text-red-400', 'text-blue-400');
+            
+            if (colorType === 'green') {
+                statusBox.classList.add('border-green-500');
+                statusTitle.classList.add('text-green-400');
+            } else if (colorType === 'red') {
+                statusBox.classList.add('border-red-500');
+                statusTitle.classList.add('text-red-400');
+            } else if (colorType === 'blue') {
+                statusBox.classList.add('border-blue-500');
+                statusTitle.classList.add('text-blue-400');
+            } else {
+                statusBox.classList.add('border-yellow-500');
+                statusTitle.classList.add('text-yellow-400');
+            }
+        }
+
+        window.resetSim = function() {
+            location.reload();
+        }
+
+    </script>
+</body>
+</html>
