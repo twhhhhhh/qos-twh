@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreB - ch1/2 電腦記憶體階層 | Computer Memory Hierarchy</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .draggable-item { cursor: grab; }
+        .draggable-item:active { cursor: grabbing; }
+        .drop-zone { transition: all 0.2s ease; }
+        .drop-zone.drag-over { background-color: #dbeafe; border-color: #3b82f6; border-style: solid; }
+        /* Custom Scrollbar for the info panel */
+        .info-panel::-webkit-scrollbar { width: 6px; }
+        .info-panel::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-6 shadow-lg">
+        <div class="container mx-auto max-w-5xl">
+            <h1 class="text-3xl font-bold mb-2">電腦記憶體階層互動平台</h1>
+            <p class="text-blue-100 text-sm md:text-base">Interactive Computer Memory Hierarchy Learning Platform</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto max-w-5xl p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+
+        <!-- Left Column: Instructions & Source Items -->
+        <section class="md:col-span-4 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-2 text-sm">1</span>
+                    學習與選擇 <span class="text-sm font-normal text-gray-500 ml-2">Learn & Select</span>
+                </h2>
+                <p class="text-gray-600 mb-4 text-sm">
+                    點擊組件查看詳細資訊，或將它們拖放到右側正確的速度順序中。
+                    <br><span class="text-xs text-gray-400">Click to view details, or drag to the right to sort by speed.</span>
+                </p>
+                
+                <!-- Source Container for Draggables -->
+                <div id="source-container" class="grid grid-cols-1 gap-3 min-h-[200px] p-2 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    <!-- Items will be injected here by JS -->
+                </div>
+            </div>
+
+            <!-- Info Panel (Dynamic Content) -->
+            <div id="info-panel" class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500 hidden transition-opacity duration-300">
+                <h3 class="text-lg font-bold text-blue-700 mb-1" id="info-title-zh">標題</h3>
+                <p class="text-sm text-gray-500 italic mb-4" id="info-title-en">Title EN</p>
+                
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <span class="font-semibold text-gray-700 block">性質 (Nature):</span>
+                        <span id="info-nature" class="text-gray-600"></span>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-700 block">一般容量 (Typical Capacity):</span>
+                        <span id="info-capacity" class="text-gray-600"></span>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-700 block">技術與功能 (Tech & Function):</span>
+                        <span id="info-tech" class="text-gray-600 leading-relaxed"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Sorting Game -->
+        <section class="md:col-span-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-2 text-sm">2</span>
+                        速度排序挑戰 <span class="text-sm font-normal text-gray-500 ml-2">Sort by Speed</span>
+                    </h2>
+                    <button onclick="resetGame()" class="text-sm text-gray-500 hover:text-blue-600 underline">重置 Reset</button>
+                </div>
+
+                <div class="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">
+                    <span>最快 Fastest</span>
+                    <span class="text-xl">⬇</span>
+                    <span>最慢 Slowest</span>
+                </div>
+
+                <!-- Drop Zones Container -->
+                <div class="flex-grow space-y-3" id="drop-container">
+                    <!-- Drop zones will be injected here -->
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex justify-end">
+                    <button onclick="checkAnswer()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow transition transform hover:-translate-y-0.5">
+                        檢查答案 Check Answer
+                    </button>
+                </div>
+
+                <!-- Success Explanation Area -->
+                <div id="success-feedback" class="hidden mt-6 bg-green-50 border border-green-200 rounded-lg p-5">
+                    <div class="flex items-start">
+                        <div class="text-green-500 text-2xl mr-3">🎉</div>
+                        <div>
+                            <h4 class="font-bold text-green-800 text-lg mb-2">正確！ Correct!</h4>
+                            <p class="text-green-900 text-sm mb-3 font-semibold leading-relaxed">
+                                為什麼 CPU 寄存器最快？<br>
+                                <span class="font-normal">因為它們位於 CPU 內部，是處理器直接運算的工作區，沒有傳輸延遲。</span>
+                            </p>
+                             <p class="text-green-900 text-sm mb-3 font-semibold leading-relaxed">
+                                Why are CPU Registers the fastest?<br>
+                                <span class="font-normal">Located directly inside the CPU, they are the immediate workspace for processor operations with zero bus latency.</span>
+                            </p>
+                            <hr class="border-green-200 my-2">
+                            <p class="text-green-900 text-sm font-semibold leading-relaxed">
+                                為什麼 HDD 硬碟最慢？<br>
+                                <span class="font-normal">因為傳統硬碟依賴機械轉動的磁碟和讀寫頭來尋找數據，物理移動需要時間。</span>
+                            </p>
+                            <p class="text-green-900 text-sm font-semibold leading-relaxed">
+                                Why is HDD the slowest?<br>
+                                <span class="font-normal">Traditional HDDs rely on mechanical spinning platters and moving read/write heads, creating significant physical latency.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- Error Feedback -->
+                <div id="error-feedback" class="hidden mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                    <p class="text-red-700 font-bold">順序不正確，請再試一次。</p>
+                    <p class="text-red-500 text-sm">Incorrect order. Please try again. Think about proximity to the CPU.</p>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-sm">
+        <p>© 2026 Computer Science Learning Platform.</p>
+    </footer>
+
+    <script>
+        // Data Structure for Memory Items
+        // Rank 1 is fastest
+        const memoryData = [
+            {
+                id: 'reg',
+                name_zh: 'CPU 寄存器',
+                name_en: 'CPU Registers',
+                rank: 1,
+                properties: {
+                    nature: '易失性 (Volatile)',
+                    capacity: '< 1 KB (極小 Tiny)',
+                    tech: '位於 CPU 核心內部的超高速存儲單元，用於暫存指令和數據。 (Ultra-fast storage inside CPU cores for immediate instructions/data.)'
+                }
+            },
+            {
+                id: 'cache',
+                name_zh: 'CPU 快取記憶體',
+                name_en: 'CPU Cache (L1/L2/L3)',
+                rank: 2,
+                properties: {
+                    nature: '易失性 (Volatile)',
+                    capacity: 'MB 級別 (小 Small)',
+                    tech: '使用 SRAM 技術，比 RAM 快但昂貴，用於緩衝 CPU 和 RAM 之間的速度差異。 (Uses SRAM. Faster/more expensive than RAM, buffers speed gap between CPU and RAM.)'
+                }
+            },
+            {
+                id: 'ram',
+                name_zh: '隨機存取記憶體 (RAM)',
+                name_en: 'Random Access Memory',
+                rank: 3,
+                properties: {
+                    nature: '易失性 (Volatile)',
+                    capacity: '8GB - 64GB (中 Medium)',
+                    tech: '主記憶體 (DRAM)。電腦運行時的暫存區，斷電後數據消失。 (Main memory. Workspace for active programs; data is lost when power is off.)'
+                }
+            },
+            {
+                id: 'rom',
+                name_zh: '唯讀記憶體 (ROM)',
+                name_en: 'Read-Only Memory',
+                rank: 4,
+                properties: {
+                    nature: '非易失性 (Non-volatile)',
+                    capacity: 'MB 級別 (小 Small)',
+                    tech: '存儲啟動程式 (BIOS/UEFI)。數據通常只能讀取，斷電後保留。 (Stores firmware/BIOS. Data is readable and retained without power.)'
+                }
+            },
+            {
+                id: 'ssd',
+                name_zh: '固態硬碟 (SSD)',
+                name_en: 'Solid State Drive',
+                rank: 5,
+                properties: {
+                    nature: '非易失性 (Non-volatile)',
+                    capacity: '256GB - 4TB (大 Large)',
+                    tech: '使用快閃記憶體 (Flash Memory) 儲存數據。比 HDD 快，無機械零件。 (Uses Flash Memory. Faster than HDD, no moving parts.)'
+                }
+            },
+            {
+                id: 'hdd',
+                name_zh: '硬碟 (HDD)',
+                name_en: 'Hard Disk Drive',
+                rank: 6,
+                properties: {
+                    nature: '非易失性 (Non-volatile)',
+                    capacity: '1TB - 20TB (極大 Huge)',
+                    tech: '利用磁性碟片旋轉儲存。成本低但速度最慢。 (Magnetic spinning platters. Low cost per GB, but slowest access speeds.)'
+                }
+            }
+        ];
+
+        // Note: Generic "CPU" was removed from sorting list as it is the processor itself, not a memory tier, 
+        // effectively represented by Registers/Cache in memory hierarchy diagrams. 
+        // If strictly required, it would be Rank 0 (The Brain), but for sorting "Memory Speed", it is the reference point.
+
+        const sourceContainer = document.getElementById('source-container');
+        const dropContainer = document.getElementById('drop-container');
+        const infoPanel = document.getElementById('info-panel');
+        let draggedItem = null;
+
+        // Initialize Game
+        function initGame() {
+            // Clear containers
+            sourceContainer.innerHTML = '';
+            dropContainer.innerHTML = '';
+            document.getElementById('success-feedback').classList.add('hidden');
+            document.getElementById('error-feedback').classList.add('hidden');
+            infoPanel.classList.add('hidden');
+
+            // 1. Create Draggable Items (Shuffled)
+            const shuffledData = [...memoryData].sort(() => Math.random() - 0.5);
+            
+            shuffledData.forEach(item => {
+                const el = createDraggableElement(item);
+                sourceContainer.appendChild(el);
+            });
+
+            // 2. Create Drop Zones (Ordered 1 to 6)
+            for (let i = 1; i <= memoryData.length; i++) {
+                const zone = document.createElement('div');
+                zone.className = 'drop-zone flex items-center h-16 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg px-4 relative';
+                zone.dataset.rankIndex = i; // The expected rank for this slot
+                
+                // Rank indicator
+                const indexBadge = document.createElement('div');
+                indexBadge.className = 'absolute left-0 -ml-3 bg-gray-200 text-gray-500 font-bold rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-sm';
+                indexBadge.innerText = i;
+                zone.appendChild(indexBadge);
+
+                // Place holder text
+                const placeholder = document.createElement('span');
+                placeholder.className = 'text-gray-400 text-sm w-full text-center pointer-events-none select-none';
+                placeholder.innerText = i === 1 ? '在此放置最快的 (Place Fastest Here)' : (i === 6 ? '在此放置最慢的 (Place Slowest Here)' : '拖放到此 (Drop Here)');
+                zone.appendChild(placeholder);
+
+                // Events
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('drop', handleDrop);
+
+                dropContainer.appendChild(zone);
+            }
+            
+            // Allow dropping back to source
+            sourceContainer.addEventListener('dragover', handleDragOver);
+            sourceContainer.addEventListener('drop', handleDropSource);
+        }
+
+        // Create HTML for a memory item
+        function createDraggableElement(item) {
+            const div = document.createElement('div');
+            div.className = 'draggable-item bg-white p-3 rounded shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-400 transition flex justify-between items-center group';
+            div.draggable = true;
+            div.dataset.id = item.id;
+            div.id = `item-${item.id}`;
+
+            div.innerHTML = `
+                <div>
+                    <div class="font-bold text-gray-800">${item.name_zh}</div>
+                    <div class="text-xs text-gray-500">${item.name_en}</div>
+                </div>
+                <div class="text-blue-500 opacity-0 group-hover:opacity-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            `;
+
+            // Drag Events
+            div.addEventListener('dragstart', (e) => {
+                draggedItem = div;
+                e.dataTransfer.setData('text/plain', item.id);
+                setTimeout(() => div.classList.add('opacity-50'), 0);
+            });
+
+            div.addEventListener('dragend', () => {
+                draggedItem = null;
+                div.classList.remove('opacity-50');
+            });
+
+            // Click Event for Info
+            div.addEventListener('click', (e) => {
+                // Prevent click triggering if it was a drag end
+                showInfo(item);
+            });
+
+            return div;
+        }
+
+        // Info Panel Logic
+        function showInfo(item) {
+            document.getElementById('info-title-zh').innerText = item.name_zh;
+            document.getElementById('info-title-en').innerText = item.name_en;
+            document.getElementById('info-nature').innerText = item.properties.nature;
+            document.getElementById('info-capacity').innerText = item.properties.capacity;
+            document.getElementById('info-tech').innerText = item.properties.tech;
+            
+            infoPanel.classList.remove('hidden');
+            infoPanel.classList.add('animate-pulse');
+            setTimeout(() => infoPanel.classList.remove('animate-pulse'), 500);
+        }
+
+        // Drag & Drop Handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            if (this.classList.contains('drop-zone')) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            if (this.classList.contains('drop-zone')) {
+                this.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            // If dropping into a drop zone
+            if (this.classList.contains('drop-zone')) {
+                // If zone already has an item, move it back to source? Or swap? 
+                // Simple version: Move existing item back to source first
+                const existingItem = this.querySelector('.draggable-item');
+                if (existingItem) {
+                    sourceContainer.appendChild(existingItem);
+                }
+                
+                // Clear placeholder text styling (hide span)
+                const placeholder = this.querySelector('span');
+                if(placeholder) placeholder.style.display = 'none';
+
+                this.appendChild(draggedItem);
+            }
+        }
+
+        function handleDropSource(e) {
+            e.preventDefault();
+            // Allow moving items back to source list
+            sourceContainer.appendChild(draggedItem);
+            
+            // Restore placeholder in the previous drop zone if empty
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                if (!zone.querySelector('.draggable-item')) {
+                    const placeholder = zone.querySelector('span');
+                    if(placeholder) placeholder.style.display = 'block';
+                }
+            });
+        }
+
+        // Validation Logic
+        function checkAnswer() {
+            const dropZones = document.querySelectorAll('.drop-zone');
+            let correctCount = 0;
+            let isFull = true;
+
+            dropZones.forEach(zone => {
+                const item = zone.querySelector('.draggable-item');
+                if (!item) {
+                    isFull = false;
+                    return;
+                }
+                
+                const currentId = item.dataset.id;
+                const expectedRank = parseInt(zone.dataset.rankIndex);
+                
+                // Find data object for current Item
+                const dataItem = memoryData.find(d => d.id === currentId);
+                
+                if (dataItem.rank === expectedRank) {
+                    correctCount++;
+                    // Visual cues for correct items
+                    zone.classList.remove('border-red-400', 'bg-red-50');
+                    zone.classList.add('border-green-500', 'bg-green-50');
+                } else {
+                    zone.classList.remove('border-green-500', 'bg-green-50');
+                    zone.classList.add('border-red-400', 'bg-red-50');
+                }
+            });
+
+            if (!isFull) {
+                alert("請先填滿所有空格！\nPlease fill all slots first!");
+                return;
+            }
+
+            if (correctCount === memoryData.length) {
+                document.getElementById('success-feedback').classList.remove('hidden');
+                document.getElementById('error-feedback').classList.add('hidden');
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            } else {
+                document.getElementById('success-feedback').classList.add('hidden');
+                document.getElementById('error-feedback').classList.remove('hidden');
+            }
+        }
+
+        function resetGame() {
+            if(confirm("確定要重置嗎？\nAre you sure you want to reset?")) {
+                initGame();
+            }
+        }
+
+        // Start
+        initGame();
+
+    </script>
+</body>
+</html>
