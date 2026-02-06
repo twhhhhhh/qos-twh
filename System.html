@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreB ch3 - 電腦系統數據處理 (System software) </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif; /* 預設中文字型 */
+            background-color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        body.lang-en {
+            font-family: 'Roboto', sans-serif; /* 英文字型 */
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+        }
+        /* 自定義滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
+        }
+        
+        /* OS 面板動畫 */
+        .slide-in-right {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- 頂部導航欄 -->
+    <header class="bg-blue-600 text-white p-4 shadow-md z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 id="header-title" class="text-xl md:text-2xl font-bold">CoreB ch3 - 電腦系統數據處理</h1>
+                <p id="header-subtitle" class="text-sm opacity-90">系統軟件架構</p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="scenario-btn" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold py-2 px-4 rounded-full transition duration-300 shadow-lg flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="scenario-btn-text">模擬例子：打開影片</span>
+                </button>
+
+                <button id="lang-btn" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 backdrop-blur-sm border border-white/30">
+                    Switch to English
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區：Canvas 與 側邊欄 -->
+    <main class="flex-grow flex items-center justify-center p-4 bg-gray-100 relative">
+        <div class="relative w-full max-w-6xl h-full flex flex-row gap-4 items-center justify-center">
+            
+            <!-- 左側：Canvas 繪圖區 -->
+            <div class="relative flex-grow h-full flex flex-col items-center justify-center">
+                 <!-- 指引文字 -->
+                <div id="instruction-overlay" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/80 backdrop-blur px-4 py-2 rounded-lg text-gray-600 text-sm shadow animate-pulse pointer-events-none z-10">
+                    點擊下方方塊查看詳細功能
+                </div>
+                <canvas id="systemCanvas" class="w-full h-[500px] md:h-[600px] border border-gray-200"></canvas>
+            </div>
+
+            <!-- 右側：OS 詳細功能面板 (預設隱藏) -->
+            <div id="os-panel" class="hidden w-80 bg-white rounded-xl shadow-xl border-l-4 border-yellow-400 p-5 flex-col gap-4 slide-in-right absolute right-4 top-1/2 transform -translate-y-1/2 md:static md:translate-y-0 md:h-[600px] z-20">
+                <div class="flex items-center gap-2 border-b pb-3 mb-2">
+                    <span class="text-3xl">⚙️</span>
+                    <div>
+                        <h2 id="os-panel-title" class="text-lg font-bold text-gray-800">操作系統功能</h2>
+                        <p id="os-panel-subtitle" class="text-xs text-gray-500">Operating System Functions</p>
+                    </div>
+                    <button onclick="closeOSPanel()" class="ml-auto text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- OS 功能列表容器，內容由 JS 生成 -->
+                <div id="os-functions-container" class="space-y-4 overflow-y-auto pr-1 custom-scrollbar flex-1">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 底部資訊欄 -->
+    <footer class="bg-white border-t border-gray-300 p-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 transition-all duration-300" id="info-footer">
+        <div class="container mx-auto max-w-4xl">
+            <div class="flex items-start gap-4">
+                <div class="p-3 bg-blue-100 rounded-lg hidden md:block" id="icon-container">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 id="info-title" class="text-xl font-bold text-gray-800 mb-1">準備就緒</h3>
+                    <p id="info-desc" class="text-gray-700 text-lg mb-1">請點擊上方的流程圖組件，或按下「模擬例子」按鈕開始學習。</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript 邏輯 -->
+    <script>
+        // --- 1. 語言配置與全域變數 ---
+        let currentLang = 'zh'; // 'zh' or 'en'
+
+        const translations = {
+            zh: {
+                headerTitle: "CoreB ch3 - 電腦系統數據處理",
+                headerSubtitle: "系統軟件的架構",
+                scenarioBtn: "模擬例子：打開影片",
+                langBtn: "Switch to English",
+                instruction: "點擊下方方塊查看詳細功能",
+                osPanelTitle: "操作系統功能",
+                osPanelSubtitle: "核心管理任務",
+                readyTitle: "準備就緒",
+                readyDesc: "請點擊上方的流程圖組件，或按下「模擬例子」按鈕開始學習。",
+                simCompleteTitle: "模擬完成",
+                simCompleteDesc: "影片已成功在螢幕上播放。"
+            },
+            en: {
+                headerTitle: "CoreB - Ch3 System software operation",
+                headerSubtitle: "How operating system works",
+                scenarioBtn: "Simulation: Open Video",
+                langBtn: "切換至中文",
+                instruction: "Click nodes below for details",
+                osPanelTitle: "OS Functions",
+                osPanelSubtitle: "Core Management Tasks",
+                readyTitle: "Ready",
+                readyDesc: "Please click on the diagram components above, or press the 'Simulation' button to start.",
+                simCompleteTitle: "Simulation Complete",
+                simCompleteDesc: "The video is now playing on the screen."
+            }
+        };
+
+        // --- 2. 配置與數據 (組件與OS功能) ---
+        
+        // 定義系統組件 (Nodes) - 包含雙語標籤與描述
+        const nodes = [
+            { 
+                id: 'user', 
+                labelZh: '用戶', labelEn: 'User',
+                x: 0.1, y: 0.5, 
+                color: '#60A5FA', // Blue
+                icon: '👤',
+                descZh: '發出指令的人。例如決定觀看一段影片，並透過肢體動作（如手指點擊）操作。',
+                descEn: 'The person who initiates commands. E.g., decides to watch a video and operates via physical actions like clicking.'
+            },
+            { 
+                id: 'input', 
+                labelZh: '輸入裝置', labelEn: 'Input Device',
+                x: 0.25, y: 0.5, 
+                color: '#34D399', // Green
+                icon: '🖱️',
+                descZh: '將物理動作轉為電子訊號。部分裝置需安裝驅動程式 (Driver) 讓 OS 識別裝置及進行溝通。',
+                descEn: 'Converts physical actions to signals. Some devices require to install a Driver program for the OS to recognize the device.'
+            },
+            { 
+                id: 'app', 
+                labelZh: '應用軟件', labelEn: 'Application',
+                x: 0.4, y: 0.3, 
+                color: '#F87171', // Red
+                icon: '▶️',
+                descZh: '執行特定任務的軟件。例如：影片播放器 (Video Player) 解讀影片檔案格式。',
+                descEn: 'Software for specific tasks. E.g., Video Player decodes the video file format.'
+            },
+            { 
+                id: 'interface', 
+                labelZh: '用戶界面', labelEn: 'Interface (GUI)',
+                x: 0.4, y: 0.7, 
+                color: '#A78BFA', // Purple
+                icon: '🪟',
+                descZh: '人機溝通的橋樑。圖形用戶界面 (GUI) 顯示圖標和視窗，讓用戶知道點擊哪裡。',
+                descEn: 'Bridge for HCI. Graphical User Interface (GUI) visualizes icons/windows to guide user interaction.'
+            },
+            { 
+                id: 'os', 
+                labelZh: '系統軟件(OS)', labelEn: 'OS\nOperating System',
+                x: 0.58, y: 0.5, 
+                color: '#FBBF24', // Yellow
+                icon: '⚙️',
+                descZh: '操作系統 (如 Windows)。總指揮，負責管理 Process、Memory 及 User 權限 (見右側)。',
+                descEn: 'Operating System. The commander managing Processes, Memory, and Users (See panel on right).'
+            },
+            { 
+                id: 'hardware', 
+                labelZh: '硬件', labelEn: 'Hardware',
+                x: 0.75, y: 0.5, 
+                color: '#9CA3AF', // Gray
+                icon: '💻',
+                descZh: '實際執行計算和存儲數據的物理設備 (CPU/RAM)。CPU 處理指令，硬碟讀取影片數據。\n 即是 Ch2 所學習的機器周期',
+                descEn: 'Physical equipment (CPU/RAM). CPU executes instructions; Disk reads video data. *Which is the machine cycle in Ch2'
+            },
+            { 
+                id: 'output', 
+                labelZh: '輸出裝置', labelEn: 'Output Device',
+                x: 0.9, y: 0.5, 
+                color: '#34D399', // Green
+                icon: '🖥️',
+                descZh: '將結果轉為人類可讀形式。可能該裝置的透過驅動程式 (Driver) 將數據轉譯成畫面或聲音。',
+                descEn: 'Converts results to readable forms. Requires a Driver to translate data into video/audio.'
+            }
+        ];
+
+        // OS 面板功能列表數據
+        const osFunctionsData = [
+            {
+                colorClass: 'bg-yellow-50 text-yellow-800',
+                titleZh: '1. 處理程序管理 (Process Mgmt)',
+                titleEn: '1. Process Management',
+                descZh: '決定哪個程式可以使用 CPU。安排多工處理 (Multitasking)，確保影片播放器和瀏覽器能同時運作。',
+                descEn: 'Decides which program gets CPU time. Handles multitasking to ensure video players and browsers run simultaneously.'
+            },
+            {
+                colorClass: 'bg-blue-50 text-blue-800',
+                titleZh: '2. 記憶體管理 (Memory Mgmt)',
+                titleEn: '2. Memory Management',
+                descZh: '分配 RAM 給不同的應用程式。確保打開影片時有足夠記憶體載入數據，並在關閉後釋放空間。',
+                descEn: 'Allocates RAM to applications. Ensures enough memory to load video data and frees space when closed.'
+            },
+            {
+                colorClass: 'bg-green-50 text-green-800',
+                titleZh: '3. 用戶管理 (User Mgmt)',
+                titleEn: '3. User Management',
+                descZh: '管理帳號登入與權限。確保只有獲授權的用戶才能存取特定檔案或安裝軟件。',
+                descEn: 'Manages logins and permissions. Ensures only authorized users can access files or install software.'
+            },
+            {
+                colorClass: 'bg-purple-50 text-purple-800',
+                titleZh: '4. 檔案管理 (File Mgmt)',
+                titleEn: '4. File Management',
+                descZh: '以階層式目錄 (Folders) 組織數據，控制檔案的讀取、寫入與刪除。',
+                descEn: 'Organizes data in hierarchical folders. Controls reading, writing, and deleting of files.'
+            }
+        ];
+
+        // 模擬場景的路徑與雙語文字
+        const scenarioPath = [
+            { node: 'user', textZh: '1. 用戶決定看影片', textEn: '1. User decides to watch video' },
+            { node: 'input', textZh: '2. 滑鼠點擊影片圖標', textEn: '2. Mouse clicks video icon' },
+            { node: 'os', textZh: '3. OS 透過 Driver 接收訊號', textEn: '3. OS receives signal via Driver' },
+            { node: 'interface', textZh: '4. 界面確認點擊了圖標', textEn: '4. Interface confirms click' },
+            { node: 'app', textZh: '5. 影片播放器啟動', textEn: '5. Video Player launches' },
+            { node: 'os', textZh: '6. OS 分配記憶體並讀取檔案', textEn: '6. OS allocates memory & reads file' },
+            { node: 'hardware', textZh: '7. CPU/硬碟讀取數據', textEn: '7. CPU/Disk process data' },
+            { node: 'os', textZh: '8. 數據傳回系統', textEn: '8. Data returned to system' },
+            { node: 'output', textZh: '9. 透過 Driver 顯示畫面', textEn: '9. Display video via Driver' }
+        ];
+
+        const connections = [
+            { from: 'user', to: 'input' },
+            { from: 'input', to: 'os' }, 
+            { from: 'os', to: 'interface' },
+            { from: 'interface', to: 'app' },
+            { from: 'app', to: 'os' }, 
+            { from: 'os', to: 'hardware' },
+            { from: 'hardware', to: 'os' },
+            { from: 'os', to: 'output' }
+        ];
+
+        // --- 3. 語言切換邏輯 ---
+
+        function updatePageLanguage() {
+            const t = translations[currentLang];
+            
+            // 更新靜態文字
+            document.getElementById('header-title').textContent = t.headerTitle;
+            document.getElementById('header-subtitle').textContent = t.headerSubtitle;
+            document.getElementById('scenario-btn-text').textContent = t.scenarioBtn;
+            document.getElementById('lang-btn').textContent = t.langBtn;
+            document.getElementById('instruction-overlay').textContent = t.instruction;
+            document.getElementById('os-panel-title').textContent = t.osPanelTitle;
+            document.getElementById('os-panel-subtitle').textContent = t.osPanelSubtitle;
+            
+            // 更新 Footer (如果不是在模擬中)
+            if (simulationStep === -1 && activeNodeId === null) {
+                document.getElementById('info-title').textContent = t.readyTitle;
+                document.getElementById('info-desc').textContent = t.readyDesc;
+            } else if (simulationStep === -1 && activeNodeId !== null) {
+                // 如果有點選節點，重新整理該節點資訊
+                const node = nodes.find(n => n.id === activeNodeId);
+                updateFooter(node);
+            }
+
+            // 更新 OS 面板內容
+            renderOSPanel();
+
+            // 重繪 Canvas (更新節點文字)
+            draw();
+
+            // 切換 Body class 以改變字型
+            if (currentLang === 'en') {
+                document.body.classList.add('lang-en');
+            } else {
+                document.body.classList.remove('lang-en');
+            }
+        }
+
+        function renderOSPanel() {
+            const container = document.getElementById('os-functions-container');
+            container.innerHTML = ''; // 清空
+
+            osFunctionsData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `${item.colorClass.split(' ')[0]} p-3 rounded-lg`; // 只取 bg color class
+
+                const title = document.createElement('h3');
+                title.className = `font-bold ${item.colorClass.split(' ')[1]} text-sm mb-1`;
+                title.textContent = currentLang === 'zh' ? item.titleZh : item.titleEn;
+
+                const p = document.createElement('p');
+                p.className = 'text-xs text-gray-700 leading-relaxed';
+                p.textContent = currentLang === 'zh' ? item.descZh : item.descEn;
+
+                div.appendChild(title);
+                div.appendChild(p);
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('lang-btn').addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updatePageLanguage();
+        });
+
+        // --- 4. Canvas 初始化與繪圖 ---
+
+        const canvas = document.getElementById('systemCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let animationFrameId;
+        let particles = [];
+        let activeNodeId = null;
+        let simulationStep = -1;
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            width = canvas.width;
+            height = canvas.height;
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function roundRect(ctx, x, y, w, h, r) {
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+            return ctx;
+        }
+
+        function drawArrow(ctx, fromX, fromY, toX, toY) {
+            const headlen = 10;
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            const angle = Math.atan2(dy, dx);
+            const offset = 40; 
+            const endX = toX - offset * Math.cos(angle);
+            const endY = toY - offset * Math.sin(angle);
+            const startX = fromX + offset * Math.cos(angle);
+            const startY = fromY + offset * Math.sin(angle);
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - headlen * Math.cos(angle - Math.PI / 6), endY - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(endX - headlen * Math.cos(angle + Math.PI / 6), endY - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+        }
+
+        function getNodeRect(node) {
+            const boxW = 110;
+            const boxH = 90;
+            const cx = node.x * width;
+            const cy = node.y * height;
+            return {
+                x: cx - boxW / 2,
+                y: cy - boxH / 2,
+                w: boxW,
+                h: boxH,
+                cx: cx,
+                cy: cy
+            };
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.fillStyle = '#cbd5e1';
+
+            connections.forEach(conn => {
+                const n1 = nodes.find(n => n.id === conn.from);
+                const n2 = nodes.find(n => n.id === conn.to);
+                const r1 = getNodeRect(n1);
+                const r2 = getNodeRect(n2);
+                drawArrow(ctx, r1.cx, r1.cy, r2.cx, r2.cy);
+            });
+
+            nodes.forEach(node => {
+                const rect = getNodeRect(node);
+                
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+                ctx.shadowBlur = 10;
+                
+                if (activeNodeId === node.id) {
+                    ctx.shadowColor = node.color;
+                    ctx.shadowBlur = 20;
+                    ctx.strokeStyle = node.color;
+                    ctx.lineWidth = 4;
+                } else {
+                    ctx.strokeStyle = 'transparent';
+                }
+
+                ctx.fillStyle = '#ffffff';
+                roundRect(ctx, rect.x, rect.y, rect.w, rect.h, 10).fill();
+                if (activeNodeId === node.id) ctx.stroke();
+                
+                ctx.fillStyle = node.color;
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.roundRect(rect.x, rect.y, rect.w, 10, [10, 10, 0, 0]);
+                ctx.fill();
+
+                ctx.fillStyle = '#1f2937';
+                ctx.font = currentLang === 'zh' ? 'bold 16px "Noto Sans TC"' : 'bold 14px "Roboto"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 根據語言獲取標籤
+                const label = currentLang === 'zh' ? node.labelZh : node.labelEn;
+                // 處理可能的多行文字 (若有)
+                const lines = label.split('\n');
+                
+                if (lines.length > 1) {
+                    ctx.fillText(lines[0], rect.cx, rect.cy + 5);
+                    ctx.font = '11px sans-serif';
+                    ctx.fillText(lines[1], rect.cx, rect.cy + 22);
+                } else {
+                    ctx.fillText(label, rect.cx, rect.cy + 15);
+                }
+
+                ctx.font = '24px serif';
+                ctx.fillText(node.icon, rect.cx, rect.cy - 15);
+            });
+
+            particles.forEach((p, index) => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#F59E0B'; 
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                const dx = p.targetX - p.x;
+                const dy = p.targetY - p.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < 5) {
+                    particles.splice(index, 1);
+                } else {
+                    p.x += (dx / dist) * 4; 
+                    p.y += (dy / dist) * 4;
+                }
+            });
+
+            animationFrameId = requestAnimationFrame(draw);
+        }
+
+        // --- 5. 互動邏輯 ---
+
+        function updateFooter(node) {
+            const titleEl = document.getElementById('info-title');
+            const descEl = document.getElementById('info-desc');
+            const container = document.getElementById('info-footer');
+
+            container.classList.add('bg-blue-50');
+            setTimeout(() => container.classList.remove('bg-blue-50'), 300);
+
+            // 根據語言更新
+            const label = currentLang === 'zh' ? node.labelZh : node.labelEn;
+            const desc = currentLang === 'zh' ? node.descZh : node.descEn;
+
+            titleEl.textContent = `${node.icon} ${label}`;
+            descEl.textContent = desc;
+            titleEl.style.color = node.color;
+        }
+
+        // 處理 OS 面板開關
+        const osPanel = document.getElementById('os-panel');
+        
+        function closeOSPanel() {
+            osPanel.classList.add('hidden');
+            osPanel.classList.remove('flex');
+            // 如果當前是 OS 被選中，清除選中狀態
+            if (activeNodeId === 'os' && simulationStep === -1) {
+                activeNodeId = null;
+            }
+        }
+
+        function toggleOSPanel(show) {
+            if (show) {
+                osPanel.classList.remove('hidden');
+                osPanel.classList.add('flex');
+            } else {
+                osPanel.classList.add('hidden');
+                osPanel.classList.remove('flex');
+            }
+        }
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let clickedNode = null;
+
+            nodes.forEach(node => {
+                const r = getNodeRect(node);
+                if (mouseX >= r.x && mouseX <= r.x + r.w &&
+                    mouseY >= r.y && mouseY <= r.y + r.h) {
+                    clickedNode = node;
+                }
+            });
+
+            if (clickedNode) {
+                activeNodeId = clickedNode.id;
+                updateFooter(clickedNode);
+                toggleOSPanel(clickedNode.id === 'os');
+                
+                if (simulationStep === -1) {
+                    const neighborConn = connections.find(c => c.from === clickedNode.id);
+                    if (neighborConn) {
+                        const target = nodes.find(n => n.id === neighborConn.to);
+                        const startR = getNodeRect(clickedNode);
+                        const endR = getNodeRect(target);
+                        particles.push({
+                            x: startR.cx, y: startR.cy,
+                            targetX: endR.cx, targetY: endR.cy
+                        });
+                    }
+                }
+            } else {
+                activeNodeId = null;
+                // 若點擊空白處，復原預設文字
+                const t = translations[currentLang];
+                document.getElementById('info-title').textContent = t.readyTitle;
+                document.getElementById('info-desc').textContent = t.readyDesc;
+                document.getElementById('info-title').style.color = '#1f2937'; // gray-800
+                toggleOSPanel(false);
+            }
+        });
+
+        // --- 6. 模擬場景邏輯 ---
+
+        function runScenario() {
+            if (simulationStep !== -1) return;
+
+            simulationStep = 0;
+            const stepDelay = 1500;
+            const t = translations[currentLang];
+            
+            toggleOSPanel(false);
+
+            function nextStep() {
+                if (simulationStep >= scenarioPath.length) {
+                    simulationStep = -1;
+                    activeNodeId = null;
+                    document.getElementById('info-title').textContent = t.simCompleteTitle;
+                    document.getElementById('info-desc').textContent = t.simCompleteDesc;
+                    document.getElementById('info-title').style.color = '#10B981'; // green
+                    return;
+                }
+
+                const currentStep = scenarioPath[simulationStep];
+                const node = nodes.find(n => n.id === currentStep.node);
+                
+                activeNodeId = node.id;
+                
+                // 根據語言更新步驟文字
+                const stepText = currentLang === 'zh' ? currentStep.textZh : currentStep.textEn;
+                const stepPrefix = currentLang === 'zh' ? "步驟" : "Step";
+                
+                document.getElementById('info-title').textContent = `${stepPrefix} ${simulationStep + 1}`;
+                document.getElementById('info-desc').textContent = stepText;
+                document.getElementById('info-title').style.color = node.color;
+
+                if (simulationStep < scenarioPath.length - 1) {
+                    const nextNodeId = scenarioPath[simulationStep + 1].node;
+                    const nextNode = nodes.find(n => n.id === nextNodeId);
+                    
+                    const startR = getNodeRect(node);
+                    const endR = getNodeRect(nextNode);
+                    
+                    for(let i=0; i<3; i++) {
+                        setTimeout(() => {
+                            particles.push({
+                                x: startR.cx, y: startR.cy,
+                                targetX: endR.cx, targetY: endR.cy
+                            });
+                        }, i * 200);
+                    }
+                }
+
+                simulationStep++;
+                setTimeout(nextStep, stepDelay);
+            }
+
+            nextStep();
+        }
+
+        document.getElementById('scenario-btn').addEventListener('click', runScenario);
+
+        // 初始化
+        updatePageLanguage(); // 執行一次初始化語言
+        setTimeout(resizeCanvas, 100); 
+        draw();
+
+    </script>
+</body>
+</html>
