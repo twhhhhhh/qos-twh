@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教學導航頁</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; }
+        h1 { text-align: center; }
+        .section { margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .btn { 
+            padding: 15px; text-align: center; background: #007bff; color: white; 
+            text-decoration: none; border-radius: 5px; transition: background 0.3s;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn span { font-size: 0.8em; opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <h1>學習資源導航</h1>
+
+    <div class="section">
+        <h2>主修部分 (Core)</h2>
+        <div class="grid">
+            <a href="https://twhhhhhh.github.io/qos-twh/binary.html" target="_blank" class="btn">
+                Binary <span>二進位基礎</span>
+            </a>
+            <a href="https://twhhhhhh.github.io/qos-twh/Memory.html" target="_blank" class="btn">
+                Memory <span>記憶體運作原理</span>
+            </a>
+            <a href="https://twhhhhhh.github.io/qos-twh/CPU.html" target="_blank" class="btn">
+                CPU <span>中央處理器架構</span>
+            </a>
+            <a href="https://twhhhhhh.github.io/qos-twh/System.html" target="_blank" class="btn">
+                System <span>系統概論</span>
+            </a>
+            <a href="https://twhhhhhh.github.io/qos-twh/AlgoCore.html" target="_blank" class="btn">
+                AlgoCore <span>核心演算法</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>編程部分選修 (Elective C)</h2>
+        <div class="grid">
+            <a href="https://twhhhhhh.github.io/qos-twh/sorting.html" target="_blank" class="btn">
+                Sorting <span>排序演算法實作</span>
+            </a>
+            <a href="https://twhhhhhh.github.io/qos-twh/datastructure.html" target="_blank" class="btn">
+                Data Structure <span>資料結構應用</span>
+            </a>
+            <a href="https://twhhhhhh.github.io/qos-twh/Exercise.html" target="_blank" class="btn">
+                Exercise <span>編程練習題</span>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
