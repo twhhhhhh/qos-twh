@@ -3,88 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高中 ICT 程式設計：Python 列表 (List) 視覺化學習</title>
+    <title>高中 ICT 程式設計：Python 列表 (S4 - CoreD1/D2)| Interactive Python List</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .list-box {
             transition: all 0.3s ease;
         }
+        /* 語言切換專用 CSS */
+        body[data-lang="en"] .only-zh { display: none !important; }
+        body[data-lang="zh"] .only-en { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans text-gray-800">
+<body data-lang="zh" class="bg-gray-100 min-h-screen font-sans text-gray-800">
 
     <!-- 頂部導航欄 -->
     <header class="bg-blue-800 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
-            <h1 class="text-2xl font-bold mb-4 sm:mb-0">Python 列表 (List) 視覺化學習</h1>
-            <nav class="flex space-x-1 sm:space-x-4">
-                <button onclick="switchTab('page1')" id="tab-page1" class="tab-btn px-4 py-2 rounded-md bg-blue-600 font-semibold transition hover:bg-blue-500">1. 基礎設定</button>
-                <button onclick="switchTab('page2')" id="tab-page2" class="tab-btn px-4 py-2 rounded-md hover:bg-blue-500 transition">2. 列表運算</button>
-                <button onclick="switchTab('page3')" id="tab-page3" class="tab-btn px-4 py-2 rounded-md hover:bg-blue-500 transition">3. 元素操作</button>
-                <button onclick="switchTab('page4')" id="tab-page4" class="tab-btn px-4 py-2 rounded-md hover:bg-blue-500 transition">4. 進階操作</button>
-            </nav>
+            <h1 class="text-2xl font-bold mb-4 sm:mb-0 flex-1">
+                <span class="only-zh">Python 列表 (List) 視覺化學習</span>
+                <span class="only-en">Interactive Python List Visualization</span>
+            </h1>
+            
+            <div class="flex items-center gap-4">
+                <nav class="flex space-x-1 sm:space-x-2">
+                    <button onclick="switchTab('page1')" id="tab-page1" class="tab-btn px-3 py-2 rounded-md bg-blue-600 font-semibold transition hover:bg-blue-500">
+                        <span class="only-zh">1. 列表運算</span><span class="only-en">1. List Operations</span>
+                    </button>
+                    <button onclick="switchTab('page2')" id="tab-page2" class="tab-btn px-3 py-2 rounded-md hover:bg-blue-500 transition">
+                        <span class="only-zh">2. 元素操作</span><span class="only-en">2. Element Ops</span>
+                    </button>
+                    <button onclick="switchTab('page3')" id="tab-page3" class="tab-btn px-3 py-2 rounded-md hover:bg-blue-500 transition">
+                        <span class="only-zh">3. 進階操作</span><span class="only-en">3. Advanced Ops</span>
+                    </button>
+                </nav>
+                <!-- 語言切換按鈕 -->
+                <button onclick="toggleLanguage()" class="px-4 py-2 bg-yellow-400 text-blue-900 rounded-md font-bold hover:bg-yellow-300 transition flex items-center shadow-sm">
+                    <span class="only-zh">EN</span>
+                    <span class="only-en">中文</span>
+                </button>
+            </div>
         </div>
     </header>
 
     <!-- 主要內容區 -->
     <main class="max-w-6xl mx-auto px-4 py-8">
 
-        <!-- 第 1 頁：基礎列表設定 -->
+        <!-- 第 1 頁：列表的運算 -->
         <section id="page1" class="page-content block">
-            <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2 mb-6 text-blue-800">第 1 頁：基礎列表設定</h2>
-            
+            <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2 mb-6 text-blue-800">
+                <span class="only-zh">第 1 頁：列表的運算</span>
+                <span class="only-en">Page 1: List Operations</span>
+            </h2>
+            <p class="mb-4 text-gray-700 font-medium">
+                <span class="only-zh">初始列表設定為：</span>
+                <span class="only-en">Initial List:</span>
+                <code class="bg-gray-200 px-2 py-1 rounded">A = [20, 18, 40, 30, 10, 5]</code>
+            </p>
+
+            <!-- 1A. 計算平均值 -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-xl font-bold mb-4">A. 擴展列表內容 (Append)</h3>
-                <div class="flex items-center gap-4 mb-6">
-                    <input type="text" id="p1-input" class="border border-gray-300 rounded-md px-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="輸入數字或文字...">
-                    <button onclick="Page1.addToList()" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">加入列表 (Append)</button>
-                    <button onclick="Page1.resetList()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">清空</button>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 min-h-[100px] flex items-center overflow-x-auto" id="p1-array-container">
-                    <!-- 列表將渲染於此 -->
-                    <p class="text-gray-400 italic">列表目前為空，請輸入內容。</p>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h3 class="text-xl font-bold mb-4">B. 輸出列表範圍 (Slicing)</h3>
-                <p class="text-sm text-gray-600 mb-4">輸入起始及結束索引值 (Index) 來擷取列表的特定部分。注意：Python 切片包含起始索引，但不包含結束索引。</p>
-                <div class="flex items-center gap-4 mb-6">
-                    <label class="font-medium">起始索引:</label>
-                    <input type="number" id="p1-start" class="border border-gray-300 rounded-md px-3 py-2 w-24" value="0" min="0">
-                    <label class="font-medium">結束索引:</label>
-                    <input type="number" id="p1-end" class="border border-gray-300 rounded-md px-3 py-2 w-24" value="1" min="0">
-                    <button onclick="Page1.sliceList()" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition">切片擷取 (Slice)</button>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 min-h-[100px] flex items-center overflow-x-auto" id="p1-slice-container">
-                    <!-- 切片結果將渲染於此 -->
-                    <p class="text-gray-400 italic">點擊按鈕顯示切片結果。</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 第 2 頁：列表的運算 -->
-        <section id="page2" class="page-content hidden">
-            <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2 mb-6 text-blue-800">第 2 頁：列表的運算</h2>
-            <p class="mb-4 text-gray-700 font-medium">初始列表設定為：<code class="bg-gray-200 px-2 py-1 rounded">A = [20, 18, 40, 30, 10, 5]</code></p>
-
-            <!-- 2A. 計算平均值 -->
-            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-xl font-bold mb-4">A. 計算平均值</h3>
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">A. 計算陣列全部內容的平均值</span>
+                    <span class="only-en">A. Calculate the Average</span>
+                </h3>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="flex-1">
-                        <div id="p2a-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div id="p1a-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
                         <div class="flex gap-4">
-                            <button onclick="P2A.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">下一步 (Next Step)</button>
-                            <button onclick="P2A.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">重置 (Reset)</button>
+                            <button onclick="P1A.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P1A.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p2a-log"></div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p1a-log"></div>
                 </div>
                 <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">展開檢視 Python 程式碼及解釋</summary>
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
                     <div class="mt-3 text-sm text-gray-700 space-y-2">
-<pre class="bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
 A = [20, 18, 40, 30, 10, 5]
 total_sum = 0
 
@@ -94,28 +96,49 @@ for i in range(0, 6):
 
 average = total_sum / 6
 print("平均值:", average)</pre>
-                        <p><strong>解釋：</strong> 迴圈會依序透過索引值 <code>i</code> 讀取列表內的元素。我們建立一個變量 <code>total_sum</code> 來累加每次讀取到的值。迴圈結束後，再除以元素總數 6 來求得平均。</p>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+total_sum = 0
+
+# i will run from 0 to 5 (exclusive of 6)
+for i in range(0, 6):
+    total_sum = total_sum + A[i]
+
+average = total_sum / 6
+print("Average:", average)</pre>
+                        <p class="only-zh"><strong>解釋：</strong> 迴圈會依序透過索引值 <code>i</code> 讀取列表內的元素。我們建立一個變量 <code>total_sum</code> 來累加每次讀取到的值。迴圈結束後，再除以元素總數 6 來求得平均。</p>
+                        <p class="only-en"><strong>Explanation:</strong> The loop sequentially reads elements from the list using the index <code>i</code>. We create a variable <code>total_sum</code> to accumulate the values. After the loop, we divide by the total number of elements (6) to calculate the average.</p>
                     </div>
                 </details>
             </div>
 
-            <!-- 2B. 找出最大/最小值 -->
+            <!-- 1B. 找出最大/最小值 -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-xl font-bold mb-4">B. 找出最大值與最小值</h3>
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">B. 找出最大值與最小值</span>
+                    <span class="only-en">B. Find Maximum and Minimum Values</span>
+                </h3>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="flex-1">
-                        <div id="p2b-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div id="p1b-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
                         <div class="flex gap-4">
-                            <button onclick="P2B.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">下一步 (Next Step)</button>
-                            <button onclick="P2B.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">重置 (Reset)</button>
+                            <button onclick="P1B.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P1B.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p2b-log"></div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p1b-log"></div>
                 </div>
                 <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">展開檢視 Python 程式碼及解釋</summary>
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
                     <div class="mt-3 text-sm text-gray-700 space-y-2">
-<pre class="bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
 A = [20, 18, 40, 30, 10, 5]
 max_val = A[0] # 先假設第一個是最大的
 min_val = A[0] # 先假設第一個是最小的
@@ -127,28 +150,51 @@ for i in range(0, 6):
         min_val = A[i]
 
 print("最大:", max_val, "最小:", min_val)</pre>
-                        <p><strong>解釋：</strong> 一開始先將列表的第一個元素 (索引 0) 預設為最大與最小值。隨後使用迴圈檢查每一個元素，若發現更大的值就更新 <code>max_val</code>，發現更小的值就更新 <code>min_val</code>。</p>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+max_val = A[0] # Assume the first element is the maximum
+min_val = A[0] # Assume the first element is the minimum
+
+for i in range(0, 6):
+    if A[i] > max_val:
+        max_val = A[i]
+    if A[i] < min_val:
+        min_val = A[i]
+
+print("Max:", max_val, "Min:", min_val)</pre>
+                        <p class="only-zh"><strong>解釋：</strong> 一開始先將列表的第一個元素 (索引 0) 預設為最大與最小值。隨後使用迴圈檢查每一個元素，若發現更大的值就更新 <code>max_val</code>，發現更小的值就更新 <code>min_val</code>。</p>
+                        <p class="only-en"><strong>Explanation:</strong> We initially set the first element (index 0) as both the max and min. Then, we use a loop to check each element. If a larger value is found, <code>max_val</code> is updated; if a smaller value is found, <code>min_val</code> is updated.</p>
                     </div>
                 </details>
             </div>
 
-            <!-- 2C. 雙數項目數量 -->
+            <!-- 1C. 雙數項目數量 -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-xl font-bold mb-4">C. 找出雙數項目的數量</h3>
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">C. 找出雙數項目的數量</span>
+                    <span class="only-en">C. Count the Number of Even Items</span>
+                </h3>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="flex-1">
-                        <div id="p2c-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div id="p1c-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
                         <div class="flex gap-4">
-                            <button onclick="P2C.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">下一步 (Next Step)</button>
-                            <button onclick="P2C.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">重置 (Reset)</button>
+                            <button onclick="P1C.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P1C.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p2c-log"></div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p1c-log"></div>
                 </div>
                 <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">展開檢視 Python 程式碼及解釋</summary>
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
                     <div class="mt-3 text-sm text-gray-700 space-y-2">
-<pre class="bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
 A = [20, 18, 40, 30, 10, 5]
 even_count = 0
 
@@ -157,35 +203,65 @@ for i in range(0, 6):
         even_count = even_count + 1
 
 print("雙數數量:", even_count)</pre>
-                        <p><strong>解釋：</strong> 使用 <code>% 2 == 0</code> 來判斷數字除以 2 的餘數是否為 0 (即判斷是否為雙數/偶數)。如果成立，計數器 <code>even_count</code> 就會加 1。</p>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+even_count = 0
+
+for i in range(0, 6):
+    if A[i] % 2 == 0:
+        even_count = even_count + 1
+
+print("Even count:", even_count)</pre>
+                        <p class="only-zh"><strong>解釋：</strong> 使用 <code>% 2 == 0</code> 來判斷數字除以 2 的餘數是否為 0 (即判斷是否為雙數/偶數)。如果成立，計數器 <code>even_count</code> 就會加 1。</p>
+                        <p class="only-en"><strong>Explanation:</strong> We use <code>% 2 == 0</code> to check if the remainder of the number divided by 2 is 0 (i.e., checking if it's an even number). If true, the <code>even_count</code> counter increments by 1.</p>
                     </div>
                 </details>
             </div>
         </section>
 
-        <!-- 第 3 頁：列表的元素操作 -->
-        <section id="page3" class="page-content hidden">
-            <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2 mb-6 text-blue-800">第 3 頁：列表的元素操作</h2>
-            <p class="mb-4 text-gray-700 font-medium">初始列表設定為：<code class="bg-gray-200 px-2 py-1 rounded">A = [20, 18, 40, 30, 10, 5]</code></p>
+        <!-- 第 2 頁：列表的元素操作 -->
+        <section id="page2" class="page-content hidden">
+            <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2 mb-6 text-blue-800">
+                <span class="only-zh">第 2 頁：列表的元素操作</span>
+                <span class="only-en">Page 2: Element Operations</span>
+            </h2>
+            <p class="mb-4 text-gray-700 font-medium">
+                <span class="only-zh">初始列表設定為：</span>
+                <span class="only-en">Initial List:</span>
+                <code class="bg-gray-200 px-2 py-1 rounded">A = [20, 18, 40, 30, 10, 5]</code>
+            </p>
 
-            <!-- 3A. 插入元素 -->
+            <!-- 2A. 插入元素 -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-xl font-bold mb-4">A. 將數值 28 插入到索引 3</h3>
-                <p class="text-sm text-gray-600 mb-4">觀察底層運算時，後方的元素需要先向右「順延」騰出空間，才能將新數值放入指定位置。</p>
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">A. 將數值 28 插入到索引 3</span>
+                    <span class="only-en">A. Insert Value 28 at Index 3</span>
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    <span class="only-zh">觀察底層運算時，後方的元素需要先向右「順延」騰出空間，才能將新數值放入指定位置。</span>
+                    <span class="only-en">Observe the underlying operation: elements behind must shift right to free up space before inserting the new value.</span>
+                </p>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="flex-1">
-                        <div id="p3a-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div id="p2a-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
                         <div class="flex gap-4">
-                            <button onclick="P3A.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">下一步 (Next Step)</button>
-                            <button onclick="P3A.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">重置 (Reset)</button>
+                            <button onclick="P2A.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P2A.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p3a-log"></div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p2a-log"></div>
                 </div>
                 <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">展開檢視 Python 程式碼及解釋</summary>
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
                     <div class="mt-3 text-sm text-gray-700 space-y-2">
-<pre class="bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
 A = [20, 18, 40, 30, 10, 5]
 
 # Python 內建方法：
@@ -197,29 +273,55 @@ print(A)
 # for i in range(5, 2, -1):
 #     A[i] = A[i-1]   將元素往右移
 # A[3] = 28</pre>
-                        <p><strong>解釋：</strong> 在 Python 中，我們只需使用 <code>.insert(index, value)</code> 即可完成。但對電腦記憶體而言，在中間插入資料時，從該位置到結尾的所有元素都必須往後移動一格，才能騰出空位存放新資料。</p>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+
+# Built-in Python method:
+A.insert(3, 28) 
+print(A)
+
+# (Underlying Principle Simulation):
+# A.append(0)  Expand space first
+# for i in range(5, 2, -1):
+#     A[i] = A[i-1]   Shift elements right
+# A[3] = 28</pre>
+                        <p class="only-zh"><strong>解釋：</strong> 在 Python 中，我們只需使用 <code>.insert(index, value)</code> 即可完成。但對電腦記憶體而言，在中間插入資料時，從該位置到結尾的所有元素都必須往後移動一格，才能騰出空位存放新資料。</p>
+                        <p class="only-en"><strong>Explanation:</strong> In Python, we simply use <code>.insert(index, value)</code>. However, in terms of computer memory, inserting data in the middle requires all subsequent elements to shift backwards by one slot to create space for the new data.</p>
                     </div>
                 </details>
             </div>
 
-            <!-- 3B. 移除元素 -->
+            <!-- 2B. 移除元素 -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-xl font-bold mb-4">B. 移除索引 2 的內容並騰空最後位置</h3>
-                <p class="text-sm text-gray-600 mb-4">觀察底層運算時，移除中間的元素後，後方的元素會向左「填補」空缺。</p>
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">B. 移除索引 2 的內容並騰空最後位置</span>
+                    <span class="only-en">B. Remove Element at Index 2 and Clear Last Position</span>
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    <span class="only-zh">觀察底層運算時，移除中間的元素後，後方的元素會向左「填補」空缺。</span>
+                    <span class="only-en">Observe the underlying operation: after removing a middle element, subsequent elements shift left to fill the gap.</span>
+                </p>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="flex-1">
-                        <div id="p3b-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div id="p2b-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
                         <div class="flex gap-4">
-                            <button onclick="P3B.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">下一步 (Next Step)</button>
-                            <button onclick="P3B.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">重置 (Reset)</button>
+                            <button onclick="P2B.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P2B.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p3b-log"></div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p2b-log"></div>
                 </div>
                 <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">展開檢視 Python 程式碼及解釋</summary>
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
                     <div class="mt-3 text-sm text-gray-700 space-y-2">
-<pre class="bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
 A = [20, 18, 40, 30, 10, 5]
 
 # Python 內建方法：
@@ -230,35 +332,66 @@ print(A)
 # for i in range(2, 5):
 #     A[i] = A[i+1]   將元素往左移填補
 # A.pop()             刪除最後多餘的空間</pre>
-                        <p><strong>解釋：</strong> Python 中可以使用 <code>A.pop(2)</code> 或 <code>del A[2]</code> 刪除指定索引的元素。底層操作上，這會導致該索引後面的所有元素往前移動一格覆蓋掉目標值，並縮短陣列的長度。</p>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+
+# Built-in Python method:
+A.pop(2) # or del A[2]
+print(A)
+
+# (Underlying Principle Simulation):
+# for i in range(2, 5):
+#     A[i] = A[i+1]   Shift elements left to fill
+# A.pop()             Remove extra space at the end</pre>
+                        <p class="only-zh"><strong>解釋：</strong> Python 中可以使用 <code>A.pop(2)</code> 或 <code>del A[2]</code> 刪除指定索引的元素。底層操作上，這會導致該索引後面的所有元素往前移動一格覆蓋掉目標值，並縮短陣列的長度。</p>
+                        <p class="only-en"><strong>Explanation:</strong> In Python, you can use <code>A.pop(2)</code> or <code>del A[2]</code>. At a lower level, this causes all elements following that index to shift forward one slot, overwriting the target value and reducing the array length.</p>
                     </div>
                 </details>
             </div>
         </section>
 
-        <!-- 第 4 頁：列表的進階操作 -->
-        <section id="page4" class="page-content hidden">
-            <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2 mb-6 text-blue-800">第 4 頁：列表的進階操作</h2>
-            <p class="mb-4 text-gray-700 font-medium">初始列表設定為：<code class="bg-gray-200 px-2 py-1 rounded">A = [5, 10, 18, 20, 30, 40]</code></p>
+        <!-- 第 3 頁：列表的進階操作 -->
+        <section id="page3" class="page-content hidden">
+            <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2 mb-6 text-blue-800">
+                <span class="only-zh">第 3 頁：列表的進階操作</span>
+                <span class="only-en">Page 3: Advanced Operations</span>
+            </h2>
+            <p class="mb-4 text-gray-700 font-medium">
+                <span class="only-zh">初始列表設定為：</span>
+                <span class="only-en">Initial List:</span>
+                <code class="bg-gray-200 px-2 py-1 rounded">A = [5, 10, 18, 20, 30, 40]</code>
+            </p>
 
-            <!-- 4A. 檢查排序 -->
+            <!-- 3A. 檢查排序 -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-xl font-bold mb-4">A. 檢查列表是否由小至大排序</h3>
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">A. 檢查列表是否由小至大排序</span>
+                    <span class="only-en">A. Check if List is Sorted in Ascending Order</span>
+                </h3>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="flex-1">
-                        <div id="p4a-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div id="p3a-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
                         <div class="flex gap-4">
-                            <button onclick="P4A.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">下一步 (Next Step)</button>
-                            <button onclick="P4A.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">重置 (Reset)</button>
-                            <button onclick="P4A.makeUnsorted()" class="bg-purple-100 text-purple-700 px-4 py-2 border border-purple-300 rounded-md hover:bg-purple-200 transition text-sm">打亂列表測試</button>
+                            <button onclick="P3A.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P3A.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
+                            <button onclick="P3A.makeUnsorted()" class="bg-purple-100 text-purple-700 px-4 py-2 border border-purple-300 rounded-md hover:bg-purple-200 transition text-sm font-semibold">
+                                <span class="only-zh">打亂列表測試</span><span class="only-en">Shuffle List Test</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p4a-log"></div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p3a-log"></div>
                 </div>
                 <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">展開檢視 Python 程式碼及解釋</summary>
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
                     <div class="mt-3 text-sm text-gray-700 space-y-2">
-<pre class="bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
 A = [5, 10, 18, 20, 30, 40]
 is_sorted = True
 
@@ -271,29 +404,56 @@ if is_sorted:
     print("TRUE")
 else:
     print("FALSE")</pre>
-                        <p><strong>解釋：</strong> 要確認是否由小到大排序，我們只需比較相鄰的兩個元素（<code>A[i]</code> 和 <code>A[i+1]</code>）。如果發現任何一個左邊大於右邊的狀況，就代表未排序，可以直接判定為 FALSE 並結束檢查。</p>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [5, 10, 18, 20, 30, 40]
+is_sorted = True
+
+for i in range(0, 5): # Note range only goes to length-1
+    if A[i] > A[i+1]: # If previous is greater than next
+        is_sorted = False
+        break # Unsorted found, break loop early
+
+if is_sorted:
+    print("TRUE")
+else:
+    print("FALSE")</pre>
+                        <p class="only-zh"><strong>解釋：</strong> 要確認是否由小到大排序，我們只需比較相鄰的兩個元素（<code>A[i]</code> 和 <code>A[i+1]</code>）。如果發現任何一個左邊大於右邊的狀況，就代表未排序，可以直接判定為 FALSE 並結束檢查。</p>
+                        <p class="only-en"><strong>Explanation:</strong> To check ascending order, we compare adjacent elements (<code>A[i]</code> and <code>A[i+1]</code>). If we find any instance where the left is greater than the right, the list is unsorted. We set it to FALSE and break the loop.</p>
                     </div>
                 </details>
             </div>
 
-            <!-- 4B. 倒轉列表 -->
+            <!-- 3B. 倒轉列表 -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-xl font-bold mb-4">B. 將列表內容倒轉 (Reverse)</h3>
-                <p class="text-sm text-gray-600 mb-4">透過交換首尾兩端的元素 (前後對調) 來實現倒轉。</p>
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">B. 將列表內容倒轉 (Reverse)</span>
+                    <span class="only-en">B. Reverse the List Contents</span>
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    <span class="only-zh">透過交換首尾兩端的元素 (前後對調) 來實現倒轉。</span>
+                    <span class="only-en">Reverse is achieved by swapping elements from both ends moving towards the center.</span>
+                </p>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="flex-1">
-                        <div id="p4b-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div id="p3b-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
                         <div class="flex gap-4">
-                            <button onclick="P4B.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">下一步 (Next Step)</button>
-                            <button onclick="P4B.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">重置 (Reset)</button>
+                            <button onclick="P3B.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P3B.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p4b-log"></div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p3b-log"></div>
                 </div>
                 <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">展開檢視 Python 程式碼及解釋</summary>
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
                     <div class="mt-3 text-sm text-gray-700 space-y-2">
-<pre class="bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
 A = [5, 10, 18, 20, 30, 40]
 
 # Python 內建方法：
@@ -306,7 +466,21 @@ print(A)
 #     temp = A[i]
 #     A[i] = A[length - 1 - i]
 #     A[length - 1 - i] = temp</pre>
-                        <p><strong>解釋：</strong> Python 提供了方便的 <code>.reverse()</code> 方法。若要自己編寫邏輯，常見做法是將索引 0 與最後一個交換，索引 1 與倒數第二個交換...直到中間位置，這樣迴圈次數只要列表長度的一半。</p>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [5, 10, 18, 20, 30, 40]
+
+# Built-in Python method:
+A.reverse()
+print(A)
+
+# (Custom logic: Two-pointers swap)
+# length = len(A)
+# for i in range(0, length // 2):
+#     temp = A[i]
+#     A[i] = A[length - 1 - i]
+#     A[length - 1 - i] = temp</pre>
+                        <p class="only-zh"><strong>解釋：</strong> Python 提供了方便的 <code>.reverse()</code> 方法。若要自己編寫邏輯，常見做法是將索引 0 與最後一個交換，索引 1 與倒數第二個交換...直到中間位置，這樣迴圈次數只要列表長度的一半。</p>
+                        <p class="only-en"><strong>Explanation:</strong> Python provides a convenient <code>.reverse()</code> method. If writing custom logic, the common approach is to swap index 0 with the last, index 1 with the second to last... stopping at the middle. Thus, loop iterations equal half the list's length.</p>
                     </div>
                 </details>
             </div>
@@ -316,6 +490,169 @@ print(A)
 
     <!-- JavaScript 邏輯 -->
     <script>
+        // ------------------------------------------
+        // 語言切換邏輯 (Language Toggle Logic)
+        // ------------------------------------------
+        const langState = { current: 'zh' };
+
+        // JavaScript 動態字串翻譯辭典
+        const dict = {
+            // P1A
+            p1a_init: {
+                zh: "準備開始...<br>變數 total_sum = 0",
+                en: "Ready to start...<br>Variable total_sum = 0"
+            },
+            p1a_loop: {
+                zh: (i, cur, sum, next) => `迴圈 i = ${i}<br>讀取 A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>total_sum = ${sum} + ${cur} = <strong>${next}</strong>`,
+                en: (i, cur, sum, next) => `Loop i = ${i}<br>Read A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>total_sum = ${sum} + ${cur} = <strong>${next}</strong>`
+            },
+            p1a_end: {
+                zh: (sum, avg) => `迴圈結束。<br>計算平均：<br>average = total_sum / 6<br>= ${sum} / 6<br>= <strong>${avg}</strong>`,
+                en: (sum, avg) => `Loop finished.<br>Calculate average:<br>average = total_sum / 6<br>= ${sum} / 6<br>= <strong>${avg}</strong>`
+            },
+            // P1B
+            p1b_init: {
+                zh: (max, min) => `準備開始...<br>預設 max_val = ${max}<br>預設 min_val = ${min}`,
+                en: (max, min) => `Ready to start...<br>Default max_val = ${max}<br>Default min_val = ${min}`
+            },
+            p1b_read: {
+                zh: (i, cur) => `迴圈 i = ${i}, 讀取 A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>`,
+                en: (i, cur) => `Loop i = ${i}, Read A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>`
+            },
+            p1b_max_update: {
+                zh: (cur, max) => `<span class="text-green-600">>> ${cur} > ${max}，更新 max_val = ${cur}</span><br>`,
+                en: (cur, max) => `<span class="text-green-600">>> ${cur} > ${max}, update max_val = ${cur}</span><br>`
+            },
+            p1b_max_skip: {
+                zh: (cur) => `<span class="text-gray-500">>> ${cur} 未大於 max_val</span><br>`,
+                en: (cur) => `<span class="text-gray-500">>> ${cur} not greater than max_val</span><br>`
+            },
+            p1b_min_update: {
+                zh: (cur, min) => `<span class="text-blue-600">>> ${cur} < ${min}，更新 min_val = ${cur}</span><br>`,
+                en: (cur, min) => `<span class="text-blue-600">>> ${cur} < ${min}, update min_val = ${cur}</span><br>`
+            },
+            p1b_min_skip: {
+                zh: (cur) => `<span class="text-gray-500">>> ${cur} 未小於 min_val</span><br>`,
+                en: (cur) => `<span class="text-gray-500">>> ${cur} not less than min_val</span><br>`
+            },
+            p1b_end: {
+                zh: (max, min) => `迴圈結束。<br>最終結果：<br>最大值 = <strong>${max}</strong><br>最小值 = <strong>${min}</strong>`,
+                en: (max, min) => `Loop finished.<br>Final Result:<br>Maximum = <strong>${max}</strong><br>Minimum = <strong>${min}</strong>`
+            },
+            // P1C
+            p1c_init: {
+                zh: "準備開始...<br>變數 even_count = 0",
+                en: "Ready to start...<br>Variable even_count = 0"
+            },
+            p1c_loop_head: {
+                zh: (i, cur) => `迴圈 i = ${i}<br>讀取 A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>`,
+                en: (i, cur) => `Loop i = ${i}<br>Read A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>`
+            },
+            p1c_even: {
+                zh: (cur, count) => `${cur} % 2 == 0 (是雙數)<br>even_count + 1 變成 <strong>${count}</strong>`,
+                en: (cur, count) => `${cur} % 2 == 0 (is even)<br>even_count + 1 becomes <strong>${count}</strong>`
+            },
+            p1c_odd: {
+                zh: (cur, count) => `${cur} % 2 != 0 (非雙數)<br>even_count 維持 <strong>${count}</strong>`,
+                en: (cur, count) => `${cur} % 2 != 0 (not even)<br>even_count remains <strong>${count}</strong>`
+            },
+            p1c_end: {
+                zh: (count) => `迴圈結束。<br>雙數項目總數量 = <strong>${count}</strong>`,
+                en: (count) => `Loop finished.<br>Total even items = <strong>${count}</strong>`
+            },
+            // P2A
+            p2a_init: {
+                zh: (idx, val) => `準備開始...<br>目標：在索引 ${idx} 插入 ${val}`,
+                en: (idx, val) => `Ready to start...<br>Target: Insert ${val} at index ${idx}`
+            },
+            p2a_step1: {
+                zh: "步驟 1：列表末端新增一個空位，準備進行順延。",
+                en: "Step 1: Add an empty slot at the end, prepare to shift."
+            },
+            p2a_step2: {
+                zh: (from, to) => `步驟 2：將 A[${from}] 的值往右順延至 A[${to}]。`,
+                en: (from, to) => `Step 2: Shift the value of A[${from}] right to A[${to}].`
+            },
+            p2a_step3: {
+                zh: (val, idx) => `步驟 3：空間已騰出，將新值 ${val} 放入 A[${idx}]。<br><strong>完成插入操作！</strong>`,
+                en: (val, idx) => `Step 3: Space freed up, put new value ${val} into A[${idx}].<br><strong>Insert operation complete!</strong>`
+            },
+            // P2B
+            p2b_init: {
+                zh: (idx, val) => `準備開始...<br>目標：移除 A[${idx}] (${val})`,
+                en: (idx, val) => `Ready to start...<br>Target: Remove A[${idx}] (${val})`
+            },
+            p2b_step1: {
+                zh: (idx) => `步驟 1：刪除 A[${idx}] 的內容，準備由後方填補。`,
+                en: (idx) => `Step 1: Delete content at A[${idx}], prepare to fill from behind.`
+            },
+            p2b_step2: {
+                zh: (from, to) => `步驟 2：將 A[${from}] 的值往左填補至 A[${to}]。`,
+                en: (from, to) => `Step 2: Shift the value of A[${from}] left to A[${to}].`
+            },
+            p2b_step3: {
+                zh: "步驟 3：縮減列表長度，清除最後多餘的空位。<br><strong>完成移除操作！</strong>",
+                en: "Step 3: Reduce list length, remove the extra empty slot.<br><strong>Remove operation complete!</strong>"
+            },
+            // P3A
+            p3a_init: {
+                zh: "準備開始檢查排序...<br>預設 is_sorted = True",
+                en: "Ready to check sorting...<br>Default is_sorted = True"
+            },
+            p3a_compare: {
+                zh: (i, left, right) => `比較 A[${i}] 和 A[${i+1}]:<br>${left} 與 ${right}<br>`,
+                en: (i, left, right) => `Compare A[${i}] and A[${i+1}]:<br>${left} vs ${right}<br>`
+            },
+            p3a_unsorted: {
+                zh: (left, right) => `<span class="text-red-600 font-bold">發現 ${left} > ${right} !</span><br>左邊比右邊大，違反排序規則。<br>is_sorted = False，提早結束 (Break)。`,
+                en: (left, right) => `<span class="text-red-600 font-bold">Found ${left} > ${right} !</span><br>Left > Right, violates sorting rule.<br>is_sorted = False, early exit (Break).`
+            },
+            p3a_continue: {
+                zh: (left, right) => `<span class="text-green-600">${left} <= ${right}，符合規則，繼續檢查。</span>`,
+                en: (left, right) => `<span class="text-green-600">${left} <= ${right}, follows the rule, continue.</span>`
+            },
+            p3a_end: {
+                zh: "所有元素檢查完畢，未發現違規。",
+                en: "All elements checked, no violations found."
+            },
+            p3a_result: {
+                zh: (res) => `<br><br>最終結果列印：<strong>${res}</strong>`,
+                en: (res) => `<br><br>Final printed result: <strong>${res}</strong>`
+            },
+            // P3B
+            p3b_init: {
+                zh: "準備開始...<br>使用首尾交換法 (Two-pointers) 進行倒轉。",
+                en: "Ready to start...<br>Using two-pointers swapping to reverse."
+            },
+            p3b_swap: {
+                zh: (i, left, right) => `迴圈次數: ${i+1}<br>交換 A[${left}] 與 A[${right}] 的數值。`,
+                en: (i, left, right) => `Loop iteration: ${i+1}<br>Swap values of A[${left}] and A[${right}].`
+            },
+            p3b_end: {
+                zh: "達到中間位置，迴圈結束。<br><strong>列表倒轉完成！</strong>",
+                en: "Reached the middle, loop ends.<br><strong>List reverse complete!</strong>"
+            }
+        };
+
+        // 提取翻譯函式
+        const L = (key, ...args) => {
+            let text = dict[key][langState.current];
+            if (typeof text === 'function') {
+                return text(...args);
+            }
+            return text;
+        };
+
+        function toggleLanguage() {
+            langState.current = langState.current === 'zh' ? 'en' : 'zh';
+            document.body.setAttribute('data-lang', langState.current);
+            
+            // 重置所有面板狀態以確保日誌文字即時更新語言
+            P1A.init(); P1B.init(); P1C.init();
+            P2A.init(); P2B.init();
+            P3A.init(); P3B.init();
+        }
+
         // 通用 UI 函式
         function switchTab(tabId) {
             // 隱藏所有頁面
@@ -341,7 +678,7 @@ print(A)
             container.innerHTML = '';
             
             if (array.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 italic text-sm">空列表</p>';
+                container.innerHTML = `<p class="text-gray-400 italic text-sm"><span class="only-zh">空列表</span><span class="only-en">Empty List</span></p>`;
                 return;
             }
 
@@ -375,51 +712,17 @@ print(A)
         }
 
         // ==========================================
-        // 第 1 頁：基礎列表設定邏輯
+        // 第 1 頁：列表運算 (P1A, P1B, P1C)
         // ==========================================
-        const Page1 = {
-            list: [],
-            addToList() {
-                const input = document.getElementById('p1-input').value;
-                if(input.trim() === '') return;
-                // 嘗試轉為數字
-                const num = Number(input);
-                if(!isNaN(num)) {
-                    this.list.push(num);
-                } else {
-                    this.list.push(input);
-                }
-                document.getElementById('p1-input').value = '';
-                this.updateUI();
-            },
-            resetList() {
-                this.list = [];
-                document.getElementById('p1-slice-container').innerHTML = '<p class="text-gray-400 italic text-sm">請重新擷取。</p>';
-                this.updateUI();
-            },
-            sliceList() {
-                const start = parseInt(document.getElementById('p1-start').value) || 0;
-                const end = parseInt(document.getElementById('p1-end').value) || 0;
-                const sliced = this.list.slice(start, end);
-                renderArray('p1-slice-container', sliced);
-            },
-            updateUI() {
-                renderArray('p1-array-container', this.list);
-            }
-        };
-
-        // ==========================================
-        // 第 2 頁：列表運算
-        // ==========================================
-        const P2A = {
+        const P1A = {
             arr: [20, 18, 40, 30, 10, 5],
             i: 0,
             sum: 0,
-            state: 'idle', // idle, running, done
+            state: 'idle',
             init() {
                 this.i = 0; this.sum = 0; this.state = 'idle';
-                renderArray('p2a-array', this.arr);
-                document.getElementById('p2a-log').innerHTML = '準備開始...<br>變數 total_sum = 0';
+                renderArray('p1a-array', this.arr);
+                document.getElementById('p1a-log').innerHTML = L('p1a_init');
             },
             next() {
                 if(this.state === 'done') return;
@@ -428,19 +731,19 @@ print(A)
                 if (this.i < this.arr.length) {
                     const currentVal = this.arr[this.i];
                     this.sum += currentVal;
-                    document.getElementById('p2a-log').innerHTML = `迴圈 i = ${this.i}<br>讀取 A[${this.i}] = <span class="text-orange-500 font-bold">${currentVal}</span><br>total_sum = ${this.sum - currentVal} + ${currentVal} = <strong>${this.sum}</strong>`;
-                    renderArray('p2a-array', this.arr, [this.i]);
+                    document.getElementById('p1a-log').innerHTML = L('p1a_loop', this.i, currentVal, this.sum - currentVal, this.sum);
+                    renderArray('p1a-array', this.arr, [this.i]);
                     this.i++;
                 } else {
                     const avg = (this.sum / this.arr.length).toFixed(2);
-                    document.getElementById('p2a-log').innerHTML = `迴圈結束。<br>計算平均：<br>average = total_sum / 6<br>= ${this.sum} / 6<br>= <strong>${avg}</strong>`;
-                    renderArray('p2a-array', this.arr);
+                    document.getElementById('p1a-log').innerHTML = L('p1a_end', this.sum, avg);
+                    renderArray('p1a-array', this.arr);
                     this.state = 'done';
                 }
             }
         };
 
-        const P2B = {
+        const P1B = {
             arr: [20, 18, 40, 30, 10, 5],
             i: 0,
             max: 0,
@@ -451,50 +754,50 @@ print(A)
                 this.max = this.arr[0]; 
                 this.min = this.arr[0];
                 this.state = 'idle';
-                renderArray('p2b-array', this.arr);
-                document.getElementById('p2b-log').innerHTML = `準備開始...<br>預設 max_val = ${this.max}<br>預設 min_val = ${this.min}`;
+                renderArray('p1b-array', this.arr);
+                document.getElementById('p1b-log').innerHTML = L('p1b_init', this.max, this.min);
             },
             next() {
                 if(this.state === 'done') return;
                 
                 if (this.i < this.arr.length) {
                     const currentVal = this.arr[this.i];
-                    let logStr = `迴圈 i = ${this.i}, 讀取 A[${this.i}] = <span class="text-orange-500 font-bold">${currentVal}</span><br>`;
+                    let logStr = L('p1b_read', this.i, currentVal);
                     
                     if(currentVal > this.max) {
-                        logStr += `<span class="text-green-600">>> ${currentVal} > ${this.max}，更新 max_val = ${currentVal}</span><br>`;
+                        logStr += L('p1b_max_update', currentVal, this.max);
                         this.max = currentVal;
                     } else {
-                        logStr += `<span class="text-gray-500">>> ${currentVal} 未大於 max_val</span><br>`;
+                        logStr += L('p1b_max_skip', currentVal);
                     }
 
                     if(currentVal < this.min) {
-                        logStr += `<span class="text-blue-600">>> ${currentVal} < ${this.min}，更新 min_val = ${currentVal}</span><br>`;
+                        logStr += L('p1b_min_update', currentVal, this.min);
                         this.min = currentVal;
                     } else {
-                        logStr += `<span class="text-gray-500">>> ${currentVal} 未小於 min_val</span><br>`;
+                        logStr += L('p1b_min_skip', currentVal);
                     }
 
-                    document.getElementById('p2b-log').innerHTML = logStr;
-                    renderArray('p2b-array', this.arr, [this.i]);
+                    document.getElementById('p1b-log').innerHTML = logStr;
+                    renderArray('p1b-array', this.arr, [this.i]);
                     this.i++;
                 } else {
-                    document.getElementById('p2b-log').innerHTML = `迴圈結束。<br>最終結果：<br>最大值 = <strong>${this.max}</strong><br>最小值 = <strong>${this.min}</strong>`;
-                    renderArray('p2b-array', this.arr);
+                    document.getElementById('p1b-log').innerHTML = L('p1b_end', this.max, this.min);
+                    renderArray('p1b-array', this.arr);
                     this.state = 'done';
                 }
             }
         };
 
-        const P2C = {
+        const P1C = {
             arr: [20, 18, 40, 30, 10, 5],
             i: 0,
             count: 0,
             state: 'idle',
             init() {
                 this.i = 0; this.count = 0; this.state = 'idle';
-                renderArray('p2c-array', this.arr);
-                document.getElementById('p2c-log').innerHTML = '準備開始...<br>變數 even_count = 0';
+                renderArray('p1c-array', this.arr);
+                document.getElementById('p1c-log').innerHTML = L('p1c_init');
             },
             next() {
                 if(this.state === 'done') return;
@@ -502,30 +805,30 @@ print(A)
                 if (this.i < this.arr.length) {
                     const currentVal = this.arr[this.i];
                     const isEven = currentVal % 2 === 0;
-                    let logStr = `迴圈 i = ${this.i}<br>讀取 A[${this.i}] = <span class="text-orange-500 font-bold">${currentVal}</span><br>`;
+                    let logStr = L('p1c_loop_head', this.i, currentVal);
                     
                     if(isEven) {
                         this.count++;
-                        logStr += `${currentVal} % 2 == 0 (是雙數)<br>even_count + 1 變成 <strong>${this.count}</strong>`;
+                        logStr += L('p1c_even', currentVal, this.count);
                     } else {
-                        logStr += `${currentVal} % 2 != 0 (非雙數)<br>even_count 維持 <strong>${this.count}</strong>`;
+                        logStr += L('p1c_odd', currentVal, this.count);
                     }
 
-                    document.getElementById('p2c-log').innerHTML = logStr;
-                    renderArray('p2c-array', this.arr, [this.i]);
+                    document.getElementById('p1c-log').innerHTML = logStr;
+                    renderArray('p1c-array', this.arr, [this.i]);
                     this.i++;
                 } else {
-                    document.getElementById('p2c-log').innerHTML = `迴圈結束。<br>雙數項目總數量 = <strong>${this.count}</strong>`;
-                    renderArray('p2c-array', this.arr);
+                    document.getElementById('p1c-log').innerHTML = L('p1c_end', this.count);
+                    renderArray('p1c-array', this.arr);
                     this.state = 'done';
                 }
             }
         };
 
         // ==========================================
-        // 第 3 頁：元素操作
+        // 第 2 頁：元素操作 (P2A, P2B)
         // ==========================================
-        const P3A = {
+        const P2A = {
             originalArr: [20, 18, 40, 30, 10, 5],
             arr: [],
             step: 0,
@@ -536,40 +839,37 @@ print(A)
                 this.arr = [...this.originalArr];
                 this.step = 0;
                 this.state = 'idle';
-                renderArray('p3a-array', this.arr);
-                document.getElementById('p3a-log').innerHTML = `準備開始...<br>目標：在索引 ${this.targetIndex} 插入 ${this.insertValue}`;
+                renderArray('p2a-array', this.arr);
+                document.getElementById('p2a-log').innerHTML = L('p2a_init', this.targetIndex, this.insertValue);
             },
             next() {
                 if(this.state === 'done') return;
 
                 if (this.step === 0) {
-                    // 擴展一個空位
                     this.arr.push('');
-                    document.getElementById('p3a-log').innerHTML = `步驟 1：列表末端新增一個空位，準備進行順延。`;
-                    renderArray('p3a-array', this.arr, [this.arr.length - 1]);
+                    document.getElementById('p2a-log').innerHTML = L('p2a_step1');
+                    renderArray('p2a-array', this.arr, [this.arr.length - 1]);
                     this.step++;
                 } else if (this.step > 0 && this.step <= (this.arr.length - 1 - this.targetIndex)) {
-                    // 移動元素邏輯
                     let fromIndex = this.arr.length - 1 - this.step;
                     let toIndex = fromIndex + 1;
                     
                     this.arr[toIndex] = this.arr[fromIndex];
-                    this.arr[fromIndex] = ''; // 模擬騰空
+                    this.arr[fromIndex] = '';
 
-                    document.getElementById('p3a-log').innerHTML = `步驟 2：將 A[${fromIndex}] 的值往右順延至 A[${toIndex}]。`;
-                    renderArray('p3a-array', this.arr, [fromIndex, toIndex]);
+                    document.getElementById('p2a-log').innerHTML = L('p2a_step2', fromIndex, toIndex);
+                    renderArray('p2a-array', this.arr, [fromIndex, toIndex]);
                     this.step++;
                 } else {
-                    // 插入元素
                     this.arr[this.targetIndex] = this.insertValue;
-                    document.getElementById('p3a-log').innerHTML = `步驟 3：空間已騰出，將新值 ${this.insertValue} 放入 A[${this.targetIndex}]。<br><strong>完成插入操作！</strong>`;
-                    renderArray('p3a-array', this.arr, [this.targetIndex]);
+                    document.getElementById('p2a-log').innerHTML = L('p2a_step3', this.insertValue, this.targetIndex);
+                    renderArray('p2a-array', this.arr, [this.targetIndex]);
                     this.state = 'done';
                 }
             }
         };
 
-        const P3B = {
+        const P2B = {
             originalArr: [20, 18, 40, 30, 10, 5],
             arr: [],
             step: 0,
@@ -579,43 +879,40 @@ print(A)
                 this.arr = [...this.originalArr];
                 this.step = 0;
                 this.state = 'idle';
-                renderArray('p3b-array', this.arr);
-                document.getElementById('p3b-log').innerHTML = `準備開始...<br>目標：移除 A[${this.targetIndex}] (${this.arr[this.targetIndex]})`;
+                renderArray('p2b-array', this.arr);
+                document.getElementById('p2b-log').innerHTML = L('p2b_init', this.targetIndex, this.arr[this.targetIndex]);
             },
             next() {
                 if(this.state === 'done') return;
 
                 if (this.step === 0) {
-                    // 清空目標
                     this.arr[this.targetIndex] = '';
-                    document.getElementById('p3b-log').innerHTML = `步驟 1：刪除 A[${this.targetIndex}] 的內容，準備由後方填補。`;
-                    renderArray('p3b-array', this.arr, [this.targetIndex]);
+                    document.getElementById('p2b-log').innerHTML = L('p2b_step1', this.targetIndex);
+                    renderArray('p2b-array', this.arr, [this.targetIndex]);
                     this.step++;
                 } else if (this.step > 0 && this.step < (this.arr.length - this.targetIndex)) {
-                    // 左移填補
                     let toIndex = this.targetIndex + this.step - 1;
                     let fromIndex = toIndex + 1;
                     
                     this.arr[toIndex] = this.arr[fromIndex];
                     this.arr[fromIndex] = '';
 
-                    document.getElementById('p3b-log').innerHTML = `步驟 2：將 A[${fromIndex}] 的值往左填補至 A[${toIndex}]。`;
-                    renderArray('p3b-array', this.arr, [toIndex, fromIndex]);
+                    document.getElementById('p2b-log').innerHTML = L('p2b_step2', fromIndex, toIndex);
+                    renderArray('p2b-array', this.arr, [toIndex, fromIndex]);
                     this.step++;
                 } else {
-                    // 移除最後的空位
                     this.arr.pop();
-                    document.getElementById('p3b-log').innerHTML = `步驟 3：縮減列表長度，清除最後多餘的空位。<br><strong>完成移除操作！</strong>`;
-                    renderArray('p3b-array', this.arr);
+                    document.getElementById('p2b-log').innerHTML = L('p2b_step3');
+                    renderArray('p2b-array', this.arr);
                     this.state = 'done';
                 }
             }
         };
 
         // ==========================================
-        // 第 4 頁：進階操作
+        // 第 3 頁：進階操作 (P3A, P3B)
         // ==========================================
-        const P4A = {
+        const P3A = {
             sortedArr: [5, 10, 18, 20, 30, 40],
             unsortedArr: [5, 18, 10, 20, 40, 30],
             arr: [],
@@ -628,8 +925,8 @@ print(A)
                 this.i = 0;
                 this.isSorted = true;
                 this.state = 'idle';
-                renderArray('p4a-array', this.arr);
-                document.getElementById('p4a-log').innerHTML = '準備開始檢查排序...<br>預設 is_sorted = True';
+                renderArray('p3a-array', this.arr);
+                document.getElementById('p3a-log').innerHTML = L('p3a_init');
             },
             makeUnsorted() {
                 this.mode = this.mode === 'sorted' ? 'unsorted' : 'sorted';
@@ -641,34 +938,34 @@ print(A)
                 if (this.i < this.arr.length - 1) {
                     let left = this.arr[this.i];
                     let right = this.arr[this.i + 1];
-                    let logStr = `比較 A[${this.i}] 和 A[${this.i+1}]:<br>${left} 與 ${right}<br>`;
+                    let logStr = L('p3a_compare', this.i, left, right);
 
                     if (left > right) {
                         this.isSorted = false;
-                        logStr += `<span class="text-red-600 font-bold">發現 ${left} > ${right} !</span><br>左邊比右邊大，違反排序規則。<br>is_sorted = False，提早結束 (Break)。`;
-                        document.getElementById('p4a-log').innerHTML = logStr;
-                        renderArray('p4a-array', this.arr, [this.i, this.i+1]);
+                        logStr += L('p3a_unsorted', left, right);
+                        document.getElementById('p3a-log').innerHTML = logStr;
+                        renderArray('p3a-array', this.arr, [this.i, this.i+1]);
                         this.state = 'done';
-                        setTimeout(() => { this.showResult(); }, 100); // 確保 UI 更新
+                        setTimeout(() => { this.showResult(); }, 100);
                     } else {
-                        logStr += `<span class="text-green-600">${left} <= ${right}，符合規則，繼續檢查。</span>`;
-                        document.getElementById('p4a-log').innerHTML = logStr;
-                        renderArray('p4a-array', this.arr, [this.i, this.i+1]);
+                        logStr += L('p3a_continue', left, right);
+                        document.getElementById('p3a-log').innerHTML = logStr;
+                        renderArray('p3a-array', this.arr, [this.i, this.i+1]);
                         this.i++;
                     }
                 } else {
-                    document.getElementById('p4a-log').innerHTML = `所有元素檢查完畢，未發現違規。`;
+                    document.getElementById('p3a-log').innerHTML = L('p3a_end');
                     this.state = 'done';
                     this.showResult();
                 }
             },
             showResult() {
-                let currentLog = document.getElementById('p4a-log').innerHTML;
-                document.getElementById('p4a-log').innerHTML = currentLog + `<br><br>最終結果列印：<strong>${this.isSorted ? 'TRUE' : 'FALSE'}</strong>`;
+                let currentLog = document.getElementById('p3a-log').innerHTML;
+                document.getElementById('p3a-log').innerHTML = currentLog + L('p3a_result', this.isSorted ? 'TRUE' : 'FALSE');
             }
         };
 
-        const P4B = {
+        const P3B = {
             originalArr: [5, 10, 18, 20, 30, 40],
             arr: [],
             i: 0,
@@ -677,8 +974,8 @@ print(A)
                 this.arr = [...this.originalArr];
                 this.i = 0;
                 this.state = 'idle';
-                renderArray('p4b-array', this.arr);
-                document.getElementById('p4b-log').innerHTML = '準備開始...<br>使用首尾交換法 (Two-pointers) 進行倒轉。';
+                renderArray('p3b-array', this.arr);
+                document.getElementById('p3b-log').innerHTML = L('p3b_init');
             },
             next() {
                 if(this.state === 'done') return;
@@ -688,18 +985,17 @@ print(A)
                     let leftIdx = this.i;
                     let rightIdx = this.arr.length - 1 - this.i;
                     
-                    // 執行交換
                     let temp = this.arr[leftIdx];
                     this.arr[leftIdx] = this.arr[rightIdx];
                     this.arr[rightIdx] = temp;
 
-                    document.getElementById('p4b-log').innerHTML = `迴圈次數: ${this.i + 1}<br>交換 A[${leftIdx}] 與 A[${rightIdx}] 的數值。`;
-                    renderArray('p4b-array', this.arr, [leftIdx, rightIdx]);
+                    document.getElementById('p3b-log').innerHTML = L('p3b_swap', this.i, leftIdx, rightIdx);
+                    renderArray('p3b-array', this.arr, [leftIdx, rightIdx]);
                     
                     this.i++;
                 } else {
-                    document.getElementById('p4b-log').innerHTML = `達到中間位置，迴圈結束。<br><strong>列表倒轉完成！</strong>`;
-                    renderArray('p4b-array', this.arr);
+                    document.getElementById('p3b-log').innerHTML = L('p3b_end');
+                    renderArray('p3b-array', this.arr);
                     this.state = 'done';
                 }
             }
@@ -707,13 +1003,13 @@ print(A)
 
         // 初始化所有組件
         window.onload = function() {
+            P1A.init();
+            P1B.init();
+            P1C.init();
             P2A.init();
             P2B.init();
-            P2C.init();
             P3A.init();
             P3B.init();
-            P4A.init();
-            P4B.init();
         };
     </script>
 </body>
