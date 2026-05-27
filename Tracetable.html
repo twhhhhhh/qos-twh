@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中四 ICT：追蹤表自習平台</title>
+    <title>中四 ICT：追蹤表工作紙自習 (Ref Worksheet)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
@@ -168,7 +168,7 @@
             }
         ];
 
-        // --- 2. Python 題庫 (加入 Max/Min, 條件Count, 陣列移位 等新題型) ---
+        // --- 2. Python 題庫 ---
         const pythonGenerators = [
             // 題型 1: While 變數改變
             () => {
@@ -186,7 +186,7 @@
                 let codeStrEn = `x = ${originalX}\ntotal = 0\nwhile x > 0:\n` + (hasIf ? `    if x % ${ifMod} == 0:\n        total = total + x\n` : `    total = total + x\n`) + `    x = x - ${step}\n\n# What is the final value of total?`;
                 return { answer: total.toString(), traceData: traceData, cols: { zh: ["次數", "x > 0", "x", hasIf ? `x % ${ifMod} == 0` : "IF 條件", "total"], en: ["Iteration", "x > 0", "x", hasIf ? `x % ${ifMod} == 0` : "IF Cond", "total"] }, code: { zh: codeStrZh, en: codeStrEn }, promptType: 'promptOutput' };
             },
-            // 題型 2: For 元素調換 (Bubble sort step)
+            // 題型 2: For 元素調換
             () => {
                 let arr = Array.from({length: 4}, () => Math.floor(Math.random() * 10) + 1);
                 let original = [...arr]; let traceData = [];
@@ -198,9 +198,9 @@
                 let target = Math.floor(Math.random()*4);
                 return { answer: arr[target].toString(), traceData: traceData, cols: {zh:["i","lst[i]","lst[i+1]","lst[i] > lst[i+1]", "lst 狀態"], en:["i","lst[i]","lst[i+1]","lst[i] > lst[i+1]", "lst State"]}, code: { zh: `lst = [${original.join(', ')}]\nfor i in range(3):\n    if lst[i] > lst[i+1]:\n        temp = lst[i]\n        lst[i] = lst[i+1]\n        lst[i+1] = temp\n\n# 請問 lst[${target}] 最後的數值是什麼？`, en: `lst = [${original.join(', ')}]\nfor i in range(3):\n    if lst[i] > lst[i+1]:\n        temp = lst[i]\n        lst[i] = lst[i+1]\n        lst[i+1] = temp\n\n# What is the final value of lst[${target}]?` }, promptType: 'promptArray' };
             },
-            // 題型 3 (NEW): 尋找最大 / 最小值 (Max / Min) (長度4-5)
+            // 題型 3: 尋找最大 / 最小值 (Max / Min)
             () => {
-                let len = Math.floor(Math.random() * 2) + 4; // 4 or 5
+                let len = Math.floor(Math.random() * 2) + 4; 
                 let arr = Array.from({length: len}, () => Math.floor(Math.random() * 30) + 1);
                 let isMax = Math.random() > 0.5; let traceData = [];
                 let m = arr[0]; let operator = isMax ? '>' : '<';
@@ -218,9 +218,9 @@
                     }, promptType: 'promptOutput'
                 };
             },
-            // 題型 4 (NEW): 陣列總和 (Sum) (長度4-5)
+            // 題型 4: 陣列總和 (Sum)
             () => {
-                let len = Math.floor(Math.random() * 2) + 4; // 4 or 5
+                let len = Math.floor(Math.random() * 2) + 4; 
                 let arr = Array.from({length: len}, () => Math.floor(Math.random() * 10) + 1);
                 let traceData = []; let total = 0;
                 for(let i=0; i<len; i++) {
@@ -236,9 +236,9 @@
                     }, promptType: 'promptOutput'
                 };
             },
-            // 題型 5 (NEW): 條件計數 (Count with condition) (長度4-5)
+            // 題型 5: 條件計數 (Count with condition)
             () => {
-                let len = Math.floor(Math.random() * 2) + 4; // 4 or 5
+                let len = Math.floor(Math.random() * 2) + 4; 
                 let arr = Array.from({length: len}, () => Math.floor(Math.random() * 20) + 1);
                 let conditionMod = Math.random() > 0.5 ? 2 : 3;
                 let traceData = []; let count = 0;
@@ -256,12 +256,12 @@
                     }, promptType: 'promptOutput'
                 };
             },
-            // 題型 6 (NEW): 陣列元素移位 (Array Shift) (長度4-5)
+            // 題型 6: 陣列元素移位 (Array Shift)
             () => {
-                let len = Math.floor(Math.random() * 2) + 4; // 4 or 5
+                let len = Math.floor(Math.random() * 2) + 4; 
                 let arr = Array.from({length: len}, () => Math.floor(Math.random() * 10) + 1);
                 let original = [...arr]; let traceData = [];
-                let isLeftShift = Math.random() > 0.5; // 左移 (data[i] = data[i+1]) 或 右骨牌效應 (data[i] = data[i-1])
+                let isLeftShift = Math.random() > 0.5; 
                 
                 if (isLeftShift) {
                     for(let i=0; i<len-1; i++) {
@@ -322,6 +322,29 @@
                 }
             },
             {
+                name: "工作紙一 Part1 Q4",
+                gen: () => {
+                    let trace = [], K = 10, S = 0, iter = 1;
+                    while(K > 5) {
+                        S = S + K;
+                        if (K === 30) { S = S / 2; }
+                        K = K - 1;
+                        trace.push([iter, "True", S, K]);
+                        iter++;
+                    }
+                    return { 
+                        answer: "40, 5", 
+                        traceData: trace, 
+                        cols: {zh:["次數","K > 5","S","K"], en:["Iter","K > 5","S","K"]}, 
+                        code: {
+                            zh: "k ← 10\nS ← 0\n當 k > 5\n  S ← S + K\n  如果 K = 30\n     則 S ← S / 2\n  K ←  K - 1\n\n# 請問完成算法後，變量 S 和 K 的值分別是什麼？\n# (請以「S的值, K的值」格式輸入，例如: 40, 5) :", 
+                            en: "k ← 10\nS ← 0\nWHILE k > 5\n  S ← S + K\n  IF K = 30 THEN\n     S ← S / 2\n  END IF\n  K ←  K - 1\n\n# What are the final values of S and K?\n# (Please enter in format: 40, 5) :"
+                        }, 
+                        promptType: 'promptOutput' 
+                    };
+                }
+            },
+            {
                 name: "工作紙一 Part2 Q5 (陣列)",
                 gen: () => {
                     let A = [0, 20, 50, 70, 10, 30], X = 50, trace = [];
@@ -339,7 +362,7 @@
                         trace.push([num, num>1?'True':'False', cond?'True':'False', c]);
                         num--; 
                     }
-                    return { answer: c.toString(), traceData: trace, cols: {zh:["num","> 1","num % 7 == 0","c"], en:["num","> 1","num % 7 == 0","c"]}, code: {zh:"num = 77\nc = 0\nwhile num > 1:\n	if num % 7 == 0:\n		c = c+1\n	num = num-1\n\n# 完成算法後 c 的值 :", en:"num = 77\nc = 0\nwhile num > 1:\n	if num % 7 == 0:\n		c = c+1\n	num = num-1\n\n# Final value of c:"}, promptType: 'promptOutput' };
+                    return { answer: c.toString(), traceData: trace, cols: {zh:["num","> 1","num % 7 == 0","c"], en:["num","> 1","num % 7 == 0","c"]}, code: {zh:"num = 77\nc = 0\nwhile num > 1:\n if num % 7 == 0:\n      c = c+1\n   num = num-1\n\n# 完成算法後 c 的值 :", en:"num = 77\nc = 0\nwhile num > 1:\n   if num % 7 == 0:\n      c = c+1\n   num = num-1\n\n# Final value of c:"}, promptType: 'promptOutput' };
                 }
             },
             {
@@ -351,7 +374,7 @@
                         if(cond) S = S+i; else S = S*2 - i;
                         trace.push([i, cond?'True':'False', S]);
                     }
-                    return { answer: S.toString(), traceData: trace, cols: {zh:["i","i < 3","S"], en:["i","i < 3","S"]}, code: {zh:"S = 0\nfor i in range(0,6):\n	if i<3:\n		S = S+i\n	else:\n		S = S*2 - i\n\n# 完成算法後 S 的值 :", en:"S = 0\nfor i in range(0,6):\n	if i<3:\n		S = S+i\n	else:\n		S = S*2 - i\n\n# Final value of S:"}, promptType: 'promptOutput' };
+                    return { answer: S.toString(), traceData: trace, cols: {zh:["i","i < 3","S"], en:["i","i < 3","S"]}, code: {zh:"S = 0\nfor i in range(0,6):\n   if i<3:\n       S = S+i\n   else:\n     S = S*2 - i\n\n# 完成算法後 S 的值 :", en:"S = 0\nfor i in range(0,6):\n   if i<3:\n       S = S+i\n   else:\n     S = S*2 - i\n\n# Final value of S:"}, promptType: 'promptOutput' };
                 }
             },
             {
@@ -362,7 +385,7 @@
                         let T = A+B; A = B; B = T;
                         trace.push([i, T, A, B]);
                     }
-                    return { answer: A.toString(), traceData: trace, cols: {zh:["i","T","A","B"], en:["i","T","A","B"]}, code: {zh:"A = 0\nB = 1\nfor i in range(1,6):\n	T = A+B\n	A = B\n	B = T\n\n# 完成算法後 A 的值 :", en:"A = 0\nB = 1\nfor i in range(1,6):\n	T = A+B\n	A = B\n	B = T\n\n# Final value of A:"}, promptType: 'promptOutput' };
+                    return { answer: A.toString(), traceData: trace, cols: {zh:["i","T","A","B"], en:["i","T","A","B"]}, code: {zh:"A = 0\nB = 1\nfor i in range(1,6):\n    T = A+B\n   A = B\n B = T\n\n# 完成算法後 A 的值 :", en:"A = 0\nB = 1\nfor i in range(1,6):\n  T = A+B\n   A = B\n B = T\n\n# Final value of A:"}, promptType: 'promptOutput' };
                 }
             },
             {
@@ -374,7 +397,7 @@
                         if (data[i] === 1) count++;
                         trace.push([i, `[${data.join(',')}]`, count]);
                     }
-                    return { answer: count.toString(), traceData: trace, cols: {zh:["i","陣列 data","count"], en:["i","Array data","count"]}, code: {zh:"count = 0\ndata = [0, 1, 0, 1, 0]\nfor i in range(5):\n	data[i] = 1 - data[i]\n	if data[i] == 1:\n		count = count+1\n\n# 寫出完成算法count的值 :", en:"count = 0\ndata = [0, 1, 0, 1, 0]\nfor i in range(5):\n	data[i] = 1 - data[i]\n	if data[i] == 1:\n		count = count+1\n\n# Final value of count:"}, promptType: 'promptOutput' };
+                    return { answer: count.toString(), traceData: trace, cols: {zh:["i","陣列 data","count"], en:["i","Array data","count"]}, code: {zh:"count = 0\ndata = [0, 1, 0, 1, 0]\nfor i in range(5):\n  data[i] = 1 - data[i]\n if data[i] == 1:\n      count = count+1\n\n# 寫出完成算法count的值 :", en:"count = 0\ndata = [0, 1, 0, 1, 0]\nfor i in range(5):\n  data[i] = 1 - data[i]\n if data[i] == 1:\n      count = count+1\n\n# Final value of count:"}, promptType: 'promptOutput' };
                 }
             },
             {
@@ -387,7 +410,7 @@
                         K = K*2;
                         trace.push([i, `[${A.join(',')}]`, K]);
                     }
-                    return { answer: K.toString(), traceData: trace, cols: {zh:["i","陣列 A","K"], en:["i","Array A","K"]}, code: {zh:"A = [1,0,0,0,0]\nK = 3\ni = 0\nwhile i<4:\n	i = i+1\n	A[i] = A[i-1]+K\n	K = K*2\n\n# 寫出完成算法K的值 :", en:"A = [1,0,0,0,0]\nK = 3\ni = 0\nwhile i<4:\n	i = i+1\n	A[i] = A[i-1]+K\n	K = K*2\n\n# Final value of K:"}, promptType: 'promptOutput' };
+                    return { answer: K.toString(), traceData: trace, cols: {zh:["i","陣列 A","K"], en:["i","Array A","K"]}, code: {zh:"A = [1,0,0,0,0]\nK = 3\ni = 0\nwhile i<4:\n    i = i+1\n   A[i] = A[i-1]+K\n   K = K*2\n\n# 寫出完成算法K的值 :", en:"A = [1,0,0,0,0]\nK = 3\ni = 0\nwhile i<4:\n  i = i+1\n   A[i] = A[i-1]+K\n   K = K*2\n\n# Final value of K:"}, promptType: 'promptOutput' };
                 }
             }
         ];
