@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中四 ICT：追蹤表自習平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-active { border-bottom: 4px solid #4f46e5; color: #4f46e5; font-weight: bold; }
+        .tab-inactive { border-bottom: 4px solid transparent; color: #64748b; }
+        .tab-inactive:hover { color: #4f46e5; border-bottom: 4px solid #c7d2fe; }
+        select { background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E"); background-position: right .5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+
+    <header class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center mb-4">
+            <h1 id="main-title" class="text-2xl font-bold text-indigo-700">中四級 ICT 編程與追蹤表練習</h1>
+            <button id="lang-toggle" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-medium transition-colors">
+                Switch to English
+            </button>
+        </div>
+        
+        <div class="flex gap-6 border-b border-slate-200 mt-2 overflow-x-auto">
+            <button id="tab-pseudo" class="pb-2 px-1 text-lg transition-colors tab-active whitespace-nowrap" onclick="switchMode('pseudo')">
+                偽代碼練習
+            </button>
+            <button id="tab-python" class="pb-2 px-1 text-lg transition-colors tab-inactive whitespace-nowrap" onclick="switchMode('python')">
+                Python 練習
+            </button>
+            <button id="tab-worksheet" class="pb-2 px-1 text-lg transition-colors tab-inactive whitespace-nowrap" onclick="switchMode('worksheet')">
+                工作紙題目
+            </button>
+        </div>
+    </header>
+
+    <main class="flex flex-col xl:flex-row gap-6">
+        
+        <section class="w-full xl:w-[45%] bg-white p-6 rounded-lg shadow-md border border-slate-200 flex flex-col">
+            <div class="flex justify-between items-center mb-4 min-h-[40px]">
+                <h2 id="q-title" class="text-xl font-bold border-b-2 border-indigo-200 pb-2 inline-block">編程題目</h2>
+                
+                <button id="new-q-btn" class="text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded transition-colors font-medium">
+                    隨機生成新題目
+                </button>
+                <select id="worksheet-select" class="hidden text-sm bg-slate-100 border border-slate-300 text-slate-700 px-3 py-2 rounded focus:outline-none focus:border-indigo-500 font-medium appearance-none">
+                    </select>
+            </div>
+            
+            <div class="bg-slate-800 text-green-400 p-4 rounded font-mono text-lg whitespace-pre-wrap leading-relaxed shadow-inner overflow-x-auto" id="code-display"></div>
+
+            <div class="mt-6 flex-grow">
+                <label id="q-prompt" class="block text-lg font-semibold mb-2 text-indigo-800">請問程式的輸出 / 最終變數值是什麼？</label>
+                <div class="flex gap-3">
+                    <input type="text" id="answer-input" class="border-2 border-slate-300 rounded px-4 py-2 w-full text-lg focus:outline-none focus:border-indigo-500 font-mono" placeholder="...">
+                    <button id="submit-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded font-bold transition-colors whitespace-nowrap">
+                        提交答案
+                    </button>
+                </div>
+                <div id="feedback-msg" class="mt-4 text-lg font-medium min-h-[1.5rem]"></div>
+            </div>
+        </section>
+
+        <section class="w-full xl:w-[55%] bg-white p-6 rounded-lg shadow-md border border-slate-200">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h2 id="table-title" class="text-xl font-bold border-b-2 border-indigo-200 pb-2 inline-block">追蹤表 (Trace Table)</h2>
+                <div class="flex gap-2">
+                    <button id="show-all-btn" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded font-medium transition-colors flex items-center gap-1">
+                        <span id="show-all-btn-text">顯示全部</span>
+                    </button>
+                    <button id="step-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-medium transition-colors flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" /></svg>
+                        <span id="step-btn-text">下一步</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto max-h-[500px] overflow-y-auto border-2 border-slate-300">
+                <table class="w-full border-collapse text-center">
+                    <thead id="trace-head" class="bg-slate-100 border-b-2 border-slate-300 sticky top-0 shadow-sm z-10">
+                    </thead>
+                    <tbody id="trace-body">
+                    </tbody>
+                </table>
+            </div>
+            <p id="table-tip" class="text-slate-500 text-sm mt-4 italic">提示：先嘗試自己計算並輸入答案，或者利用右上方按鈕觀察變數在迴圈中的變化。</p>
+        </section>
+    </main>
+
+    <script>
+        const dict = {
+            zh: {
+                mainTitle: "中四級 ICT 編程與追蹤表練習", qTitle: "編程題目", newQBtn: "隨機生成新題目",
+                submitBtn: "提交答案", tableTitle: "追蹤表 (Trace Table)", stepBtnText: "下一步", showAllBtnText: "顯示全部",
+                langToggle: "Switch to English", tableTip: "提示：先嘗試自己計算並輸入答案，或者利用右上方按鈕觀察變數在迴圈中的變化。",
+                promptOutput: "程式輸出 / 最終數值 : ____________", promptArray: "陣列指定位置的最後數值是什麼？",
+                feedbackCorrect: "🎉 答對了！你可以查看追蹤表核對你的運算過程。",
+                feedbackWrong: "❌ 答錯了。請觀察追蹤表找出邏輯上的盲點。",
+                feedbackEmpty: "請先輸入答案！", finishedSteps: "已完成",
+                tabPseudo: "偽代碼練習", tabPython: "Python 練習", tabWorksheet: "工作紙題目"
+            },
+            en: {
+                mainTitle: "Form 4 ICT: Trace Table Practice", qTitle: "Programming Question", newQBtn: "Generate New",
+                submitBtn: "Submit", tableTitle: "Trace Table", stepBtnText: "Next", showAllBtnText: "Show All",
+                langToggle: "切換至中文", tableTip: "Hint: Try to calculate the answer first, or use the buttons to observe variable changes.",
+                promptOutput: "Program Output / Final Value : ____________", promptArray: "What is the final value at the specified array index?",
+                feedbackCorrect: "🎉 Correct! Check the trace table to verify your process.",
+                feedbackWrong: "❌ Incorrect. Trace the logic to find the mistake.",
+                feedbackEmpty: "Please enter an answer first!", finishedSteps: "Done",
+                tabPseudo: "Pseudocode", tabPython: "Python Practice", tabWorksheet: "Worksheet"
+            }
+        };
+
+        let currentLang = 'zh';
+        let currentMode = 'pseudo'; 
+        let currentQuestion = null;
+        let currentStepIndex = 0;
+
+        const DOM = {
+            langToggle: document.getElementById('lang-toggle'), mainTitle: document.getElementById('main-title'),
+            qTitle: document.getElementById('q-title'), newQBtn: document.getElementById('new-q-btn'),
+            worksheetSelect: document.getElementById('worksheet-select'), codeDisplay: document.getElementById('code-display'), 
+            qPrompt: document.getElementById('q-prompt'), answerInput: document.getElementById('answer-input'), 
+            submitBtn: document.getElementById('submit-btn'), feedbackMsg: document.getElementById('feedback-msg'), 
+            tableTitle: document.getElementById('table-title'), stepBtn: document.getElementById('step-btn'), 
+            stepBtnText: document.getElementById('step-btn-text'), showAllBtn: document.getElementById('show-all-btn'),
+            showAllBtnText: document.getElementById('show-all-btn-text'), traceHead: document.getElementById('trace-head'), 
+            traceBody: document.getElementById('trace-body'), tableTip: document.getElementById('table-tip'), 
+            tabPseudo: document.getElementById('tab-pseudo'), tabPython: document.getElementById('tab-python'),
+            tabWorksheet: document.getElementById('tab-worksheet')
+        };
+
+        // --- 1. 偽代碼題庫 (隨機) ---
+        const pseudoGenerators = [
+            () => {
+                const limit = Math.floor(Math.random() * 3) + 3; const cond = Math.floor(Math.random() * 2) + 2; 
+                let s = 1, traceData = [];
+                for (let j = 1; j <= limit; j++) {
+                    let isLess = j < cond;
+                    if (isLess) s = s * 2; else s = s + 3;
+                    traceData.push([j, isLess ? 'True' : 'False', j, s]);
+                }
+                return {
+                    answer: s.toString(), traceData: traceData,
+                    cols: { zh: ["次數", `J < ${cond}`, "J", "S"], en: ["Iteration", `J < ${cond}`, "J", "S"] },
+                    code: { zh: `S ← 1\n設 J 由 1 到 ${limit}\n如果 J < ${cond}\n則 S ← S * 2\n否則 S ← S + 3\n輸出 S`, en: `S ← 1\nFOR J FROM 1 TO ${limit}\n  IF J < ${cond} THEN\n    S ← S * 2\n  ELSE\n    S ← S + 3\n  END IF\nNEXT J\nPRINT S` }, promptType: 'promptOutput'
+                };
+            },
+            () => {
+                let arr = Array.from({length: 5}, () => Math.floor(Math.random() * 10) + 1);
+                let originalArrStr = arr.join(', ');
+                let cr = [...arr]; cr.unshift(0); 
+                let traceData = [];
+                for(let i=1; i<=4; i++) {
+                    let isEven = (cr[i] % 2 === 0);
+                    if (isEven) { cr[i] = cr[i+1]; }
+                    traceData.push([i, i, isEven ? 'True' : 'False', cr[i], `[${cr.slice(1).join(', ')}]`]);
+                }
+                let targetIdx = Math.floor(Math.random() * 4) + 1;
+                return {
+                    answer: cr[targetIdx].toString(), traceData: traceData,
+                    cols: { zh: ["次數", "i", "CR[i] % 2 = 0", `CR[i]`, "陣列 CR"], en: ["Iteration", "i", "CR[i] % 2 = 0", `CR[i]`, "Array CR"] },
+                    code: { zh: `陣列 CR 初始值為 [${originalArrStr}]\n\n設 i 由 1 到 4\n  如果 CR[i] % 2 = 0\n  則 CR[i] ← CR[i+1]\n\n# 請問執行後 CR[${targetIdx}] 的數值是什麼？`, en: `Array CR initial values: [${originalArrStr}]\n\nFOR i FROM 1 TO 4\n  IF CR[i] % 2 = 0 THEN\n    CR[i] ← CR[i+1]\n  END IF\nNEXT i\n\n# What is the final value of CR[${targetIdx}]?` }, promptType: 'promptArray'
+                };
+            }
+        ];
+
+        // --- 2. Python 題庫 (加入 Max/Min, 條件Count, 陣列移位 等新題型) ---
+        const pythonGenerators = [
+            // 題型 1: While 變數改變
+            () => {
+                let x = Math.floor(Math.random() * 5) + 10; let step = Math.floor(Math.random() * 2) + 2; 
+                let hasIf = Math.random() > 0.5; let ifMod = Math.floor(Math.random() * 2) + 2;
+                let total = 0, traceData = [], iteration = 1, originalX = x;
+                while (x > 0) {
+                    let conditionStr = "-";
+                    if (hasIf) { let cond = (x % ifMod === 0); conditionStr = cond ? 'True' : 'False'; if (cond) total += x; } 
+                    else { total += x; }
+                    traceData.push([iteration, `${x} > 0`, x, hasIf ? conditionStr : "-", total]);
+                    x -= step; iteration++;
+                }
+                let codeStrZh = `x = ${originalX}\ntotal = 0\nwhile x > 0:\n` + (hasIf ? `    if x % ${ifMod} == 0:\n        total = total + x\n` : `    total = total + x\n`) + `    x = x - ${step}\n\n# 請問 total 最後的數值是什麼？`;
+                let codeStrEn = `x = ${originalX}\ntotal = 0\nwhile x > 0:\n` + (hasIf ? `    if x % ${ifMod} == 0:\n        total = total + x\n` : `    total = total + x\n`) + `    x = x - ${step}\n\n# What is the final value of total?`;
+                return { answer: total.toString(), traceData: traceData, cols: { zh: ["次數", "x > 0", "x", hasIf ? `x % ${ifMod} == 0` : "IF 條件", "total"], en: ["Iteration", "x > 0", "x", hasIf ? `x % ${ifMod} == 0` : "IF Cond", "total"] }, code: { zh: codeStrZh, en: codeStrEn }, promptType: 'promptOutput' };
+            },
+            // 題型 2: For 元素調換 (Bubble sort step)
+            () => {
+                let arr = Array.from({length: 4}, () => Math.floor(Math.random() * 10) + 1);
+                let original = [...arr]; let traceData = [];
+                for(let i=0; i<3; i++) {
+                    let cond = arr[i] > arr[i+1];
+                    if(cond) { let temp = arr[i]; arr[i] = arr[i+1]; arr[i+1] = temp; }
+                    traceData.push([i, arr[i], arr[i+1], cond?'True':'False', `[${arr.join(', ')}]`]);
+                }
+                let target = Math.floor(Math.random()*4);
+                return { answer: arr[target].toString(), traceData: traceData, cols: {zh:["i","lst[i]","lst[i+1]","lst[i] > lst[i+1]", "lst 狀態"], en:["i","lst[i]","lst[i+1]","lst[i] > lst[i+1]", "lst State"]}, code: { zh: `lst = [${original.join(', ')}]\nfor i in range(3):\n    if lst[i] > lst[i+1]:\n        temp = lst[i]\n        lst[i] = lst[i+1]\n        lst[i+1] = temp\n\n# 請問 lst[${target}] 最後的數值是什麼？`, en: `lst = [${original.join(', ')}]\nfor i in range(3):\n    if lst[i] > lst[i+1]:\n        temp = lst[i]\n        lst[i] = lst[i+1]\n        lst[i+1] = temp\n\n# What is the final value of lst[${target}]?` }, promptType: 'promptArray' };
+            },
+            // 題型 3 (NEW): 尋找最大 / 最小值 (Max / Min) (長度4-5)
+            () => {
+                let len = Math.floor(Math.random() * 2) + 4; // 4 or 5
+                let arr = Array.from({length: len}, () => Math.floor(Math.random() * 30) + 1);
+                let isMax = Math.random() > 0.5; let traceData = [];
+                let m = arr[0]; let operator = isMax ? '>' : '<';
+                for(let i=1; i<len; i++) {
+                    let cond = isMax ? (arr[i] > m) : (arr[i] < m);
+                    if(cond) m = arr[i];
+                    traceData.push([i, arr[i], cond ? 'True' : 'False', m]);
+                }
+                return {
+                    answer: m.toString(), traceData: traceData,
+                    cols: {zh:["i","data[i]", `data[i] ${operator} m`, "m"], en:["i","data[i]", `data[i] ${operator} m`, "m"]},
+                    code: {
+                        zh: `data = [${arr.join(', ')}]\nm = data[0]\nfor i in range(1, ${len}):\n    if data[i] ${operator} m:\n        m = data[i]\n\n# 請問 m 最後的數值是什麼？`,
+                        en: `data = [${arr.join(', ')}]\nm = data[0]\nfor i in range(1, ${len}):\n    if data[i] ${operator} m:\n        m = data[i]\n\n# What is the final value of m?`
+                    }, promptType: 'promptOutput'
+                };
+            },
+            // 題型 4 (NEW): 陣列總和 (Sum) (長度4-5)
+            () => {
+                let len = Math.floor(Math.random() * 2) + 4; // 4 or 5
+                let arr = Array.from({length: len}, () => Math.floor(Math.random() * 10) + 1);
+                let traceData = []; let total = 0;
+                for(let i=0; i<len; i++) {
+                    total += arr[i];
+                    traceData.push([i, arr[i], total]);
+                }
+                return {
+                    answer: total.toString(), traceData: traceData,
+                    cols: {zh:["i","data[i]", "total"], en:["i","data[i]", "total"]},
+                    code: {
+                        zh: `data = [${arr.join(', ')}]\ntotal = 0\nfor i in range(${len}):\n    total = total + data[i]\n\n# 請問 total (代表總和) 最後的數值是什麼？`,
+                        en: `data = [${arr.join(', ')}]\ntotal = 0\nfor i in range(${len}):\n    total = total + data[i]\n\n# What is the final value of total?`
+                    }, promptType: 'promptOutput'
+                };
+            },
+            // 題型 5 (NEW): 條件計數 (Count with condition) (長度4-5)
+            () => {
+                let len = Math.floor(Math.random() * 2) + 4; // 4 or 5
+                let arr = Array.from({length: len}, () => Math.floor(Math.random() * 20) + 1);
+                let conditionMod = Math.random() > 0.5 ? 2 : 3;
+                let traceData = []; let count = 0;
+                for(let i=0; i<len; i++) {
+                    let isMatch = arr[i] % conditionMod === 0;
+                    if(isMatch) count++;
+                    traceData.push([i, arr[i], isMatch ? 'True' : 'False', count]);
+                }
+                return {
+                    answer: count.toString(), traceData: traceData,
+                    cols: {zh:["i","data[i]", `data[i] % ${conditionMod} == 0`, "count"], en:["i","data[i]", `data[i] % ${conditionMod} == 0`, "count"]},
+                    code: {
+                        zh: `count = 0\ndata = [${arr.join(', ')}]\nfor i in range(${len}):\n    if data[i] % ${conditionMod} == 0:\n        count = count + 1\n\n# 請問 count 最後的數值是什麼？`,
+                        en: `count = 0\ndata = [${arr.join(', ')}]\nfor i in range(${len}):\n    if data[i] % ${conditionMod} == 0:\n        count = count + 1\n\n# What is the final value of count?`
+                    }, promptType: 'promptOutput'
+                };
+            },
+            // 題型 6 (NEW): 陣列元素移位 (Array Shift) (長度4-5)
+            () => {
+                let len = Math.floor(Math.random() * 2) + 4; // 4 or 5
+                let arr = Array.from({length: len}, () => Math.floor(Math.random() * 10) + 1);
+                let original = [...arr]; let traceData = [];
+                let isLeftShift = Math.random() > 0.5; // 左移 (data[i] = data[i+1]) 或 右骨牌效應 (data[i] = data[i-1])
+                
+                if (isLeftShift) {
+                    for(let i=0; i<len-1; i++) {
+                        arr[i] = arr[i+1];
+                        traceData.push([i, arr[i+1], `[${arr.join(', ')}]`]);
+                    }
+                    let target = Math.floor(Math.random() * (len-1));
+                    return {
+                        answer: arr[target].toString(), traceData: traceData,
+                        cols: {zh:["i", "data[i+1]", "陣列 data 變化"], en:["i", "data[i+1]", "Array data state"]},
+                        code: {
+                            zh: `data = [${original.join(', ')}]\nfor i in range(${len-1}):\n    data[i] = data[i+1]\n\n# 請問迴圈結束後，data[${target}] 的數值是什麼？`,
+                            en: `data = [${original.join(', ')}]\nfor i in range(${len-1}):\n    data[i] = data[i+1]\n\n# What is the final value of data[${target}]?`
+                        }, promptType: 'promptArray'
+                    };
+                } else {
+                    for(let i=1; i<len; i++) {
+                        arr[i] = arr[i-1];
+                        traceData.push([i, arr[i-1], `[${arr.join(', ')}]`]);
+                    }
+                    let target = Math.floor(Math.random() * (len-1)) + 1;
+                    return {
+                        answer: arr[target].toString(), traceData: traceData,
+                        cols: {zh:["i", "data[i-1]", "陣列 data 變化"], en:["i", "data[i-1]", "Array data state"]},
+                        code: {
+                            zh: `data = [${original.join(', ')}]\nfor i in range(1, ${len}):\n    data[i] = data[i-1]\n\n# 請問迴圈結束後，data[${target}] 的數值是什麼？`,
+                            en: `data = [${original.join(', ')}]\nfor i in range(1, ${len}):\n    data[i] = data[i-1]\n\n# What is the final value of data[${target}]?`
+                        }, promptType: 'promptArray'
+                    };
+                }
+            }
+        ];
+
+        // --- 3. 工作紙題庫 (固定內容) ---
+        const worksheetData = [
+            {
+                name: "工作紙一 Part1 Q1",
+                gen: () => {
+                    let trace = [], I = 1, J = 0, iter = 1;
+                    while(I < 4) { J = J + (I*2); I = I + 1; trace.push([iter, I<=4?'True':'False', J, I]); iter++; }
+                    return { answer: J.toString(), traceData: trace, cols: {zh: ["次數", "I < 4", "J", "I"], en: ["Iter", "I < 4", "J", "I"]}, code: {zh: "I ← 1\nJ ← 0\n當 I < 4\n  J = J + (I * 2)\n  I ← I + 1\n\n# 完成算法後 J 的值 :", en: "I ← 1\nJ ← 0\nWHILE I < 4\n  J = J + (I * 2)\n  I ← I + 1\n\n# Final value of J:"}, promptType: 'promptOutput' };
+                }
+            },
+            {
+                name: "工作紙一 Part1 Q2",
+                gen: () => {
+                    let trace = [], S = 1;
+                    for(let J=1; J<=4; J++) { let cond = J<3; if(cond) S*=2; else S+=3; trace.push([J, cond?'True':'False', J, S]); }
+                    return { answer: S.toString(), traceData: trace, cols: {zh:["次數","J < 3","J","S"], en:["Iter","J < 3","J","S"]}, code: {zh:"S ← 1\n設 J 由 1 到 4\n    如果 J < 3\n        則 S ← S * 2\n    否則 S ← S + 3\n\n# 完成算法後 S 的值 :", en:"S ← 1\nFOR J FROM 1 TO 4\n  IF J < 3 THEN\n    S ← S * 2\n  ELSE\n    S ← S + 3\n\n# Final value of S:"}, promptType: 'promptOutput' };
+                }
+            },
+            {
+                name: "工作紙一 Part1 Q3",
+                gen: () => {
+                    let trace = [], V = 0;
+                    for(let L=1; L<=6; L++) { let cond = L%2===0; if(cond) V+=1; trace.push([L, cond?'True':'False', L, V]); }
+                    return { answer: V.toString(), traceData: trace, cols: {zh:["次數","L % 2 = 0","L","V"], en:["Iter","L % 2 = 0","L","V"]}, code: {zh:"V ← 0\n設 L 由 1 到 6\n    如果 L % 2 = 0\n        則 V ← V + 1\n\n# 變量 V 的值 :", en:"V ← 0\nFOR L FROM 1 TO 6\n  IF L % 2 = 0 THEN\n    V ← V + 1\n\n# Final value of V:"}, promptType: 'promptOutput' };
+                }
+            },
+            {
+                name: "工作紙一 Part2 Q5 (陣列)",
+                gen: () => {
+                    let A = [0, 20, 50, 70, 10, 30], X = 50, trace = [];
+                    for(let i=1; i<=5; i++) { let cond = A[i]<X; if(cond) A[i] = X - A[i]; X -= 5; trace.push([i, cond?'True':'False', `[${A.slice(1).join(',')}]`, X]); }
+                    return { answer: `[${A.slice(1).join(', ')}]`, traceData: trace, cols: {zh:["i","A[i] < X","陣列 A","X"], en:["i","A[i] < X","Array A","X"]}, code: {zh:"陣列 A = [20, 50, 70, 10, 30]\ni = 1\nX = 50\n當 i <= 5:\n     如果 A[i] < X \n           A[i] = X - A[i]\n     X = X - 5\n\n# 寫出完成算法後陣列內容 (例如: [1,2,3,4,5]) :", en:"Array A = [20, 50, 70, 10, 30]\ni = 1\nX = 50\nWHILE i <= 5:\n  IF A[i] < X THEN\n    A[i] = X - A[i]\n  X = X - 5\n\n# Final Array A (e.g. [1,2,3,4,5]) :"}, promptType: 'promptOutput' };
+                }
+            },
+            {
+                name: "工作紙二 Part3 Q1 (Python while)",
+                gen: () => {
+                    let num = 77, c = 0, trace = [];
+                    while(num > 1) { 
+                        let cond = num%7===0; 
+                        if(cond) c++; 
+                        trace.push([num, num>1?'True':'False', cond?'True':'False', c]);
+                        num--; 
+                    }
+                    return { answer: c.toString(), traceData: trace, cols: {zh:["num","> 1","num % 7 == 0","c"], en:["num","> 1","num % 7 == 0","c"]}, code: {zh:"num = 77\nc = 0\nwhile num > 1:\n	if num % 7 == 0:\n		c = c+1\n	num = num-1\n\n# 完成算法後 c 的值 :", en:"num = 77\nc = 0\nwhile num > 1:\n	if num % 7 == 0:\n		c = c+1\n	num = num-1\n\n# Final value of c:"}, promptType: 'promptOutput' };
+                }
+            },
+            {
+                name: "工作紙二 Part3 Q2 (Python for)",
+                gen: () => {
+                    let S = 0, trace = [];
+                    for(let i=0; i<6; i++) {
+                        let cond = i<3;
+                        if(cond) S = S+i; else S = S*2 - i;
+                        trace.push([i, cond?'True':'False', S]);
+                    }
+                    return { answer: S.toString(), traceData: trace, cols: {zh:["i","i < 3","S"], en:["i","i < 3","S"]}, code: {zh:"S = 0\nfor i in range(0,6):\n	if i<3:\n		S = S+i\n	else:\n		S = S*2 - i\n\n# 完成算法後 S 的值 :", en:"S = 0\nfor i in range(0,6):\n	if i<3:\n		S = S+i\n	else:\n		S = S*2 - i\n\n# Final value of S:"}, promptType: 'promptOutput' };
+                }
+            },
+            {
+                name: "工作紙二 Part3 Q3 (Python for)",
+                gen: () => {
+                    let A = 0, B = 1, trace = [];
+                    for(let i=1; i<6; i++) {
+                        let T = A+B; A = B; B = T;
+                        trace.push([i, T, A, B]);
+                    }
+                    return { answer: A.toString(), traceData: trace, cols: {zh:["i","T","A","B"], en:["i","T","A","B"]}, code: {zh:"A = 0\nB = 1\nfor i in range(1,6):\n	T = A+B\n	A = B\n	B = T\n\n# 完成算法後 A 的值 :", en:"A = 0\nB = 1\nfor i in range(1,6):\n	T = A+B\n	A = B\n	B = T\n\n# Final value of A:"}, promptType: 'promptOutput' };
+                }
+            },
+            {
+                name: "工作紙二 Part4 Q4 (Python List)",
+                gen: () => {
+                    let count = 0, data = [0, 1, 0, 1, 0], trace = [];
+                    for(let i=0; i<5; i++) {
+                        data[i] = 1 - data[i];
+                        if (data[i] === 1) count++;
+                        trace.push([i, `[${data.join(',')}]`, count]);
+                    }
+                    return { answer: count.toString(), traceData: trace, cols: {zh:["i","陣列 data","count"], en:["i","Array data","count"]}, code: {zh:"count = 0\ndata = [0, 1, 0, 1, 0]\nfor i in range(5):\n	data[i] = 1 - data[i]\n	if data[i] == 1:\n		count = count+1\n\n# 寫出完成算法count的值 :", en:"count = 0\ndata = [0, 1, 0, 1, 0]\nfor i in range(5):\n	data[i] = 1 - data[i]\n	if data[i] == 1:\n		count = count+1\n\n# Final value of count:"}, promptType: 'promptOutput' };
+                }
+            },
+            {
+                name: "工作紙二 Part4 Q5 (Python List)",
+                gen: () => {
+                    let A = [1,0,0,0,0], K = 3, i = 0, trace = [];
+                    while(i < 4) {
+                        i = i+1;
+                        A[i] = A[i-1] + K;
+                        K = K*2;
+                        trace.push([i, `[${A.join(',')}]`, K]);
+                    }
+                    return { answer: K.toString(), traceData: trace, cols: {zh:["i","陣列 A","K"], en:["i","Array A","K"]}, code: {zh:"A = [1,0,0,0,0]\nK = 3\ni = 0\nwhile i<4:\n	i = i+1\n	A[i] = A[i-1]+K\n	K = K*2\n\n# 寫出完成算法K的值 :", en:"A = [1,0,0,0,0]\nK = 3\ni = 0\nwhile i<4:\n	i = i+1\n	A[i] = A[i-1]+K\n	K = K*2\n\n# Final value of K:"}, promptType: 'promptOutput' };
+                }
+            }
+        ];
+
+        // 載入下拉選單
+        worksheetData.forEach((item, index) => {
+            const opt = document.createElement('option');
+            opt.value = index;
+            opt.textContent = item.name;
+            DOM.worksheetSelect.appendChild(opt);
+        });
+
+        function applyLanguage() {
+            DOM.langToggle.textContent = dict[currentLang].langToggle;
+            DOM.mainTitle.textContent = dict[currentLang].mainTitle;
+            DOM.qTitle.textContent = dict[currentLang].qTitle;
+            DOM.newQBtn.textContent = dict[currentLang].newQBtn;
+            DOM.submitBtn.textContent = dict[currentLang].submitBtn;
+            DOM.tableTitle.textContent = dict[currentLang].tableTitle;
+            DOM.stepBtnText.textContent = dict[currentLang].stepBtnText;
+            DOM.showAllBtnText.textContent = dict[currentLang].showAllBtnText;
+            DOM.tableTip.textContent = dict[currentLang].tableTip;
+            DOM.tabPseudo.textContent = dict[currentLang].tabPseudo;
+            DOM.tabPython.textContent = dict[currentLang].tabPython;
+            DOM.tabWorksheet.textContent = dict[currentLang].tabWorksheet;
+            
+            if (currentQuestion) {
+                DOM.codeDisplay.textContent = currentQuestion.code[currentLang];
+                DOM.qPrompt.textContent = dict[currentLang][currentQuestion.promptType];
+                renderTableHeader();
+            }
+            DOM.feedbackMsg.textContent = "";
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            applyLanguage();
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            DOM.tabPseudo.className = "pb-2 px-1 text-lg transition-colors tab-inactive whitespace-nowrap";
+            DOM.tabPython.className = "pb-2 px-1 text-lg transition-colors tab-inactive whitespace-nowrap";
+            DOM.tabWorksheet.className = "pb-2 px-1 text-lg transition-colors tab-inactive whitespace-nowrap";
+            
+            if (mode === 'pseudo') DOM.tabPseudo.classList.replace('tab-inactive', 'tab-active');
+            else if (mode === 'python') DOM.tabPython.classList.replace('tab-inactive', 'tab-active');
+            else if (mode === 'worksheet') DOM.tabWorksheet.classList.replace('tab-inactive', 'tab-active');
+
+            if (mode === 'worksheet') {
+                DOM.newQBtn.classList.add('hidden');
+                DOM.worksheetSelect.classList.remove('hidden');
+            } else {
+                DOM.newQBtn.classList.remove('hidden');
+                DOM.worksheetSelect.classList.add('hidden');
+            }
+            
+            generateQuestion();
+        }
+
+        function renderTableHeader() {
+            if(!currentQuestion) return;
+            const cols = currentQuestion.cols[currentLang];
+            let html = '<tr>';
+            cols.forEach(col => {
+                html += `<th class="border border-slate-300 px-4 py-3 text-slate-700 bg-slate-200 font-semibold">${col}</th>`;
+            });
+            html += '</tr>';
+            DOM.traceHead.innerHTML = html;
+        }
+
+        function generateQuestion() {
+            if (currentMode === 'worksheet') {
+                const idx = DOM.worksheetSelect.value;
+                currentQuestion = worksheetData[idx].gen();
+            } else {
+                let generatorList = currentMode === 'pseudo' ? pseudoGenerators : pythonGenerators;
+                const randomGen = generatorList[Math.floor(Math.random() * generatorList.length)];
+                currentQuestion = randomGen();
+            }
+            
+            currentStepIndex = 0;
+            DOM.answerInput.value = '';
+            DOM.feedbackMsg.textContent = '';
+            DOM.traceBody.innerHTML = '';
+            
+            DOM.stepBtn.disabled = false;
+            DOM.stepBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            DOM.stepBtn.classList.replace('bg-slate-400', 'bg-blue-500');
+            DOM.stepBtn.classList.replace('hover:bg-slate-500', 'hover:bg-blue-600');
+            DOM.stepBtnText.textContent = dict[currentLang].stepBtnText;
+
+            DOM.showAllBtn.disabled = false;
+            DOM.showAllBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            applyLanguage();
+        }
+
+        function checkAnswer() {
+            const userAnswer = DOM.answerInput.value.trim().replace(/\s+/g, '');
+            const correctAns = currentQuestion.answer.replace(/\s+/g, '');
+            
+            if (!userAnswer) {
+                DOM.feedbackMsg.textContent = dict[currentLang].feedbackEmpty;
+                DOM.feedbackMsg.className = "mt-4 text-lg font-medium min-h-[1.5rem] text-slate-500";
+                return;
+            }
+
+            if (userAnswer === correctAns) {
+                DOM.feedbackMsg.textContent = dict[currentLang].feedbackCorrect;
+                DOM.feedbackMsg.className = "mt-4 text-lg font-medium min-h-[1.5rem] text-emerald-600";
+            } else {
+                DOM.feedbackMsg.textContent = dict[currentLang].feedbackWrong;
+                DOM.feedbackMsg.className = "mt-4 text-lg font-medium min-h-[1.5rem] text-red-500";
+            }
+        }
+
+        function appendRow(rowData) {
+            const tr = document.createElement('tr');
+            tr.className = "fade-in bg-white hover:bg-indigo-50 transition-colors";
+            rowData.forEach(cell => {
+                const td = document.createElement('td');
+                td.className = "border border-slate-300 px-4 py-2 font-mono text-sm";
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+            DOM.traceBody.appendChild(tr);
+        }
+
+        function showNextStep() {
+            if (currentStepIndex >= currentQuestion.traceData.length) return;
+            
+            appendRow(currentQuestion.traceData[currentStepIndex]);
+            DOM.traceBody.parentElement.parentElement.scrollTop = DOM.traceBody.parentElement.parentElement.scrollHeight;
+            currentStepIndex++;
+            
+            checkFinished();
+        }
+
+        function showAllSteps() {
+            if (currentStepIndex >= currentQuestion.traceData.length) return;
+            
+            while(currentStepIndex < currentQuestion.traceData.length) {
+                appendRow(currentQuestion.traceData[currentStepIndex]);
+                currentStepIndex++;
+            }
+            DOM.traceBody.parentElement.parentElement.scrollTop = DOM.traceBody.parentElement.parentElement.scrollHeight;
+            checkFinished();
+        }
+
+        function checkFinished() {
+            if (currentStepIndex >= currentQuestion.traceData.length) {
+                DOM.stepBtn.disabled = true;
+                DOM.stepBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                DOM.stepBtnText.textContent = dict[currentLang].finishedSteps;
+                DOM.stepBtn.classList.replace('bg-blue-500', 'bg-slate-400');
+                DOM.stepBtn.classList.replace('hover:bg-blue-600', 'hover:bg-slate-500');
+                
+                DOM.showAllBtn.disabled = true;
+                DOM.showAllBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        DOM.langToggle.addEventListener('click', toggleLanguage);
+        DOM.newQBtn.addEventListener('click', generateQuestion);
+        DOM.worksheetSelect.addEventListener('change', generateQuestion);
+        DOM.submitBtn.addEventListener('click', checkAnswer);
+        DOM.stepBtn.addEventListener('click', showNextStep);
+        DOM.showAllBtn.addEventListener('click', showAllSteps);
+        DOM.answerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
+
+        generateQuestion();
+    </script>
+</body>
+</html>
