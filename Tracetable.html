@@ -343,7 +343,7 @@
                 gen: () => {
                     let A = [0, 20, 50, 70, 10, 30], X = 50, trace = [];
                     for(let i=1; i<=5; i++) { let cond = A[i]<X; if(cond) {A[i] = X - A[i]; X -= 5;} trace.push([i, cond?'True':'False', `[${A.slice(1).join(',')}]`, X]); }
-                    return { answer: `[${A.slice(1).join(', ')}]`, traceData: trace, cols: {zh:["i","A[i] < X","陣列 A","X"], en:["i","A[i] < X","Array A","X"]}, code: {zh:"陣列 A 初始狀態: \n索引: 1   2   3   4   5\n內容: 20  50  70  10  30\n\ni = 1\nX = 50\n當 i <= 5:\n     如果 A[i] < X \n           A[i] = X - A[i]\n           X = X - 5\n\n# 寫出完成算法後陣列內容 (例如: [1,2,3,4,5]) :", en:"Array A initial state: \nIndex: 1   2   3   4   5\nValue: 20  50  70  10  30\n\ni = 1\nX = 50\nWHILE i <= 5:\n  IF A[i] < X THEN\n    A[i] = X - A[i]\n  X = X - 5\n\n# Final Array A (e.g. [1,2,3,4,5]) :"}, promptType: 'promptOutput' };
+                    return { answer: `[${A.slice(1).join(', ')}]`, traceData: trace, cols: {zh:["i","A[i] < X","陣列 A","X"], en:["i","A[i] < X","Array A","X"]}, code: {zh:"陣列 A 初始狀態: \n索引: 1   2   3   4   5\n內容: 20  50  70  10  30\n\ni = 1\nX = 50\n當 i <= 5:\n     如果 A[i] < X \n           A[i] = X - A[i]\n           X = X - 5\n\n# 寫出完成算法後陣列內容 (例如: [1,2,3,4,5]) :", en:"Array A initial state: \nIndex: 1   2   3   4   5\nValue: 20  50  70  10  30\n\ni = 1\nX = 50\nWHILE i <= 5:\n  IF A[i] < X THEN\n    A[i] = X - A[i]\n    X = X - 5\n\n# Final Array A (e.g. [1,2,3,4,5]) :"}, promptType: 'promptOutput' };
                 }
             },
             {
