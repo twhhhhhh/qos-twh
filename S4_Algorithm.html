@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高中 ICT 程式設計：Python 列表 (S4 - CoreD1/D2)| Interactive Python List</title>
+    <title>S4 D1/D2 算法及程式設計：Python 列表 (List) 重溫</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .list-box {
@@ -214,6 +214,120 @@ for i in range(0, 6):
 print("Even count:", even_count)</pre>
                         <p class="only-zh"><strong>解釋：</strong> 使用 <code>% 2 == 0</code> 來判斷數字除以 2 的餘數是否為 0 (即判斷是否為雙數/偶數)。如果成立，計數器 <code>even_count</code> 就會加 1。</p>
                         <p class="only-en"><strong>Explanation:</strong> We use <code>% 2 == 0</code> to check if the remainder of the number divided by 2 is 0 (i.e., checking if it's an even number). If true, the <code>even_count</code> counter increments by 1.</p>
+                    </div>
+                </details>
+            </div>
+
+            <!-- 1D. 線性搜尋 - For Loop 版本 -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">D. 線性搜尋：For Loop 尋找數值 40 (無 Break)</span>
+                    <span class="only-en">D. Linear Search: For Loop for Value 40 (No Break)</span>
+                </h3>
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="flex-1">
+                        <div id="p1d-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div class="flex gap-4">
+                            <button onclick="P1D.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P1D.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p1d-log"></div>
+                </div>
+                <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
+                    <div class="mt-3 text-sm text-gray-700 space-y-2">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+index = -1 
+
+# 搜尋數值 40 的索引 (沒有 break，會搜尋最後一個出現的位置)
+for i in range(0, 6):
+    if A[i] == 40:
+        index = i
+
+print("數值 40 的索引為 :", index)</pre>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+index = -1 
+
+# Search index of 40 (no break, searches for the last occurrence)
+for i in range(0, 6):
+    if A[i] == 40:
+        index = i
+
+print("Index of 40 is:", index)</pre>
+                        <p class="only-zh"><strong>解釋：</strong> 線性搜尋 (Linear Search) 是一種簡單的搜尋演算法。本段程式使用 <code>for loop</code> 依序檢查每個元素。由於沒有使用 <code>break</code>，程式會一直執行到列表末端。若列表中有多個相同數值，<code>index</code> 會保存<strong>最後一次</strong>符合條件的索引值。若找不到，則保持預設值 <code>-1</code>。</p>
+                        <p class="only-en"><strong>Explanation:</strong> Linear Search is a straightforward search algorithm. This block uses a <code>for loop</code> to inspect each element sequentially. Since there is no <code>break</code> statement, the loop will run to the very end. If there are duplicates, <code>index</code> will keep the <strong>last occurrence's</strong> index. If not found, it remains <code>-1</code>.</p>
+                    </div>
+                </details>
+            </div>
+
+            <!-- 1E. 線性搜尋 - While Loop 與 Flag 終止版本 -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h3 class="text-xl font-bold mb-4">
+                    <span class="only-zh">E. 線性搜尋：While Loop 尋找數值 40 (Flag 提早結束)</span>
+                    <span class="only-en">E. Linear Search: While Loop for Value 40 (Early Exit via Flag)</span>
+                </h3>
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="flex-1">
+                        <div id="p1e-array" class="flex flex-wrap gap-2 mb-6 min-h-[80px]"></div>
+                        <div class="flex gap-4">
+                            <button onclick="P1E.next()" class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 transition shadow-md">
+                                <span class="only-zh">下一步 (Next Step)</span><span class="only-en">Next Step</span>
+                            </button>
+                            <button onclick="P1E.init()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition">
+                                <span class="only-zh">重置 (Reset)</span><span class="only-en">Reset</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm" id="p1e-log"></div>
+                </div>
+                <details class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <summary class="font-semibold cursor-pointer text-blue-700 outline-none">
+                        <span class="only-zh">展開檢視 Python 程式碼及解釋</span>
+                        <span class="only-en">Expand Python Code & Explanation</span>
+                    </summary>
+                    <div class="mt-3 text-sm text-gray-700 space-y-2">
+                        <pre class="only-zh bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+index = -1 
+F = False
+
+# 搜尋數值 40 的索引 (使用 flag 提早終止)
+i = 0
+while i < 6 and F == False:
+    if A[i] == 40:
+        F = True
+        index = i
+    i = i + 1
+
+if F == True:
+    print("數值 40 的索引為 :", index)</pre>
+                        <pre class="only-en bg-gray-800 text-green-400 p-3 rounded-md overflow-x-auto">
+A = [20, 18, 40, 30, 10, 5]
+index = -1 
+F = False
+
+# Search index of 40 (early exit using flag F)
+i = 0
+while i < 6 and F == False:
+    if A[i] == 40:
+        F = True
+        index = i
+    i = i + 1
+
+if F == True:
+    print("Index of 40 is:", index)</pre>
+                        <p class="only-zh"><strong>解釋：</strong> 此版本使用 <code>while loop</code> 以及布林標記變數 (Flag) <code>F</code>。只要找到目標值，<code>F</code> 就會更新為 <code>True</code>，迴圈判斷條件 <code>F == False</code> 將不再成立，從而**提早跳出迴圈**。這樣做可以避免無謂的後續搜尋，提升程式執行效率。</p>
+                        <p class="only-en"><strong>Explanation:</strong> This version uses a <code>while loop</code> combined with a boolean flag <code>F</code>. Once the target value is found, <code>F</code> becomes <code>True</code>. The loop condition <code>F == False</code> breaks, leading to an **early termination**. This avoids searching remaining elements unnecessarily, improving program efficiency.</p>
                     </div>
                 </details>
             </div>
@@ -560,6 +674,48 @@ print(A)
                 zh: (count) => `迴圈結束。<br>雙數項目總數量 = <strong>${count}</strong>`,
                 en: (count) => `Loop finished.<br>Total even items = <strong>${count}</strong>`
             },
+            // P1D (線性搜尋 - For Loop)
+            p1d_init: {
+                zh: "準備開始搜尋...<br>變數 index = -1",
+                en: "Ready to search...<br>Variable index = -1"
+            },
+            p1d_loop: {
+                zh: (i, cur) => `迴圈 i = ${i}<br>讀取 A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>正在比較 A[${i}] == 40...<br>`,
+                en: (i, cur) => `Loop i = ${i}<br>Read A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>Comparing A[${i}] == 40...<br>`
+            },
+            p1d_found: {
+                zh: (i) => `<span class="text-green-600 font-bold">>> 成立! 更新 index = ${i}</span>`,
+                en: (i) => `<span class="text-green-600 font-bold">>> Match! Update index = ${i}</span>`
+            },
+            p1d_not_found: {
+                zh: (index) => `<span class="text-gray-500">>> 不成立。 index 保持為 ${index}</span>`,
+                en: (index) => `<span class="text-gray-500">>> No match. index remains ${index}</span>`
+            },
+            p1d_end: {
+                zh: (index) => `迴圈結束。<br>數值 40 的最後索引位置為：<strong>${index}</strong>`,
+                en: (index) => `Loop finished.<br>Last index position of 40 is: <strong>${index}</strong>`
+            },
+            // P1E (線性搜尋 - While Loop with Flag)
+            p1e_init: {
+                zh: "準備開始搜尋...<br>初始值 index = -1, F = False, i = 0",
+                en: "Ready to search...<br>Initial index = -1, F = False, i = 0"
+            },
+            p1e_loop: {
+                zh: (i, cur, F) => `判斷條件: i < 6 (${i} < 6) 且 F == False (${F} == False)<br>條件符合，進入迴圈。<br>讀取 A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>比較 A[${i}] == 40...<br>`,
+                en: (i, cur, F) => `Condition: i < 6 (${i} < 6) and F == False (${F} == False)<br>Condition met, enter loop.<br>Read A[${i}] = <span class="text-orange-500 font-bold">${cur}</span><br>Comparing A[${i}] == 40...<br>`
+            },
+            p1e_found: {
+                zh: (i) => `<span class="text-green-600 font-bold">>> 成立! 更新 Flag F = True, 記錄 index = ${i}</span>`,
+                en: (i) => `<span class="text-green-600 font-bold">>> Match! Set Flag F = True, record index = ${i}</span>`
+            },
+            p1e_not_found: {
+                zh: () => `<span class="text-gray-500">>> 不成立。 Flag F 保持 False, index 保持 -1。<br>i 遞增為下一索引。</span>`,
+                en: () => `<span class="text-gray-500">>> No match. Flag F remains False, index remains -1.<br>Increment i for next index.</span>`
+            },
+            p1e_end: {
+                zh: (F, i, index) => `迴圈結束。<br>原因：${F ? 'F 已變為 True (搜尋成功)' : 'i 達到 6 (已搜尋全部元素)'}。<br><strong>最終數值 40 的索引為：${index}</strong>`,
+                en: (F, i, index) => `Loop finished.<br>Reason: ${F ? 'F became True (Found!)' : 'i reached 6 (Scanned all elements)'}.<br><strong>Final index of 40 is: ${index}</strong>`
+            },
             // P2A
             p2a_init: {
                 zh: (idx, val) => `準備開始...<br>目標：在索引 ${idx} 插入 ${val}`,
@@ -648,7 +804,7 @@ print(A)
             document.body.setAttribute('data-lang', langState.current);
             
             // 重置所有面板狀態以確保日誌文字即時更新語言
-            P1A.init(); P1B.init(); P1C.init();
+            P1A.init(); P1B.init(); P1C.init(); P1D.init(); P1E.init();
             P2A.init(); P2B.init();
             P3A.init(); P3B.init();
         }
@@ -712,7 +868,7 @@ print(A)
         }
 
         // ==========================================
-        // 第 1 頁：列表運算 (P1A, P1B, P1C)
+        // 第 1 頁：列表運算 (P1A, P1B, P1C, P1D, P1E)
         // ==========================================
         const P1A = {
             arr: [20, 18, 40, 30, 10, 5],
@@ -820,6 +976,86 @@ print(A)
                 } else {
                     document.getElementById('p1c-log').innerHTML = L('p1c_end', this.count);
                     renderArray('p1c-array', this.arr);
+                    this.state = 'done';
+                }
+            }
+        };
+
+        const P1D = {
+            arr: [20, 18, 40, 30, 10, 5],
+            i: 0,
+            index: -1,
+            state: 'idle',
+            init() {
+                this.i = 0;
+                this.index = -1;
+                this.state = 'idle';
+                renderArray('p1d-array', this.arr);
+                document.getElementById('p1d-log').innerHTML = L('p1d_init');
+            },
+            next() {
+                if(this.state === 'done') return;
+                this.state = 'running';
+
+                if (this.i < this.arr.length) {
+                    const currentVal = this.arr[this.i];
+                    let logStr = L('p1d_loop', this.i, currentVal);
+
+                    if (currentVal === 40) {
+                        this.index = this.i;
+                        logStr += L('p1d_found', this.i);
+                    } else {
+                        logStr += L('p1d_not_found', this.index);
+                    }
+
+                    document.getElementById('p1d-log').innerHTML = logStr;
+                    renderArray('p1d-array', this.arr, [this.i]);
+                    this.i++;
+                } else {
+                    document.getElementById('p1d-log').innerHTML = L('p1d_end', this.index);
+                    renderArray('p1d-array', this.arr);
+                    this.state = 'done';
+                }
+            }
+        };
+
+        const P1E = {
+            arr: [20, 18, 40, 30, 10, 5],
+            i: 0,
+            index: -1,
+            F: false,
+            state: 'idle',
+            init() {
+                this.i = 0;
+                this.index = -1;
+                this.F = false;
+                this.state = 'idle';
+                renderArray('p1e-array', this.arr);
+                document.getElementById('p1e-log').innerHTML = L('p1e_init');
+            },
+            next() {
+                if(this.state === 'done') return;
+                this.state = 'running';
+
+                // 判斷 while 迴圈條件：i < 6 且 F == False
+                if (this.i < this.arr.length && this.F === false) {
+                    const currentVal = this.arr[this.i];
+                    let logStr = L('p1e_loop', this.i, currentVal, this.F ? "True" : "False");
+
+                    if (currentVal === 40) {
+                        this.F = true;
+                        this.index = this.i;
+                        logStr += L('p1e_found', this.i);
+                    } else {
+                        logStr += L('p1e_not_found');
+                    }
+
+                    document.getElementById('p1e-log').innerHTML = logStr;
+                    renderArray('p1e-array', this.arr, [this.i]);
+                    this.i++;
+                } else {
+                    document.getElementById('p1e-log').innerHTML = L('p1e_end', this.F, this.i, this.index);
+                    renderArray('p1e-array', this.arr);
                     this.state = 'done';
                 }
             }
@@ -1006,6 +1242,8 @@ print(A)
             P1A.init();
             P1B.init();
             P1C.init();
+            P1D.init();
+            P1E.init();
             P2A.init();
             P2B.init();
             P3A.init();
