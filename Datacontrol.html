@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S4 - CoreA1 Ch2 數據控制 | Data Control </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+
+    <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 id="nav-title" class="text-xl md:text-2xl font-bold tracking-wide">數據控制 (Data Control)</h1>
+            <button id="lang-btn" onclick="toggleLanguage()" class="bg-white text-blue-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-blue-50 transition-all text-sm">
+                English
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 space-y-12">
+
+        <section class="bg-white rounded-xl shadow-sm p-6 border border-slate-100">
+            <h2 id="sec1-title" class="text-2xl font-bold text-slate-900 border-b pb-3 mb-6">1 & 2. 數據有效性檢驗 (Data Validation) 與表單應用</h2>
+            <p id="sec1-desc" class="text-slate-600 mb-6">數據有效性檢驗由**電腦系統自動執行**。請試著點擊下方左側表單的各個輸入欄位，右側將會即時高亮對應的有效性檢驗方法及說明。</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-5 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 id="form-title" class="text-lg font-bold mb-4 text-blue-700">範例登記表單 (互動區域)</h3>
+                    <form onsubmit="event.preventDefault();">
+                        <div class="mb-4">
+                            <label id="lbl-username" class="block text-sm font-semibold mb-1">用戶名 (必填，5-10字元):</label>
+                            <input type="text" id="input-username" onfocus="highlightValidation('completeness-length')" placeholder="例如: ictstudent" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label id="lbl-email" class="block text-sm font-semibold mb-1 font-medium">電郵地址 (特定格式):</label>
+                            <input type="email" id="input-email" onfocus="highlightValidation('format')" placeholder="username@school.edu.hk" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label id="lbl-age" class="block text-sm font-semibold mb-1">年齡 (必須在 11 至 18 之間):</label>
+                            <input type="number" id="input-age" onfocus="highlightValidation('range')" placeholder="15" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label id="lbl-role" class="block text-sm font-semibold mb-1">身份 (預設選項):</label>
+                            <select id="input-role" onfocus="highlightValidation('fixed')" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="Student">學生 (Student)</option>
+                                <option value="Teacher">教師 (Teacher)</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label id="lbl-pwd" class="block text-sm font-semibold mb-1">設定密碼:</label>
+                            <input type="password" id="input-pwd" onfocus="highlightValidation('consistency')" placeholder="******" class="w-full p-2 border rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <label id="lbl-cpwd" class="block text-sm font-semibold mb-1">確認密碼 (必須與上方相同):</label>
+                            <input type="password" id="input-cpwd" onfocus="highlightValidation('consistency')" placeholder="******" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label id="lbl-uid" class="block text-sm font-semibold mb-1">智能卡學號 (不可與他人重複):</label>
+                            <input type="text" id="input-uid" onfocus="highlightValidation('uniqueness')" placeholder="S2026001" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label id="lbl-hkid" class="block text-sm font-semibold mb-1">身份證明號碼 (最後一字為校驗碼):</label>
+                            <input type="text" id="input-hkid" onfocus="highlightValidation('checkdigit')" placeholder="A123456(7)" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4" id="validation-list">
+                    <div id="v-completeness" class="p-4 border rounded-xl bg-white transition-all duration-300">
+                        <h4 class="font-bold text-blue-600 text-base" data-zh="1. 完整性檢驗 (Completeness Check)" data-en="1. Completeness Check">1. 完整性檢驗 (Completeness Check)</h4>
+                        <p class="text-sm mt-1 text-slate-600" data-zh="確保所有必填的欄位（如用戶名）都已經輸入數據，沒有留空。" data-en="Ensures that all mandatory fields (e.g., username) have data entered and are not left blank."></p>
+                    </div>
+                    <div id="v-length" class="p-4 border rounded-xl bg-white transition-all duration-300">
+                        <h4 class="font-bold text-blue-600 text-base" data-zh="2. 長度檢驗 (Length Check)" data-en="2. Length Check">2. 長度檢驗 (Length Check)</h4>
+                        <p class="text-sm mt-1 text-slate-600" data-zh="檢查輸入的字元數目是否在指定的限制內（例如用戶名必須為 5-10 個字元）。" data-en="Checks whether the number of characters entered falls within specific limits (e.g., 5-10 characters)."></p>
+                    </div>
+                    <div id="v-format" class="p-4 border rounded-xl bg-white transition-all duration-300">
+                        <h4 class="font-bold text-blue-600 text-base" data-zh="3. 格式檢驗 (Format Check)" data-en="3. Format Check">3. 格式檢驗 (Format Check)</h4>
+                        <p class="text-sm mt-1 text-slate-600" data-zh="確保數據符合特定的預設樣式（例如電郵必須含有 '@' 及 '.'）。" data-en="Ensures that the data conforms to a specific predefined pattern (e.g., email must contain '@' and '.')."></p>
+                    </div>
+                    <div id="v-range" class="p-4 border rounded-xl bg-white transition-all duration-300">
+                        <h4 class="font-bold text-blue-600 text-base" data-zh="4. 範圍檢驗 (Range Check)" data-en="4. Range Check">4. 範圍檢驗 (Range Check)</h4>
+                        <p class="text-sm mt-1 text-slate-600" data-zh="檢查數值數據是否落在合理的上限和下限之間（例如年齡必須在 11 至 18 之間）。" data-en="Checks whether numerical data falls within a reasonable upper and lower limit (e.g., age between 11 and 18)."></p>
+                    </div>
+                    <div id="v-fixed" class="p-4 border rounded-xl bg-white transition-all duration-300">
+                        <h4 class="font-bold text-blue-600 text-base" data-zh="5. 固定值檢驗 (Fixed Value Check)" data-en="5. Fixed Value Check">5. 固定值檢驗 (Fixed Value Check)</h4>
+                        <p class="text-sm mt-1 text-slate-600" data-zh="限制數據必須屬於一組預先定義好的值（例如下拉式選單中的『學生』或『教師』）。" data-en="Restricts data to a predefined set of values (e.g., selecting 'Student' or 'Teacher' from a dropdown)."></p>
+                    </div>
+                    <div id="v-consistency" class="p-4 border rounded-xl bg-white transition-all duration-300">
+                        <h4 class="font-bold text-blue-600 text-base" data-zh="6. 一致性檢驗 (Consistency Check)" data-en="6. Consistency Check">6. 一致性檢驗 (Consistency Check)</h4>
+                        <p class="text-sm mt-1 text-slate-600" data-zh="比較兩個或多個相關欄位的數據是否互相吻合（例如『密碼』與『確認密碼』必須相同）。" data-en="Compares data across two or more related fields to ensure they match logically (e.g., 'Password' and 'Confirm Password')."></p>
+                    </div>
+                    <div id="v-uniqueness" class="p-4 border rounded-xl bg-white transition-all duration-300">
+                        <h4 class="font-bold text-blue-600 text-base" data-zh="7. 唯一性檢驗 (Uniqueness Check)" data-en="7. Uniqueness Check">7. 唯一性檢驗 (Uniqueness Check)</h4>
+                        <p class="text-sm mt-1 text-slate-600" data-zh="檢查輸入的數據在資料庫中是否獨一無二，避免重複（例如學號、身份證號碼）。" data-en="Checks whether the entered data is unique within the database to prevent duplicates (e.g., Student ID)."></p>
+                    </div>
+                    <div id="v-checkdigit" class="p-4 border rounded-xl bg-white transition-all duration-300">
+                        <h4 class="font-bold text-blue-600 text-base" data-zh="8. 檢查數位檢驗 (Check Digit Check)" data-en="8. Check Digit Check">8. 檢查數位檢驗 (Check Digit Check)</h4>
+                        <p class="text-sm mt-1 text-slate-600" data-zh="利用數學公式對號碼前面的數字進行計算，得出最後一位數（檢查數位）並進行核對（如 HKID 或 ISBN）。" data-en="Applies a mathematical formula to the leading digits to calculate a final digit (check digit) to detect manual entry errors."></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl shadow-sm p-6 border border-slate-100">
+            <h2 id="sec3-title" class="text-2xl font-bold text-slate-900 border-b pb-3 mb-6">3. 數據傳輸控制：奇偶檢查 (Parity Check) 互動模擬</h2>
+            <p id="sec3-desc" class="text-slate-600 mb-6">奇偶檢查是一種用於偵測**數據傳輸錯誤**的方法。請選擇校驗模式，並點擊下方的二進制位元 (Bit) 來改變數據，觀察系統如何即時計算並找出錯誤！</p>
+            
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 max-w-3xl mx-auto">
+                <div class="flex items-center justify-center space-x-6 mb-6">
+                    <span id="lbl-parity-mode" class="font-semibold text-slate-700">選擇校驗模式:</span>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" name="parityMode" value="even" checked onclick="calculateParity()" class="form-radio text-blue-600 h-4 w-4">
+                        <span id="lbl-even" class="ml-2 text-sm font-medium text-slate-700">偶校驗 (Even Parity)</span>
+                    </label>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="radio" name="parityMode" value="odd" onclick="calculateParity()" class="form-radio text-blue-600 h-4 w-4">
+                        <span id="lbl-odd" class="ml-2 text-sm font-medium text-slate-700">奇校驗 (Odd Parity)</span>
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-8 gap-2 md:gap-4 mb-6">
+                    <div class="text-center"><div class="text-xs font-bold text-slate-400 mb-1">Data 1</div><button onclick="toggleBit(0)" id="bit-0" class="w-full py-4 rounded-lg text-xl font-bold bg-blue-100 border-2 border-blue-300 text-blue-800 transition-all">0</button></div>
+                    <div class="text-center"><div class="text-xs font-bold text-slate-400 mb-1">Data 2</div><button onclick="toggleBit(1)" id="bit-1" class="w-full py-4 rounded-lg text-xl font-bold bg-blue-100 border-2 border-blue-300 text-blue-800 transition-all">1</button></div>
+                    <div class="text-center"><div class="text-xs font-bold text-slate-400 mb-1">Data 3</div><button onclick="toggleBit(2)" id="bit-2" class="w-full py-4 rounded-lg text-xl font-bold bg-blue-100 border-2 border-blue-300 text-blue-800 transition-all">0</button></div>
+                    <div class="text-center"><div class="text-xs font-bold text-slate-400 mb-1">Data 4</div><button onclick="toggleBit(3)" id="bit-3" class="w-full py-4 rounded-lg text-xl font-bold bg-blue-100 border-2 border-blue-300 text-blue-800 transition-all">1</button></div>
+                    <div class="text-center"><div class="text-xs font-bold text-slate-400 mb-1">Data 5</div><button onclick="toggleBit(4)" id="bit-4" class="w-full py-4 rounded-lg text-xl font-bold bg-blue-100 border-2 border-blue-300 text-blue-800 transition-all">0</button></div>
+                    <div class="text-center"><div class="text-xs font-bold text-slate-400 mb-1">Data 6</div><button onclick="toggleBit(5)" id="bit-5" class="w-full py-4 rounded-lg text-xl font-bold bg-blue-100 border-2 border-blue-300 text-blue-800 transition-all">0</button></div>
+                    <div class="text-center"><div class="text-xs font-bold text-slate-400 mb-1">Data 7</div><button onclick="toggleBit(6)" id="bit-6" class="w-full py-4 rounded-lg text-xl font-bold bg-blue-100 border-2 border-blue-300 text-blue-800 transition-all">1</button></div>
+                    <div class="text-center"><div class="text-xs font-bold text-purple-500 mb-1">Parity</div><button onclick="toggleBit(7)" id="bit-7" class="w-full py-4 rounded-lg text-xl font-bold bg-purple-100 border-2 border-purple-400 text-purple-800 transition-all">1</button></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="text-sm">
+                        <span id="lbl-count-ones" class="font-medium text-slate-600">當前「1」的總數量 (包括校驗位):</span> 
+                        <span id="ones-count" class="font-bold text-lg text-blue-600 ml-1">4</span>
+                    </div>
+                    <div id="parity-result" class="px-6 py-2 rounded-full font-bold text-white transition-all shadow">
+                        檢查通過 (Pass)
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-blue-50 rounded text-xs text-blue-800 space-y-1">
+                    <p id="parity-tip-1">💡 <b>偶校驗原理：</b> 所有位元中「1」的總數必須是<b>偶數</b>。如果傳輸過程中某個 0 變成了 1，總數變成奇数，電腦就會發現錯誤！</p>
+                    <p id="parity-tip-2">⚠️ <b>缺點：</b> 如果同時有兩個位元發生錯誤（例如兩個 0 同時變成 1），奇偶檢查將無法偵測出錯誤。</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl shadow-sm p-6 border border-slate-100">
+            <h2 id="sec4-title" class="text-2xl font-bold text-slate-900 border-b pb-3 mb-6">4. 數據驗證 (Data Verification)</h2>
+            <p id="sec4-desc" class="text-slate-600 mb-4">與自動化的數據有效性檢驗 (Validation) 不同，<b>數據驗證 (Verification)</b> 的目的是為了確保輸入電腦的數據與**原始源文件完全一致**。這部分通常涉及<b>人手參與</b>。</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div class="border border-slate-200 p-5 rounded-xl bg-slate-50">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <div class="bg-emerald-500 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center font-bold">1</div>
+                        <h3 id="verify-m1-title" class="font-bold text-slate-800">雙重數據輸入 (Double Entry)</h3>
+                    </div>
+                    <p id="verify-m1-desc" class="text-sm text-slate-600 leading-relaxed">由兩位不同的操作員獨立輸入同一份數據，或由同一人輸入兩次。電腦隨後比對兩次輸入的結果，如果發現不吻合，則提示需要更正。這常用於極度重要的數據（如設定新密碼、銀行帳號登記）。</p>
+                </div>
+
+                <div class="border border-slate-200 p-5 rounded-xl bg-slate-50">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <div class="bg-emerald-500 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center font-bold">2</div>
+                        <h3 id="verify-m2-title" class="font-bold text-slate-800">視覺檢查 / 校對 (Visual Check / Proofreading)</h3>
+                    </div>
+                    <p id="verify-m2-desc" class="text-sm text-slate-600 leading-relaxed">在數據輸入完成後，由人工將螢幕上顯示的數據與原始的紙張文件或源單據逐一進行肉眼對比校對，以找出輸入時的人為筆誤。雖然效率較低，但能有效確保數據與源頭一致。</p>
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-amber-50 border border-amber-200 text-amber-900 text-sm rounded-lg flex items-start space-x-2">
+                <span class="font-bold">🎯 考試必背對比 (Summary):</span>
+                <ul class="list-disc list-inside space-y-1 text-xs md:text-sm">
+                    <li><b id="tip-val">有效性檢驗 (Validation):</b> 檢查數據是否「合理、符合規則」 (電腦自動處理)。</li>
+                    <li><b id="tip-ver">數據驗證 (Verification):</b> 檢查數據是否「與原本的一模一樣」 (通常涉及人手)。</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-400 text-center py-4 text-xs mt-auto">
+        <p>© 2026 高中 ICT 課題自學平台 - 數據控制. Powered by Tailwind CSS & Vanilla JS.</p>
+    </footer>
+
+    <script>
+        // 1. 語系資料字典
+        let currentLang = 'zh';
+        const langData = {
+            zh: {
+                navTitle: "數據控制 (Data Control) 自學平台",
+                sec1Title: "1 & 2. 數據有效性檢驗 (Data Validation) 與表單應用",
+                sec1Desc: "數據有效性檢驗由電腦系統自動執行。請試著點擊下方左側表單的各個輸入欄位，右側將會即時高亮對應的有效性檢驗方法及說明。",
+                formTitle: "範例登記表單 (互動區域)",
+                lblUsername: "用戶名 (必填，5-10字元):",
+                lblEmail: "電郵地址 (特定格式):",
+                lblAge: "年齡 (必須在 11 至 18 之間):",
+                lblRole: "身份 (預設選項):",
+                lblPwd: "設定密碼:",
+                lblCpwd: "確認密碼 (必須與上方相同):",
+                lblUid: "智能卡學號 (不可與他人重複):",
+                lblHkid: "身份證明號碼 (最後一字為校驗碼):",
+                sec3Title: "3. 數據傳輸控制：奇偶檢查 (Parity Check) 互動模擬",
+                sec3Desc: "奇偶檢查是一種用於偵測數據傳輸錯誤的方法。請選擇校驗模式，並點擊下方的二進制位元 (Bit) 來改變數據，觀察系統如何即時計算並找出錯誤！",
+                lblParityMode: "選擇校驗模式:",
+                lblEven: "偶校驗 (Even Parity)",
+                lblOdd: "奇校驗 (Odd Parity)",
+                lblCountOnes: "當前「1」的總數量 (包括校驗位):",
+                parityPass: "檢查通過 (Pass)",
+                parityFail: "偵測到錯誤！(Error)",
+                parityTip1: "💡 <b>偶校驗原理：</b> 所有位元中「1」的總數必須是<b>偶數</b>。如果傳輸過程中某個 0 變成了 1，總數變成奇數，電腦就會發現錯誤！",
+                parityTip1Odd: "💡 <b>奇校驗原理：</b> 所有位元中「1」的總數必須是<b>奇數</b>。如果傳輸過程中某個 0 變成了 1，總數變成偶數，電腦就會發現錯誤！",
+                parityTip2: "⚠️ <b>缺點：</b> 如果同時有兩個位元發生錯誤（例如兩個 0 同時變成 1），奇偶檢查將無法偵測出錯誤。",
+                sec4Title: "4. 數據驗證 (Data Verification)",
+                sec4Desc: "與自動化的數據有效性檢驗 (Validation) 不同，數據驗證 (Verification) 的目的是為了確保輸入電腦的數據與原始源文件完全一致。這部分通常涉及人手參與。",
+                verifyM1Title: "雙重數據輸入 (Double Entry)",
+                verifyM1Desc: "由兩位不同的操作員獨立輸入同一份數據，或由同一人輸入兩次。電腦隨後比對兩次輸入的結果，如果發現不吻合，則提示需要更正。這常用於極度重要的數據（如設定新密碼、銀行帳號登記）。",
+                verifyM2Title: "視覺檢查 / 校對 (Visual Check / Proofreading)",
+                verifyM2Desc: "在數據輸入完成後，由人工將螢幕上顯示的數據與原始的紙張文件或源單據逐一進行肉眼對比校對，以找出輸入時的人為筆誤。雖然效率較低，但能有效確保數據與源頭一致。",
+                tipVal: "有效性檢驗 (Validation): 檢查數據是否「合理、符合規則」 (電腦自動處理)。",
+                tipVer: "數據驗證 (Verification): 檢查數據是否「與原本的一模一樣」 (通常涉及人手)。"
+            },
+            en: {
+                navTitle: "Data Control Self-Learning Platform",
+                sec1Title: "1 & 2. Data Validation & Form Applications",
+                sec1Desc: "Data validation is performed automatically by computer systems. Try focusing on different form inputs on the left to highlight their corresponding validation checks and definitions on the right.",
+                formTitle: "Example Registration Form (Interactive)",
+                lblUsername: "Username (Required, 5-10 chars):",
+                lblEmail: "Email Address (Specific Format):",
+                lblAge: "Age (Must be between 11 and 18):",
+                lblRole: "Role (Predefined Options):",
+                lblPwd: "Password:",
+                lblCpwd: "Confirm Password (Must match above):",
+                lblUid: "Smart Card ID (Must be unique):",
+                lblHkid: "ID Number (Last character is Check Digit):",
+                sec3Title: "3. Data Transmission Control: Interactive Parity Check Simulator",
+                sec3Desc: "Parity checking is a method used to detect data transmission errors. Select the parity mode, and click the binary bits to flip them. Watch how the system detects errors in real-time!",
+                lblParityMode: "Select Parity Mode:",
+                lblEven: "Even Parity",
+                lblOdd: "Odd Parity",
+                lblCountOnes: "Total number of '1's (including parity bit):",
+                parityPass: "No Error Detected (Pass)",
+                parityFail: "Error Detected! (Fail)",
+                parityTip1: "💡 <b>Even Parity Principle:</b> The total number of '1's must be <b>even</b>. If a '0' accidentally flips to '1' during transmission, the count becomes odd, and the system catches the error!",
+                parityTip1Odd: "💡 <b>Odd Parity Principle:</b> The total number of '1's must be <b>odd</b>. If a '0' accidentally flips to '1' during transmission, the count becomes even, and the system catches the error!",
+                parityTip2: "⚠️ <b>Limitation:</b> If an even number of bits flip simultaneously (e.g., two '0's become '1's), parity check cannot detect the error.",
+                sec4Title: "4. Data Verification",
+                sec4Desc: "Unlike automated validation, Data Verification ensures that the data entered into the computer perfectly matches the original source documents. This usually involves manual intervention.",
+                verifyM1Title: "Double Entry",
+                verifyM1Desc: "Data is entered twice independently by two different operators or by the same person. The system compares both entries and flags any mismatches for correction. Often used for critical data like password creation or banking records.",
+                verifyM2Title: "Visual Check / Proofreading",
+                verifyM2Desc: "After data entry, a person manually checks the data displayed on screen against the original paper forms or source documents to spot typos. Though slower, it effectively ensures fidelity to the source.",
+                tipVal: "Data Validation: Checks if data is 'reasonable and follows rules' (Automated).",
+                tipVer: "Data Verification: Checks if data is 'identical to the original source' (Manual)."
+            }
+        };
+
+        // 2. 語系切換函數
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('lang-btn').innerText = currentLang === 'zh' ? 'English' : '繁體中文';
+            
+            // 更新固定 ID 的文本
+            document.getElementById('nav-title').innerText = langData[currentLang].navTitle;
+            document.getElementById('sec1-title').innerText = langData[currentLang].sec1Title;
+            document.getElementById('sec1-desc').innerText = langData[currentLang].sec1Desc;
+            document.getElementById('form-title').innerText = langData[currentLang].formTitle;
+            document.getElementById('lbl-username').innerText = langData[currentLang].lblUsername;
+            document.getElementById('lbl-email').innerText = langData[currentLang].lblEmail;
+            document.getElementById('lbl-age').innerText = langData[currentLang].lblAge;
+            document.getElementById('lbl-role').innerText = langData[currentLang].lblRole;
+            document.getElementById('lbl-pwd').innerText = langData[currentLang].lblPwd;
+            document.getElementById('lbl-cpwd').innerText = langData[currentLang].lblCpwd;
+            document.getElementById('lbl-uid').innerText = langData[currentLang].lblUid;
+            document.getElementById('lbl-hkid').innerText = langData[currentLang].lblHkid;
+            
+            document.getElementById('sec3-title').innerText = langData[currentLang].sec3Title;
+            document.getElementById('sec3-desc').innerText = langData[currentLang].sec3Desc;
+            document.getElementById('lbl-parity-mode').innerText = langData[currentLang].lblParityMode;
+            document.getElementById('lbl-even').innerText = langData[currentLang].lblEven;
+            document.getElementById('lbl-odd').innerText = langData[currentLang].lblOdd;
+            document.getElementById('lbl-count-ones').innerText = langData[currentLang].lblCountOnes;
+            
+            document.getElementById('parity-tip-2').innerText = langData[currentLang].parityTip2;
+
+            document.getElementById('sec4-title').innerText = langData[currentLang].sec4Title;
+            document.getElementById('sec4-desc').innerText = langData[currentLang].sec4Desc;
+            document.getElementById('verify-m1-title').innerText = langData[currentLang].verifyM1Title;
+            document.getElementById('verify-m1-desc').innerText = langData[currentLang].verifyM1Desc;
+            document.getElementById('verify-m2-title').innerText = langData[currentLang].verifyM2Title;
+            document.getElementById('verify-m2-desc').innerText = langData[currentLang].verifyM2Desc;
+            
+            document.getElementById('tip-val').innerText = langData[currentLang].tipVal;
+            document.getElementById('tip-ver').innerText = langData[currentLang].tipVer;
+
+            // 動態更新 8 種檢驗卡片的內文
+            const cards = document.querySelectorAll('#validation-list [data-zh]');
+            cards.forEach(el => {
+                const targetKey = 'data-' + currentLang;
+                el.innerText = el.getAttribute(targetKey);
+            });
+
+            // 重新計算奇偶校驗以更新反饋文本
+            calculateParity();
+        }
+
+        // 3. 表單與 8 種檢驗互動高亮
+        function highlightValidation(type) {
+            // 清除所有高亮樣式
+            const allCards = document.querySelectorAll('#validation-list > div');
+            allCards.forEach(card => {
+                card.classList.remove('border-blue-500', 'bg-blue-50', 'scale-105', 'shadow-md');
+                card.classList.add('bg-white', 'border-slate-200');
+            });
+
+            // 定義哪些卡片需要被高亮
+            let targetIds = [];
+            if (type === 'completeness-length') targetIds = ['v-completeness', 'v-length'];
+            else if (type === 'format') targetIds = ['v-format'];
+            else if (type === 'range') targetIds = ['v-range'];
+            else if (type === 'fixed') targetIds = ['v-fixed'];
+            else if (type === 'consistency') targetIds = ['v-consistency'];
+            else if (type === 'uniqueness') targetIds = ['v-uniqueness'];
+            else if (type === 'checkdigit') targetIds = ['v-checkdigit'];
+
+            // 套用高亮樣式
+            targetIds.forEach(id => {
+                const card = document.getElementById(id);
+                if (card) {
+                    card.classList.remove('bg-white', 'border-slate-200');
+                    card.classList.add('border-blue-500', 'bg-blue-50', 'scale-105', 'shadow-md');
+                }
+            });
+        }
+
+        // 4. 奇偶檢查模擬器邏輯
+        let bits = [0, 1, 0, 1, 0, 0, 1, 1]; // 預設 8 位數據 (前7位為 Data，最後1位為 Parity)
+
+        function toggleBit(index) {
+            bits[index] = bits[index] === 0 ? 1 : 0;
+            document.getElementById(`bit-${index}`).innerText = bits[index];
+            calculateParity();
+        }
+
+        function calculateParity() {
+            // 計算所有「1」的總數
+            const totalOnes = bits.reduce((sum, bit) => sum + bit, 0);
+            document.getElementById('ones-count').innerText = totalOnes;
+
+            // 獲取當前所選的模式 (Even 或 Odd)
+            const mode = document.querySelector('input[name="parityMode"]:checked').value;
+            const resultDiv = document.getElementById('parity-result');
+            const tip1El = document.getElementById('parity-tip-1');
+
+            // 依據模式動態更新說明文字
+            if (mode === 'even') {
+                tip1El.innerHTML = langData[currentLang].parityTip1;
+            } else {
+                tip1El.innerHTML = langData[currentLang].parityTip1Odd;
+            }
+
+            // 判斷是否符合奇偶規則
+            let isPass = false;
+            if (mode === 'even' && totalOnes % 2 === 0) {
+                isPass = true;
+            } else if (mode === 'odd' && totalOnes % 2 !== 0) {
+                isPass = true;
+            }
+
+            // 更新結果方塊的顏色與文字
+            if (isPass) {
+                resultDiv.innerText = langData[currentLang].parityPass;
+                resultDiv.className = "px-6 py-2 rounded-full font-bold text-white shadow bg-emerald-500 transition-all";
+            } else {
+                resultDiv.innerText = langData[currentLang].parityFail;
+                resultDiv.className = "px-6 py-2 rounded-full font-bold text-white shadow bg-rose-500 animate-pulse transition-all";
+            }
+        }
+
+        // 初始化加載
+        window.onload = function() {
+            // 初始化文字
+            toggleLanguage(); // 先調用一次切換到預設 zh
+            currentLang = 'zh'; // 重置為 zh
+        };
+    </script>
+</body>
+</html>
