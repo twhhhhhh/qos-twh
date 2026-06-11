@@ -48,7 +48,6 @@
 </head>
 <body class="flex flex-col h-screen">
 
-    <!-- 頂部導航欄 -->
     <header class="bg-blue-600 text-white p-4 shadow-md z-10">
         <div class="container mx-auto flex justify-between items-center">
             <div>
@@ -71,23 +70,19 @@
         </div>
     </header>
 
-    <!-- 主要內容區：Canvas 與 側邊欄 -->
     <main class="flex-grow flex items-center justify-center p-4 bg-gray-100 relative">
         <div class="relative w-full max-w-6xl h-full flex flex-row gap-4 items-center justify-center">
             
-            <!-- 左側：Canvas 繪圖區 -->
             <div class="relative flex-grow h-full flex flex-col items-center justify-center">
-                 <!-- 指引文字 -->
-                <div id="instruction-overlay" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/80 backdrop-blur px-4 py-2 rounded-lg text-gray-600 text-sm shadow animate-pulse pointer-events-none z-10">
+                 <div id="instruction-overlay" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/80 backdrop-blur px-4 py-2 rounded-lg text-gray-600 text-sm shadow animate-pulse pointer-events-none z-10">
                     點擊下方方塊查看詳細功能
                 </div>
                 <canvas id="systemCanvas" class="w-full h-[500px] md:h-[600px] border border-gray-200"></canvas>
             </div>
 
-            <!-- 右側：OS 詳細功能面板 (預設隱藏) -->
             <div id="os-panel" class="hidden w-80 bg-white rounded-xl shadow-xl border-l-4 border-yellow-400 p-5 flex-col gap-4 slide-in-right absolute right-4 top-1/2 transform -translate-y-1/2 md:static md:translate-y-0 md:h-[600px] z-20">
                 <div class="flex items-center gap-2 border-b pb-3 mb-2">
-                    <span class="text-3xl">⚙️</span>
+                    <span id="os-panel-icon" class="text-3xl">⚙️</span>
                     <div>
                         <h2 id="os-panel-title" class="text-lg font-bold text-gray-800">操作系統功能</h2>
                         <p id="os-panel-subtitle" class="text-xs text-gray-500">Operating System Functions</p>
@@ -99,16 +94,13 @@
                     </button>
                 </div>
                 
-                <!-- OS 功能列表容器，內容由 JS 生成 -->
                 <div id="os-functions-container" class="space-y-4 overflow-y-auto pr-1 custom-scrollbar flex-1">
-                    <!-- Dynamic Content -->
-                </div>
+                    </div>
             </div>
 
         </div>
     </main>
 
-    <!-- 底部資訊欄 -->
     <footer class="bg-white border-t border-gray-300 p-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 transition-all duration-300" id="info-footer">
         <div class="container mx-auto max-w-4xl">
             <div class="flex items-start gap-4">
@@ -125,7 +117,6 @@
         </div>
     </footer>
 
-    <!-- JavaScript 邏輯 -->
     <script>
         // --- 1. 語言配置與全域變數 ---
         let currentLang = 'zh'; // 'zh' or 'en'
@@ -137,8 +128,6 @@
                 scenarioBtn: "模擬例子：打開影片",
                 langBtn: "Switch to English",
                 instruction: "點擊下方方塊查看詳細功能",
-                osPanelTitle: "操作系統功能",
-                osPanelSubtitle: "核心管理任務",
                 readyTitle: "準備就緒",
                 readyDesc: "請點擊上方的流程圖組件，或按下「模擬例子」按鈕開始學習。",
                 simCompleteTitle: "模擬完成",
@@ -150,8 +139,6 @@
                 scenarioBtn: "Simulation: Open Video",
                 langBtn: "切換至中文",
                 instruction: "Click nodes below for details",
-                osPanelTitle: "OS Functions",
-                osPanelSubtitle: "Core Management Tasks",
                 readyTitle: "Ready",
                 readyDesc: "Please click on the diagram components above, or press the 'Simulation' button to start.",
                 simCompleteTitle: "Simulation Complete",
@@ -159,14 +146,14 @@
             }
         };
 
-        // --- 2. 配置與數據 (組件與OS功能) ---
+        // --- 2. 配置與數據 (組件與動態面板功能) ---
         
-        // 定義系統組件 (Nodes) - 包含雙語標籤與描述
+        // 定義系統組件 (Nodes)
         const nodes = [
             { 
                 id: 'user', 
                 labelZh: '用戶', labelEn: 'User',
-                x: 0.1, y: 0.5, 
+                x: 0.08, y: 0.5, 
                 color: '#60A5FA', // Blue
                 icon: '👤',
                 descZh: '發出指令的人。例如決定觀看一段影片，並透過肢體動作（如手指點擊）操作。',
@@ -175,7 +162,7 @@
             { 
                 id: 'input', 
                 labelZh: '輸入裝置', labelEn: 'Input Device',
-                x: 0.25, y: 0.5, 
+                x: 0.22, y: 0.5, 
                 color: '#34D399', // Green
                 icon: '🖱️',
                 descZh: '將物理動作轉為電子訊號。部分裝置需安裝驅動程式 (Driver) 讓 OS 識別裝置及進行溝通。',
@@ -184,16 +171,25 @@
             { 
                 id: 'app', 
                 labelZh: '應用軟件', labelEn: 'Application',
-                x: 0.4, y: 0.3, 
+                x: 0.36, y: 0.3, 
                 color: '#F87171', // Red
                 icon: '▶️',
-                descZh: '執行特定任務的軟件。例如：影片播放器 (Video Player) 解讀影片檔案格式。',
-                descEn: 'Software for specific tasks. E.g., Video Player decodes the video file format.'
+                descZh: '執行特定任務的軟件。例如：影片播放器 (Video Player) 解讀影片檔案格式。可以延伸調用實用程式維護系統。',
+                descEn: 'Software for specific tasks. E.g., Video Player decodes the video file format. Can extend to utility tools for maintenance.'
+            },
+            { 
+                id: 'utility', 
+                labelZh: '實用程式', labelEn: 'Utility Program',
+                x: 0.48, y: 0.18, 
+                color: '#EC4899', // Pink
+                icon: '🛠️',
+                descZh: '一種系統軟件，負責協助管理、維護、優化和保護電腦系統的資源與運作。',
+                descEn: 'A type of system software designed to help analyze, configure, optimize or maintain a computer.'
             },
             { 
                 id: 'interface', 
                 labelZh: '用戶界面', labelEn: 'Interface (GUI)',
-                x: 0.4, y: 0.7, 
+                x: 0.36, y: 0.7, 
                 color: '#A78BFA', // Purple
                 icon: '🪟',
                 descZh: '人機溝通的橋樑。圖形用戶界面 (GUI) 顯示圖標和視窗，讓用戶知道點擊哪裡。',
@@ -202,16 +198,25 @@
             { 
                 id: 'os', 
                 labelZh: '系統軟件(OS)', labelEn: 'OS\nOperating System',
-                x: 0.58, y: 0.5, 
+                x: 0.58, y: 0.45, 
                 color: '#FBBF24', // Yellow
                 icon: '⚙️',
-                descZh: '操作系統 (如 Windows)。總指揮，負責管理 Process、Memory 及 User 權限 (見右側)。',
+                descZh: '操作系統 (如 Windows)。總指揮，負責管理 Process、Memory 及 User 權限 (見右側面板)。',
                 descEn: 'Operating System. The commander managing Processes, Memory, and Users (See panel on right).'
+            },
+            { 
+                id: 'driver', 
+                labelZh: '驅動程式', labelEn: 'Device Driver',
+                x: 0.58, y: 0.72, 
+                color: '#6366F1', // Indigo
+                icon: '🔌',
+                descZh: '一種特殊的系統軟件，充當作業系統與硬件裝置之間的溝通橋樑（見右側面板）。',
+                descEn: 'A specialized system software acting as a translator/bridge between the OS and hardware devices.'
             },
             { 
                 id: 'hardware', 
                 labelZh: '硬件', labelEn: 'Hardware',
-                x: 0.75, y: 0.5, 
+                x: 0.76, y: 0.5, 
                 color: '#9CA3AF', // Gray
                 icon: '💻',
                 descZh: '實際執行計算和存儲數據的物理設備 (CPU/RAM)。CPU 處理指令，硬碟讀取影片數據。\n 即是 Ch2 所學習的機器周期',
@@ -228,37 +233,87 @@
             }
         ];
 
-        // OS 面板功能列表數據
-        const osFunctionsData = [
-            {
-                colorClass: 'bg-yellow-50 text-yellow-800',
-                titleZh: '1. 處理程序管理 (Process Mgmt)',
-                titleEn: '1. Process Management',
-                descZh: '決定哪個程式可以使用 CPU。安排多工處理 (Multitasking)，確保影片播放器和瀏覽器能同時運作。',
-                descEn: 'Decides which program gets CPU time. Handles multitasking to ensure video players and browsers run simultaneously.'
+        // 彈出式面板（OS / 驅動程式 / 實用程式）數據結構
+        const panelContents = {
+            os: {
+                icon: '⚙️',
+                borderColor: 'border-yellow-400',
+                titleZh: '操作系統功能', titleEn: 'OS Functions',
+                subtitleZh: '核心管理任務', subtitleEn: 'Core Management Tasks',
+                data: [
+                    {
+                        colorClass: 'bg-yellow-50 text-yellow-800',
+                        titleZh: '1. 處理程序管理 (Process Mgmt)', titleEn: '1. Process Management',
+                        descZh: '決定哪個程式可以使用 CPU。安排多工處理 (Multitasking)，確保影片播放器和瀏覽器能同時運作。',
+                        descEn: 'Decides which program gets CPU time. Handles multitasking to ensure video players and browsers run simultaneously.'
+                    },
+                    {
+                        colorClass: 'bg-blue-50 text-blue-800',
+                        titleZh: '2. 記憶體管理 (Memory Mgmt)', titleEn: '2. Memory Management',
+                        descZh: '分配 RAM 給不同的應用程式。確保打開影片時有足夠記憶體載入數據，並在關閉後釋放空間。',
+                        descEn: 'Allocates RAM to applications. Ensures enough memory to load video data and frees space when closed.'
+                    },
+                    {
+                        colorClass: 'bg-green-50 text-green-800',
+                        titleZh: '3. 用戶管理 (User Mgmt)', titleEn: '3. User Management',
+                        descZh: '管理帳號登入與權限。確保只有獲授權的用戶才能存取特定檔案或安裝軟件。',
+                        descEn: 'Manages logins and permissions. Ensures only authorized users can access files or install software.'
+                    },
+                    {
+                        colorClass: 'bg-purple-50 text-purple-800',
+                        titleZh: '4. 檔案管理 (File Mgmt)', titleEn: '4. File Management',
+                        descZh: '以階層式目錄 (Folders) 組織數據，控制檔案的讀取、寫入與刪除。',
+                        descEn: 'Organizes data in hierarchical folders. Controls reading, writing, and deleting of files.'
+                    }
+                ]
             },
-            {
-                colorClass: 'bg-blue-50 text-blue-800',
-                titleZh: '2. 記憶體管理 (Memory Mgmt)',
-                titleEn: '2. Memory Management',
-                descZh: '分配 RAM 給不同的應用程式。確保打開影片時有足夠記憶體載入數據，並在關閉後釋放空間。',
-                descEn: 'Allocates RAM to applications. Ensures enough memory to load video data and frees space when closed.'
+            driver: {
+                icon: '🔌',
+                borderColor: 'border-indigo-500',
+                titleZh: '驅動程式詳情', titleEn: 'Device Driver Details',
+                subtitleZh: '硬件溝通與更新維護', subtitleEn: 'Hardware Bridge & Updates',
+                data: [
+                    {
+                        colorClass: 'bg-indigo-50 text-indigo-800',
+                        titleZh: '💡 主要功能 (Main Functions)', titleEn: '💡 Main Functions',
+                        descZh: '1.協調操作系統作業系統與外部硬件之間的通訊。將操作系統發出的通用指令，翻譯成特定設備（如顯示卡、打印機）能夠理解的電訊號。\n 2. 處理外部硬件的的錯誤訊息',
+                        descEn: '1. Coordinates communication between the operating system and external hardware. Translates general instructions issued by the operating system into electrical signals that specific devices (such as graphics cards and printers) can understand.\n2. Handles error messages from external hardware.'
+                    },
+                    {
+                        colorClass: 'bg-teal-50 text-teal-800',
+                        titleZh: '🚀 更新驅動程式的好處 (Benefits)', titleEn: '🚀 Benefits of Updating',
+                        descZh: '1. 提升效能與系統穩定性：提升硬件的運算效率，減少藍屏或崩潰風險。\n2. 修正錯誤與安全漏洞：修復舊版本已知的 Bug 並阻擋潛在的安全漏洞攻擊。\n3. 支援新功能：使舊硬件能完美兼容全新的操作系統或最新版的應用軟件。',
+                        descEn: '1. Boosts Performance & Stability: Optimizes hardware efficiency and reduces system crashes.\n2. Fixes Bugs & Vulnerabilities: Patches known technical flaws and enhances security.\n3. Enables New Features: Ensures compatibility with the latest OS versions and software releases.'
+                    }
+                ]
             },
-            {
-                colorClass: 'bg-green-50 text-green-800',
-                titleZh: '3. 用戶管理 (User Mgmt)',
-                titleEn: '3. User Management',
-                descZh: '管理帳號登入與權限。確保只有獲授權的用戶才能存取特定檔案或安裝軟件。',
-                descEn: 'Manages logins and permissions. Ensures only authorized users can access files or install software.'
-            },
-            {
-                colorClass: 'bg-purple-50 text-purple-800',
-                titleZh: '4. 檔案管理 (File Mgmt)',
-                titleEn: '4. File Management',
-                descZh: '以階層式目錄 (Folders) 組織數據，控制檔案的讀取、寫入與刪除。',
-                descEn: 'Organizes data in hierarchical folders. Controls reading, writing, and deleting of files.'
+            utility: {
+                icon: '🛠️',
+                borderColor: 'border-pink-500',
+                titleZh: '實用程式功能', titleEn: 'Utility Program Tools',
+                subtitleZh: '系統維護與維修工具', subtitleEn: 'System Maintenance & Optimization',
+                data: [
+                    {
+                        colorClass: 'bg-pink-50 text-pink-800',
+                        titleZh: '💾 磁碟重組工具 (Disk Defragmenter)', titleEn: '💾 Disk Defragmenter',
+                        descZh: '重新排列硬碟中分散的檔案碎片，把相關數據集中儲存到連續的空間，減少磁頭移動的尋道時間，從而顯著加快檔案讀取和系統響應的速度。',
+                        descEn: 'Rearranges fragmented data files on a hard drive to store them in contiguous sectors. This minimizes disk head movement, greatly speeding up file retrieval and overall system performance.'
+                    },
+                    {
+                        colorClass: 'bg-orange-50 text-orange-800',
+                        titleZh: '🛡️ 系統還原 (System Restore)', titleEn: '🛡️ System Restore',
+                        descZh: '在電腦因安裝未知軟件或受損而發生嚴重錯誤時，允許用戶將系統檔案和設定還原到先前建立的正常「還原點」，用作修復系統而不會刪除個人文件。',
+                        descEn: 'Allows users to revert computer system files, registries, and installations back to an earlier stable state ("Restore Point") to fix critical errors, without affecting personal user documents.'
+                    },
+                    {
+                        colorClass: 'bg-cyan-50 text-cyan-800',
+                        titleZh: '📂 檔案管理員 (File Manager)', titleEn: '📂 File Manager',
+                        descZh: '提供圖形化用戶界面（如 Windows 檔案總管），供用戶直觀地瀏覽、建立、複製、移動、重新命名、刪除和系統化組織電腦內所有的檔案與資料夾。',
+                        descEn: 'Provides a graphical user interface (e.g., Windows File Explorer) that lets users easily browse, create, copy, move, rename, delete, and organize files and hierarchical directory structures.'
+                    }
+                ]
             }
-        ];
+        };
 
         // 模擬場景的路徑與雙語文字
         const scenarioPath = [
@@ -279,6 +334,8 @@
             { from: 'os', to: 'interface' },
             { from: 'interface', to: 'app' },
             { from: 'app', to: 'os' }, 
+            { from: 'app', to: 'utility' }, // 應用軟件延伸出實用程式
+            { from: 'os', to: 'driver' },    // OS旁邊加入驅動程式
             { from: 'os', to: 'hardware' },
             { from: 'hardware', to: 'os' },
             { from: 'os', to: 'output' }
@@ -295,8 +352,6 @@
             document.getElementById('scenario-btn-text').textContent = t.scenarioBtn;
             document.getElementById('lang-btn').textContent = t.langBtn;
             document.getElementById('instruction-overlay').textContent = t.instruction;
-            document.getElementById('os-panel-title').textContent = t.osPanelTitle;
-            document.getElementById('os-panel-subtitle').textContent = t.osPanelSubtitle;
             
             // 更新 Footer (如果不是在模擬中)
             if (simulationStep === -1 && activeNodeId === null) {
@@ -308,8 +363,10 @@
                 updateFooter(node);
             }
 
-            // 更新 OS 面板內容
-            renderOSPanel();
+            // 如果有打開面板，同步更新面板內容語言
+            if (['os', 'driver', 'utility'].includes(activeNodeId)) {
+                renderSidePanel();
+            }
 
             // 重繪 Canvas (更新節點文字)
             draw();
@@ -322,20 +379,33 @@
             }
         }
 
-        function renderOSPanel() {
+        function renderSidePanel() {
             const container = document.getElementById('os-functions-container');
             container.innerHTML = ''; // 清空
 
-            osFunctionsData.forEach(item => {
+            const config = panelContents[activeNodeId];
+            if (!config) return;
+
+            // 動態更新面板標題、副標題、圖標和邊框顏色
+            const panelEl = document.getElementById('os-panel');
+            panelEl.classList.remove('border-yellow-400', 'border-indigo-500', 'border-pink-500');
+            panelEl.classList.add(config.borderColor);
+            
+            document.getElementById('os-panel-icon').textContent = config.icon;
+            document.getElementById('os-panel-title').textContent = currentLang === 'zh' ? config.titleZh : config.titleEn;
+            document.getElementById('os-panel-subtitle').textContent = currentLang === 'zh' ? config.subtitleZh : config.subtitleEn;
+
+            // 渲染列表內容
+            config.data.forEach(item => {
                 const div = document.createElement('div');
-                div.className = `${item.colorClass.split(' ')[0]} p-3 rounded-lg`; // 只取 bg color class
+                div.className = `${item.colorClass.split(' ')[0]} p-3 rounded-lg`; 
 
                 const title = document.createElement('h3');
                 title.className = `font-bold ${item.colorClass.split(' ')[1]} text-sm mb-1`;
                 title.textContent = currentLang === 'zh' ? item.titleZh : item.titleEn;
 
                 const p = document.createElement('p');
-                p.className = 'text-xs text-gray-700 leading-relaxed';
+                p.className = 'text-xs text-gray-700 leading-relaxed whitespace-pre-line';
                 p.textContent = currentLang === 'zh' ? item.descZh : item.descEn;
 
                 div.appendChild(title);
@@ -388,7 +458,7 @@
             const dx = toX - fromX;
             const dy = toY - fromY;
             const angle = Math.atan2(dy, dx);
-            const offset = 40; 
+            const offset = 42; 
             const endX = toX - offset * Math.cos(angle);
             const endY = toY - offset * Math.sin(angle);
             const startX = fromX + offset * Math.cos(angle);
@@ -407,7 +477,7 @@
         }
 
         function getNodeRect(node) {
-            const boxW = 110;
+            const boxW = 115;
             const boxH = 90;
             const cx = node.x * width;
             const cy = node.y * height;
@@ -462,13 +532,11 @@
                 ctx.fill();
 
                 ctx.fillStyle = '#1f2937';
-                ctx.font = currentLang === 'zh' ? 'bold 16px "Noto Sans TC"' : 'bold 14px "Roboto"';
+                ctx.font = currentLang === 'zh' ? 'bold 15px "Noto Sans TC"' : 'bold 13px "Roboto"';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // 根據語言獲取標籤
                 const label = currentLang === 'zh' ? node.labelZh : node.labelEn;
-                // 處理可能的多行文字 (若有)
                 const lines = label.split('\n');
                 
                 if (lines.length > 1) {
@@ -517,7 +585,6 @@
             container.classList.add('bg-blue-50');
             setTimeout(() => container.classList.remove('bg-blue-50'), 300);
 
-            // 根據語言更新
             const label = currentLang === 'zh' ? node.labelZh : node.labelEn;
             const desc = currentLang === 'zh' ? node.descZh : node.descEn;
 
@@ -526,14 +593,12 @@
             titleEl.style.color = node.color;
         }
 
-        // 處理 OS 面板開關
         const osPanel = document.getElementById('os-panel');
         
         function closeOSPanel() {
             osPanel.classList.add('hidden');
             osPanel.classList.remove('flex');
-            // 如果當前是 OS 被選中，清除選中狀態
-            if (activeNodeId === 'os' && simulationStep === -1) {
+            if (['os', 'driver', 'utility'].includes(activeNodeId) && simulationStep === -1) {
                 activeNodeId = null;
             }
         }
@@ -566,7 +631,14 @@
             if (clickedNode) {
                 activeNodeId = clickedNode.id;
                 updateFooter(clickedNode);
-                toggleOSPanel(clickedNode.id === 'os');
+                
+                // 當點擊 OS, Driver 或 Utility 時，動態渲染並彈出右側面板
+                if (['os', 'driver', 'utility'].includes(clickedNode.id)) {
+                    renderSidePanel();
+                    toggleOSPanel(true);
+                } else {
+                    toggleOSPanel(false);
+                }
                 
                 if (simulationStep === -1) {
                     const neighborConn = connections.find(c => c.from === clickedNode.id);
@@ -582,11 +654,10 @@
                 }
             } else {
                 activeNodeId = null;
-                // 若點擊空白處，復原預設文字
                 const t = translations[currentLang];
                 document.getElementById('info-title').textContent = t.readyTitle;
                 document.getElementById('info-desc').textContent = t.readyDesc;
-                document.getElementById('info-title').style.color = '#1f2937'; // gray-800
+                document.getElementById('info-title').style.color = '#1f2937';
                 toggleOSPanel(false);
             }
         });
@@ -608,7 +679,7 @@
                     activeNodeId = null;
                     document.getElementById('info-title').textContent = t.simCompleteTitle;
                     document.getElementById('info-desc').textContent = t.simCompleteDesc;
-                    document.getElementById('info-title').style.color = '#10B981'; // green
+                    document.getElementById('info-title').style.color = '#10B981'; 
                     return;
                 }
 
@@ -617,7 +688,6 @@
                 
                 activeNodeId = node.id;
                 
-                // 根據語言更新步驟文字
                 const stepText = currentLang === 'zh' ? currentStep.textZh : currentStep.textEn;
                 const stepPrefix = currentLang === 'zh' ? "步驟" : "Step";
                 
@@ -652,7 +722,7 @@
         document.getElementById('scenario-btn').addEventListener('click', runScenario);
 
         // 初始化
-        updatePageLanguage(); // 執行一次初始化語言
+        updatePageLanguage(); 
         setTimeout(resizeCanvas, 100); 
         draw();
 
