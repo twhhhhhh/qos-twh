@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Core C1：Ch2 網絡協定 Network Protocal</title>
+    <title>Core C1：Ch2 網絡協定 Network Protocol</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap');
         body { font-family: 'Noto Sans HK', sans-serif; }
         /* 確保畫布在容器內自適應但不失真 */
-        #workflowCanvas { max-width: 100%; height: auto; }
+        #workflowCanvas, #animationCanvas { max-width: 100%; height: auto; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
     <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
         <div>
-            <h1 id="main-title" class="text-xl font-bold text-indigo-900 tracking-tight">Ch2 網絡協定 Network Protocal</h1>
+            <h1 id="main-title" class="text-xl font-bold text-indigo-900 tracking-tight">Ch2 網絡協定 Network Protocol</h1>
         </div>
         <button id="lang-btn" onclick="toggleLanguage()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 rounded-full transition-all shadow-md flex items-center gap-2">
             <i class="fa-solid fa-globe"></i>
@@ -51,18 +51,47 @@
                         <h3 id="panel-title" class="text-2xl font-bold text-indigo-900"></h3>
                         <button onclick="closePanel()" class="text-slate-300 hover:text-slate-600 transition-colors"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
                     </div>
-                    <div id="panel-content" class="text-base lg:text-lg leading-relaxed text-slate-600 space-y-6">
-                        </div>
+                    <div id="panel-content" class="text-base lg:text-lg leading-relaxed text-slate-600 space-y-6"></div>
                 </div>
             </div>
         </div>
     </main>
 
+    <section class="max-w-[1600px] mx-auto px-4 lg:px-8 pb-12">
+        <div class="w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
+                <div>
+                    <h2 id="anim-section-title" class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-play-cycle text-indigo-600 animate-spin-slow"></i> 動態模擬：數據包傳輸與重組流程 (Packet Switching)
+                    </h2>
+                    <p id="anim-section-subtitle" class="text-xs text-slate-500 mt-1">觀察 TCP/IP 如何分割、分路路由並重組數據</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="play-btn" onclick="startSimulation()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-play"></i> <span>播放動畫</span>
+                    </button>
+                    <button id="reset-btn" onclick="resetSimulation()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-5 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-rotate-left"></i> <span>重置</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="anim-status-bar" class="mb-4 p-3 bg-indigo-50 border border-indigo-100 text-indigo-950 font-medium rounded-xl text-sm flex items-center gap-2">
+                <i class="fa-solid fa-info-circle text-indigo-600"></i>
+                <span id="anim-status-text">點擊「播放動畫」按鈕開始模擬</span>
+            </div>
+
+            <div class="w-full overflow-x-auto bg-slate-950 rounded-xl p-4 border border-slate-800">
+                <canvas id="animationCanvas" width="1050" height="240" class="mx-auto block"></canvas>
+            </div>
+        </div>
+    </section>
+
     <script>
         let currentLang = 'zh';
         let selectedNodeId = null;
 
-        // 節點定義：加入 ID 8 (伺服器檔案)
+        // 靜態流程圖節點定義
         const nodes = [
             { id: 1, zh: '用戶電腦', en: "User's Computer", x: 50, y: 80, w: 140, h: 60, interactive: false, icon: 'fa-laptop' },
             { id: 2, zh: 'TCP/IP傳送要求', en: 'TCP/IP Request', x: 280, y: 80, w: 170, h: 60, interactive: true, icon: 'fa-box-open' },
@@ -76,104 +105,55 @@
 
         const conceptDetails = {
             2: {
-                zh: {
-                    title: "TCP/IP 傳送要求",
-                    content: `<p><span class="text-indigo-600 font-bold">傳輸控制協定 (TCP)</span> 會將用戶發出的應用程式數據（如網頁請求）拆解成多個較小的<span class="text-amber-600 font-bold">數據包 (Packets)</span>。</p>
-                              <p>TCP 會在每個數據包加上<span class="text-emerald-600 font-bold">順序號碼 (Sequence Number)</span>，以便在目的地重新組裝並偵測錯誤。</p>
-                              <p>隨後，<span class="text-blue-600 font-bold">網際網路協定 (IP)</span> 負責在每個數據包貼上源頭與目的地的<span class="text-rose-600 font-bold">IP位址 (IP Address)</span> 以便傳送。</p>`
-                },
-                en: {
-                    title: "TCP/IP Transmission Request",
-                    content: `<p><span class="text-indigo-600 font-bold">Transmission Control Protocol (TCP)</span> breaks down the application data into smaller <span class="text-amber-600 font-bold">packets</span>.</p>
-                              <p>TCP adds a <span class="text-emerald-600 font-bold">Sequence Number</span> to each packet to ensure correct reassembly and error detection at the destination.</p>
-                              <p><span class="text-blue-600 font-bold">Internet Protocol (IP)</span> then labels each packet with the source and destination <span class="text-rose-600 font-bold">IP Addresses</span> for delivery.</p>`
-                    }
+                zh: { title: "TCP/IP 傳送要求", content: `<p><span class="text-indigo-600 font-bold">傳輸控制協定 (TCP)</span> 會將用戶發出的應用程式數據（如網頁請求）拆解成多個較小的<span class="text-amber-600 font-bold">數據包 (Packets)</span>。</p><p>TCP 會在每個數據包加上<span class="text-emerald-600 font-bold">順序號碼 (Sequence Number)</span>，以便在目的地重新組裝並偵測錯誤。</p><p>隨後，<span class="text-blue-600 font-bold">網際網路協定 (IP)</span> 負責在每個數據包貼上源頭與目的地的<span class="text-rose-600 font-bold">IP位址 (IP Address)</span> 以便傳送。</p>` },
+                en: { title: "TCP/IP Transmission Request", content: `<p><span class="text-indigo-600 font-bold">Transmission Control Protocol (TCP)</span> breaks down the application data into smaller <span class="text-amber-600 font-bold">packets</span>.</p><p>TCP adds a <span class="text-emerald-600 font-bold">Sequence Number</span> to each packet to ensure correct reassembly and error detection at the destination.</p><p><span class="text-blue-600 font-bold">Internet Protocol (IP)</span> then labels each packet with the source and destination <span class="text-rose-600 font-bold">IP Addresses</span> for delivery.</p>` }
             },
-           3: {
-                zh: {
-                    title: "DNS 伺服器",
-                    content: `<p><span class="text-indigo-600 font-bold">域名系統 (DNS) 伺服器</span> 充當互聯網的電話簿。</p>
-                              <p>由於人類容易記住英文字母組成的 <span class="text-amber-600 font-bold">網址 (URL)</span>（例如 www.example.com），但網絡路由器只能識別數字。因此，DNS 的核心功能就是將 URL <span class="text-emerald-600 font-bold">翻譯/解析</span> 為指定的 <span class="text-rose-600 font-bold">IP位址</span>。</p>`
-                },
-                en: {
-                    title: "DNS Server",
-                    content: `<p><span class="text-indigo-600 font-bold">Domain Name System (DNS) Server</span> acts as the phonebook of the Internet.</p>
-                              <p>Since humans prefer text-based <span class="text-amber-600 font-bold">URLs</span> but network devices communicate via numbers, DNS <span class="text-emerald-600 font-bold">translates/resolves</span> the URL into its corresponding numeric <span class="text-rose-600 font-bold">IP Address</span>.</p>`
-                }
+            3: {
+                zh: { title: "DNS 伺服器", content: `<p><span class="text-indigo-600 font-bold">域名系統 (DNS) 伺服器</span> 充當互聯網的電話簿。</p><p>由於人類容易記住英文字母組成的 <span class="text-amber-600 font-bold">網址 (URL)</span>（例如 www.example.com），但網絡路由器只能識別數字。因此，DNS 的核心功能就是將 URL <span class="text-emerald-600 font-bold">翻譯/解析</span> 為指定的 <span class="text-rose-600 font-bold">IP位址</span>。</p>` },
+                en: { title: "DNS Server", content: `<p><span class="text-indigo-600 font-bold">Domain Name System (DNS) Server</span> acts as the phonebook of the Internet.</p><p>Since humans prefer text-based <span class="text-amber-600 font-bold">URLs</span> but network devices communicate via numbers, DNS <span class="text-emerald-600 font-bold">translates/resolves</span> the URL into its corresponding numeric <span class="text-rose-600 font-bold">IP Address</span>.</p>` }
             },
-           5: {
-                zh: {
-                    title: "IP 協定選擇路徑",
-                    content: `<p>在互聯網這個龐大的 <span class="text-indigo-600 font-bold">廣域網 (WAN)</span> 當中，數據包必須經過多個 <span class="text-amber-600 font-bold">路由器 (Routers)</span>。</p>
-                              <p><span class="text-blue-600 font-bold">IP 協定</span> 扮演著導航員的角色。它會根據目前的網絡擁堵情況與鏈路成本，為每一個數據包動態地 <span class="text-emerald-600 font-bold">選擇最佳傳輸路徑 (Routing)</span>。注意：同一個請求的不同數據包可能會經由不同的路徑到達目的地。</p>`
-                },
-                en: {
-                    title: "IP Protocol Routing",
-                    content: `<p>Within the massive <span class="text-indigo-600 font-bold">Wide Area Network (WAN)</span>, packets pass through multiple <span class="text-amber-600 font-bold">routers</span>.</p>
-                              <p>The <span class="text-blue-600 font-bold">IP Protocol</span> acts as a navigator, dynamically selecting the <span class="text-emerald-600 font-bold">optimal routing path</span> for each packet based on network traffic. Different packets from the same request might travel through different paths.</p>`
-                }
+            5: {
+                zh: { title: "IP 協定選擇路徑", content: `<p>在互聯網這個龐大的 <span class="text-indigo-600 font-bold">廣域網 (WAN)</span> 當中，數據包必須經過多個 <span class="text-amber-600 font-bold">路由器 (Routers)</span>。</p><p><span class="text-blue-600 font-bold">IP 協定</span> 扮演著導航員的角色。它會根據目前的網絡擁堵情況與鏈路成本，為每一個數據包動態地 <span class="text-emerald-600 font-bold">選擇最佳傳輸路徑 (Routing)</span>。注意：同一個請求的不同數據包可能會經由不同的路徑到達目的地。</p>` },
+                en: { title: "IP Protocol Routing", content: `<p>Within the massive <span class="text-indigo-600 font-bold">Wide Area Network (WAN)</span>, packets pass through multiple <span class="text-amber-600 font-bold">routers</span>.</p><p>The <span class="text-blue-600 font-bold">IP Protocol</span> acts as a navigator, dynamically selecting the <span class="text-emerald-600 font-bold">optimal routing path</span> for each packet based on network traffic. Different packets from the same request might travel through different paths.</p>` }
             },
             6: {
-                zh: {
-                    title: "TCP 重組",
-                    content: `<p>當所有的數據包陸續到達目的地後，由於經過不同的路由，它們抵達的順序可能會錯亂。</p>
-                              <p>此時目的地的 <span class="text-indigo-600 font-bold">TCP 協定</span> 就會發揮作用，根據數據包上的 <span class="text-amber-600 font-bold">序號</span> 重新排列，並檢查是否有封包遺失。</p>
-                              <p>確認無誤後，將它們重組成一個完整的 <span class="text-emerald-600 font-bold">HTTP / HTTPS 要求</span> 並交給伺服器處理。</p>`
-                },
-                en: {
-                    title: "TCP Reassembly",
-                    content: `<p>When individual packets arrive at the destination, they may appear out of order due to different routing paths.</p>
-                              <p>The destination's <span class="text-indigo-600 font-bold">TCP layer</span> takes over, using the <span class="text-amber-600 font-bold">Sequence Numbers</span> to rearrange and check for any packet loss.</p>
-                              <p>Once validated, it reassembles them back into a complete <span class="text-emerald-600 font-bold">HTTP / HTTPS Request</span> for the server.</p>`
-                }
+                zh: { title: "TCP 重組", content: `<p>當所有的數據包陸續到達目的地後，由於經過不同的路由，它們抵達的順序可能會錯亂。</p><p>此時目的地的 <span class="text-indigo-600 font-bold">TCP 協定</span> 就會發揮作用，根據數據包上的 <span class="text-amber-600 font-bold">序號</span> 重新排列，並檢查是否有封包遺失。</p><p>確認無誤後，將它們重組成一個完整的 <span class="text-emerald-600 font-bold">HTTP / HTTPS 要求</span> 並交給伺服器處理。</p>` },
+                en: { title: "TCP Reassembly", content: `<p>When individual packets arrive at the destination, they may appear out of order due to different routing paths.</p><p>The destination's <span class="text-indigo-600 font-bold">TCP layer</span> takes over, using the <span class="text-amber-600 font-bold">Sequence Numbers</span> to rearrange and check for any packet loss.</p><p>Once validated, it reassembles them back into a complete <span class="text-emerald-600 font-bold">HTTP / HTTPS Request</span> for the server.</p>` }
             },
             7: {
-                zh: { title: "網站伺服器與 HTTP", content: `<p>伺服器使用 <span class="text-indigo-600 font-bold">HTTP 協定</span> 處理要求：</p>
-                    <ul class="list-disc ml-5 space-y-2">
-                        <li><span class="text-emerald-600 font-bold">GET 要求</span>：從伺服器<span class="underline">獲取</span>資源（如開啟網頁）。</li>
-                        <li><span class="text-rose-600 font-bold">POST 要求</span>：向伺服器<span class="underline">傳送</span>數據（如提交表格、登入）。</li>
-                    </ul>
-                    <p>伺服器處理後會回傳 <span class="text-amber-600 font-bold">HTML 代碼</span> 或檔案資源。</p>` },
-                en: { title: "Web Server & HTTP", content: `<p>Servers handle requests using <span class="text-indigo-600 font-bold">HTTP</span>:</p>
-                    <ul class="list-disc ml-5 space-y-2">
-                        <li><span class="text-emerald-600 font-bold">GET</span>: <span class="underline">Retrieve</span> resources from server.</li>
-                        <li><span class="text-rose-600 font-bold">POST</span>: <span class="underline">Submit</span> data to server (e.g., forms).</li>
-                    </ul>` }
+                zh: { title: "網站伺服器與 HTTP", content: `<p>伺服器使用 <span class="text-indigo-600 font-bold">HTTP 協定</span> 處理要求：</p><ul class="list-disc ml-5 space-y-2"><li><span class="text-emerald-600 font-bold">GET 要求</span>：從伺服器<span class="underline">獲取</span>資源（如開啟網頁）。</li><li><span class="text-rose-600 font-bold">POST 要求</span>：向伺服器<span class="underline">傳送</span>數據（如提交表格、登入）。</li></ul><p>伺服器處理後會回傳 <span class="text-amber-600 font-bold">HTML 代碼</span> 或檔案資源。</p>` },
+                en: { title: "Web Server & HTTP", content: `<p>Servers handle requests using <span class="text-indigo-600 font-bold">HTTP</span>:</p><ul class="list-disc ml-5 space-y-2"><li><span class="text-emerald-600 font-bold">GET</span>: <span class="underline">Retrieve</span> resources from server.</li><li><span class="text-rose-600 font-bold">POST</span>: <span class="underline">Submit</span> data to server (e.g., forms).</li></ul>` }
             },
             8: {
-                zh: { title: "URL 路徑與伺服器檔案", content: `<p><span class="text-indigo-600 font-bold">URL (統一資源定位符)</span> 描述了檔案在伺服器內的物理位置。</p>
-                    <p>路徑例子：</p>
-                    <div class="bg-slate-50 p-3 rounded font-mono text-sm border-l-4 border-indigo-500">
-                        www.abc.com/<span class="text-rose-500">index.html</span> (根目錄首頁)<br>
-                        www.abc.com/<span class="text-emerald-500">image/a.png</span> (圖片資料夾檔案)<br>
-                        www.abc.com/<span class="text-blue-500">image/b.png</span>
-                    </div>
-                    <p>瀏覽器透過路徑精準存取伺服器 <span class="text-amber-600 font-bold">檔案系統</span> 內的資源。</p>` },
-                en: { title: "URL Paths & Server Files", content: `<p><span class="text-indigo-600 font-bold">URL</span> describes the resource's location on the server.</p>
-                    <p>Examples:</p>
-                    <div class="bg-slate-50 p-3 rounded font-mono text-sm border-l-4 border-indigo-500">
-                        www.abc.com/<span class="text-rose-500">index.html</span> (Home)<br>
-                        www.abc.com/<span class="text-emerald-500">image/a.png</span> (Sub-folder file)
-                    </div>` }
+                zh: { title: "URL 路徑與伺服器檔案", content: `<p><span class="text-indigo-600 font-bold">URL (統一資源定位符)</span> 描述了檔案在伺服器內的物理位置。</p><p>路徑例子：</p><div class="bg-slate-50 p-3 rounded font-mono text-sm border-l-4 border-indigo-500">www.abc.com/<span class="text-rose-500">index.html</span> (根目錄首頁)<br>www.abc.com/<span class="text-emerald-500">image/a.png</span> (圖片資料夾檔案)<br>www.abc.com/<span class="text-blue-500">image/b.png</span></div><p>瀏覽器透過路徑精準存取伺服器 <span class="text-amber-600 font-bold">檔案系統</span> 內的資源。</p>` },
+                en: { title: "URL Paths & Server Files", content: `<p><span class="text-indigo-600 font-bold">URL</span> describes the resource's location on the server.</p><p>Examples:</p><div class="bg-slate-50 p-3 rounded font-mono text-sm border-l-4 border-indigo-500">www.abc.com/<span class="text-rose-500">index.html</span> (Home)<br>www.abc.com/<span class="text-emerald-500">image/a.png</span> (Sub-folder file)<br>www.abc.com/<span class="text-blue-500">image/b.png</span></div>` }
             }
+        };
+
+        // 狀態描述庫（用於新動畫 Section）
+        const statusTexts = {
+            idle: { zh: "點擊「播放動畫」按鈕開始模擬", en: "Click 'Play' button to start the simulation" },
+            split: { zh: "【TCP 拆解】用戶指令被拆解成多個數據包，並打上順序序號 #1, #2, #3", en: "[TCP Segmentation] The data is split into packets with Sequence Numbers #1, #2, #3" },
+            routing: { zh: "【IP 路由傳輸】透過網絡路由器動態選擇路徑。由於路徑異同，數據包到達目的地的順序可能錯亂！", en: "[IP Routing] Packets travel via routers. Due to path variations, they may arrive out of order!" },
+            reassemble: { zh: "【TCP 重組校對】數據包全部到達目的地，TCP 層依照序號重新進行排列與結合", en: "[TCP Reassembly] Packets arrived! TCP sorts them back into correct order and reassembles them" },
+            complete: { zh: "【傳輸完成】指令重組成功！轉化為完整的 HTTP 要求送交網頁伺服器", en: "[Complete] Reassembly successful! Complete HTTP request delivered to the Web Server" }
         };
 
         const canvas = document.getElementById('workflowCanvas');
         const ctx = canvas.getContext('2d');
 
+        // 繪製主靜態流程圖
         function drawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // 繪製箭頭流程
             ctx.setLineDash([]);
             drawArrow(190, 110, 280, 110); 
             drawArrow(450, 110, 540, 110);
             drawArrow(690, 110, 780, 110);
-            drawArrow(860, 140, 860, 260); // 下降
+            drawArrow(860, 140, 860, 260); 
             drawArrow(780, 290, 690, 290);
             drawArrow(540, 290, 440, 290);
             
-            // 伺服器與檔案之間的連接線 (雙向虛線表示內部邏輯連接)
             ctx.setLineDash([5, 5]);
             drawArrow(280, 290, 210, 290, false); 
             ctx.setLineDash([]);
@@ -183,7 +163,6 @@
                 const isSelected = selectedNodeId === node.id;
                 
                 ctx.save();
-                // 節點樣式
                 ctx.shadowColor = 'rgba(0,0,0,0.05)';
                 ctx.shadowBlur = 10;
                 
@@ -202,7 +181,6 @@
                 ctx.fill();
                 ctx.stroke();
 
-                // 文字
                 ctx.fillStyle = node.interactive ? '#1e3a8a' : '#64748b';
                 ctx.font = `bold ${currentLang === 'zh' ? '15px' : '13px'} 'Noto Sans HK'`;
                 ctx.textAlign = 'center';
@@ -233,6 +211,227 @@
             ctx.restore();
         }
 
+        // ==========================================
+        // 全新加入：動畫引擎邏輯 (Animation Engine)
+        // ==========================================
+        const animCanvas = document.getElementById('animationCanvas');
+        const actx = animCanvas.getContext('2d');
+        let animState = 'idle'; // idle, split, routing, reassemble, complete
+        let animTimer = 0;
+        let animationFrameId = null;
+
+        // 定義動畫實體
+        let animPackets = [];
+        const animNodes = {
+            user: { x: 80, y: 120, labelZh: "用戶電腦", labelEn: "User PC" },
+            isp: { x: 380, y: 50, labelZh: "ISP 路由A", labelEn: "ISP Route A" },
+            router: { x: 380, y: 190, labelZh: "中轉路由B", labelEn: "Router B" },
+            reassembly: { x: 720, y: 120, labelZh: "TCP重組區", labelEn: "TCP Reassembly" },
+            server: { x: 960, y: 120, labelZh: "網頁伺服器", labelEn: "Web Server" }
+        };
+
+        function updateStatusText(state) {
+            document.getElementById('anim-status-text').innerText = statusTexts[state][currentLang];
+        }
+
+        function resetSimulation() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animState = 'idle';
+            animTimer = 0;
+            updateStatusText('idle');
+            
+            // 初始化封包數據
+            animPackets = [
+                { id: 1, x: 80, y: 120, size: 24, progress: 0, path: 'top', currentX: 80, currentY: 120, arrived: false, color: '#f59e0b' },
+                { id: 2, x: 80, y: 120, size: 24, progress: 0, path: 'bottom', currentX: 80, currentY: 120, arrived: false, color: '#10b981' },
+                { id: 3, x: 80, y: 120, size: 24, progress: 0, path: 'top', currentX: 80, currentY: 120, arrived: false, color: '#ef4444' }
+            ];
+            
+            drawAnimationCanvas();
+        }
+
+        function startSimulation() {
+            resetSimulation();
+            animState = 'split';
+            updateStatusText('split');
+            simulationLoop();
+        }
+
+        function simulationLoop() {
+            animTimer++;
+            
+            // 狀態機邏輯切換
+            if (animState === 'split' && animTimer > 90) {
+                animState = 'routing';
+                updateStatusText('routing');
+                animTimer = 0;
+            } else if (animState === 'routing') {
+                // 檢查是否全部封包安全抵達重組站
+                if (animPackets.every(p => p.arrived)) {
+                    animState = 'reassemble';
+                    updateStatusText('reassemble');
+                    animTimer = 0;
+                }
+            } else if (animState === 'reassemble' && animTimer > 120) {
+                animState = 'complete';
+                updateStatusText('complete');
+                animTimer = 0;
+            }
+
+            // 更新實體動態位址
+            if (animState === 'routing') {
+                // 故意製造不按順序到達 (特意拉開飛快速度差：#2 最快, #1 次之, #3 最慢)
+                animPackets[0].progress += 0.008; // 封包 #1
+                animPackets[1].progress += 0.015; // 封包 #2 (最速)
+                animPackets[2].progress += 0.006; // 封包 #3
+                
+                animPackets.forEach(p => {
+                    if (p.progress >= 1) {
+                        p.progress = 1;
+                        p.arrived = true;
+                    }
+                    
+                    // 根據路徑計算三次元貝茲/線性網格點
+                    if (p.path === 'top') {
+                        if (p.progress < 0.5) {
+                            let localProg = p.progress / 0.5;
+                            p.currentX = animNodes.user.x + (animNodes.isp.x - animNodes.user.x) * localProg;
+                            p.currentY = animNodes.user.y + (animNodes.isp.y - animNodes.user.y) * localProg;
+                        } else {
+                            let localProg = (p.progress - 0.5) / 0.5;
+                            p.currentX = animNodes.isp.x + (animNodes.reassembly.x - animNodes.isp.x) * localProg;
+                            p.currentY = animNodes.isp.y + (animNodes.reassembly.y - animNodes.isp.y) * localProg;
+                        }
+                    } else { // bottom path
+                        if (p.progress < 0.5) {
+                            let localProg = p.progress / 0.5;
+                            p.currentX = animNodes.user.x + (animNodes.router.x - animNodes.user.x) * localProg;
+                            p.currentY = animNodes.user.y + (animNodes.router.y - animNodes.user.y) * localProg;
+                        } else {
+                            let localProg = (p.progress - 0.5) / 0.5;
+                            p.currentX = animNodes.router.x + (animNodes.reassembly.x - animNodes.router.x) * localProg;
+                            p.currentY = animNodes.router.y + (animNodes.reassembly.y - animNodes.router.y) * localProg;
+                        }
+                    }
+                });
+            }
+
+            drawAnimationCanvas();
+            animationFrameId = requestAnimationFrame(simulationLoop);
+        }
+
+        function drawAnimationCanvas() {
+            actx.clearRect(0, 0, animCanvas.width, animCanvas.height);
+            
+            // 繪製背景參考拓撲連線
+            actx.strokeStyle = '#334155';
+            actx.lineWidth = 2;
+            actx.setLineDash([4, 4]);
+            
+            // User -> ISP & Router
+            actx.beginPath(); actx.moveTo(animNodes.user.x, animNodes.user.y); actx.lineTo(animNodes.isp.x, animNodes.isp.y); actx.stroke();
+            actx.beginPath(); actx.moveTo(animNodes.user.x, animNodes.user.y); actx.lineTo(animNodes.router.x, animNodes.router.y); actx.stroke();
+            // ISP & Router -> Reassembly
+            actx.beginPath(); actx.moveTo(animNodes.isp.x, animNodes.isp.y); actx.lineTo(animNodes.reassembly.x, animNodes.reassembly.y); actx.stroke();
+            actx.beginPath(); actx.moveTo(animNodes.router.x, animNodes.router.y); actx.lineTo(animNodes.reassembly.x, animNodes.reassembly.y); actx.stroke();
+            // Reassembly -> Server
+            actx.beginPath(); actx.moveTo(animNodes.reassembly.x, animNodes.reassembly.y); actx.lineTo(animNodes.server.x, animNodes.server.y); actx.stroke();
+            actx.setLineDash([]);
+
+            // 繪製基礎硬體節點外殼
+            Object.keys(animNodes).forEach(key => {
+                const node = animNodes[key];
+                actx.fillStyle = '#1e293b';
+                actx.strokeStyle = '#475569';
+                actx.lineWidth = 2;
+                
+                actx.beginPath();
+                actx.arc(node.x, node.y, 40, 0, 2*Math.PI);
+                actx.fill();
+                actx.stroke();
+                
+                // 寫入硬體標籤文字
+                actx.fillStyle = '#94a3b8';
+                actx.font = "12px 'Noto Sans HK'";
+                actx.textAlign = 'center';
+                const txt = currentLang === 'zh' ? node.labelZh : node.labelEn;
+                actx.fillText(txt, node.x, node.y + 5);
+            });
+
+            // 狀態機下的封包動態繪製層
+            if (animState === 'idle') {
+                // 畫大塊完整數據原始包
+                actx.fillStyle = '#6366f1';
+                actx.beginPath(); actx.roundRect(animNodes.user.x - 25, animNodes.user.y - 25, 50, 50, 6); actx.fill();
+                actx.fillStyle = '#ffffff'; actx.font = "bold 11px sans-serif";
+                actx.fillText("DATA", animNodes.user.x, animNodes.user.y + 4);
+            }
+            
+            else if (animState === 'split') {
+                // 模擬裂解抖動動畫效果
+                let offset = Math.min(animTimer * 0.4, 25);
+                drawSinglePacket(1, animNodes.user.x, animNodes.user.y - offset, '#f59e0b');
+                drawSinglePacket(2, animNodes.user.x, animNodes.user.y, '#10b981');
+                drawSinglePacket(3, animNodes.user.x, animNodes.user.y + offset, '#ef4444');
+            }
+            
+            else if (animState === 'routing') {
+                // 依照動態算出的航道軌跡點渲染
+                animPackets.forEach(p => {
+                    drawSinglePacket(p.id, p.currentX, p.currentY, p.color);
+                });
+            }
+            
+            else if (animState === 'reassemble') {
+                // 完美展現核心重點：亂序到達後依據序號就位 (0-40幀亂序展示, 40-80幀校準交換, 80幀後融合)
+                if (animTimer < 40) {
+                    // 亂序堆疊：#2 先到佔首位，接著是 #1, #3
+                    drawSinglePacket(2, animNodes.reassembly.x - 30, animNodes.reassembly.y, '#10b981');
+                    drawSinglePacket(1, animNodes.reassembly.x, animNodes.reassembly.y, '#f59e0b');
+                    drawSinglePacket(3, animNodes.reassembly.x + 30, animNodes.reassembly.y, '#ef4444');
+                } else if (animTimer >= 40 && animTimer < 80) {
+                    // 自動歸位校對動畫
+                    drawSinglePacket(1, animNodes.reassembly.x - 30, animNodes.reassembly.y, '#f59e0b');
+                    drawSinglePacket(2, animNodes.reassembly.x, animNodes.reassembly.y, '#10b981');
+                    drawSinglePacket(3, animNodes.reassembly.x + 30, animNodes.reassembly.y, '#ef4444');
+                    
+                    actx.fillStyle = '#38bdf8'; actx.font = "bold 12px 'Noto Sans HK'";
+                    actx.fillText(currentLang === 'zh' ? "校對序號排序中..." : "Sorting by Seq No...", animNodes.reassembly.x, animNodes.reassembly.y - 45);
+                } else {
+                    // 完美融合成大包
+                    actx.fillStyle = '#6366f1';
+                    actx.beginPath(); actx.roundRect(animNodes.reassembly.x - 25, animNodes.reassembly.y - 25, 50, 50, 6); actx.fill();
+                    actx.fillStyle = '#ffffff'; actx.font = "bold 11px sans-serif"; actx.fillText("HTTP", animNodes.reassembly.x, animNodes.reassembly.y + 4);
+                }
+            }
+            
+            else if (animState === 'complete') {
+                // 順暢流入目的地伺服器
+                let slideX = animNodes.reassembly.x + (animNodes.server.x - animNodes.reassembly.x) * Math.min(animTimer/60, 1);
+                actx.fillStyle = '#6366f1';
+                actx.beginPath(); actx.roundRect(slideX - 25, animNodes.reassembly.y - 25, 50, 50, 6); actx.fill();
+                actx.fillStyle = '#ffffff'; actx.font = "bold 11px sans-serif"; actx.fillText("HTTP", slideX, animNodes.reassembly.y + 4);
+            }
+        }
+
+        // 輔助繪製單個有編號標籤的小數據包
+        function drawSinglePacket(id, x, y, color) {
+            actx.save();
+            actx.fillStyle = color;
+            actx.beginPath();
+            actx.roundRect(x - 12, y - 12, 24, 24, 4);
+            actx.fill();
+            
+            actx.fillStyle = '#ffffff';
+            actx.font = "bold 10px sans-serif";
+            actx.textAlign = 'center';
+            actx.fillText("#" + id, x, y + 4);
+            actx.restore();
+        }
+
+        // ==========================================
+        // 原有事件與多語言互通邏輯修正
+        // ==========================================
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX - rect.left) * (canvas.width / rect.width);
@@ -267,7 +466,6 @@
             document.getElementById('panel-title').innerText = data.title;
             document.getElementById('panel-content').innerHTML = data.content;
             
-            // 自動滾動到描述區 (手機版實用)
             if (window.innerWidth < 1024) {
                 document.getElementById('info-panel').scrollIntoView({ behavior: 'smooth' });
             }
@@ -285,22 +483,46 @@
             const btn = document.getElementById('lang-btn');
             const title = document.getElementById('main-title');
             const placeholder = document.getElementById('placeholder-text');
+            const canvasTip = document.getElementById('canvas-tip');
+
+            // 新增模擬器文字切換
+            const animSecTitle = document.getElementById('anim-section-title');
+            const animSecSubtitle = document.getElementById('anim-section-subtitle');
+            const playBtn = document.getElementById('play-btn');
+            const resetBtn = document.getElementById('reset-btn');
 
             if (currentLang === 'zh') {
                 btn.innerHTML = '<i class="fa-solid fa-globe"></i> <span>English</span>';
-                title.innerText = 'Core C2 - Ch2 網絡協定 Network Protocal';
+                title.innerText = 'Ch2 網絡協定 Network Protocol';
                 placeholder.innerText = '請點擊左側流程圖中的概念節點';
+                canvasTip.innerHTML = '<i class="fa-solid fa-mouse-pointer mr-2"></i>點擊藍框節點查看詳細 ICT 考點';
+                
+                animSecTitle.innerHTML = '<i class="fa-solid fa-play-cycle text-indigo-600"></i> 動態模擬：數據包傳輸與重組流程 (Packet Switching)';
+                animSecSubtitle.innerText = '觀察 TCP/IP 如何分割、分路路由並重組數據';
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i> <span>播放動畫</span>';
+                resetBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> <span>重置</span>';
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-globe"></i> <span>中文</span>';
-                title.innerText = 'Core C2 - Ch2 網絡協定 Network Protocal';
+                title.innerText = 'Ch2 Network Protocol';
                 placeholder.innerText = 'Please click on a concept node in the diagram';
+                canvasTip.innerHTML = '<i class="fa-solid fa-mouse-pointer mr-2"></i>Click on blue-bordered nodes to view details';
+                
+                animSecTitle.innerHTML = '<i class="fa-solid fa-play-cycle text-indigo-600"></i> Dynamic Simulation: Packet Switching Process';
+                animSecSubtitle.innerText = 'Observe how TCP/IP segments, routes, and reassembles data packets';
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i> <span>Play</span>';
+                resetBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> <span>Reset</span>';
             }
 
+            updateStatusText(animState);
             if (selectedNodeId) showPanel(selectedNodeId);
             drawCanvas();
+            drawAnimationCanvas();
         }
 
-        window.onload = drawCanvas;
+        window.onload = function() {
+            drawCanvas();
+            resetSimulation();
+        };
     </script>
 </body>
 </html>
