@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core C1：Ch2 網絡協定 Network Protocal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap');
+        body { font-family: 'Noto Sans HK', sans-serif; }
+        /* 確保畫布在容器內自適應但不失真 */
+        #workflowCanvas { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
+        <div>
+            <h1 id="main-title" class="text-xl font-bold text-indigo-900 tracking-tight">Ch2 網絡協定 Network Protocal</h1>
+        </div>
+        <button id="lang-btn" onclick="toggleLanguage()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 rounded-full transition-all shadow-md flex items-center gap-2">
+            <i class="fa-solid fa-globe"></i>
+            <span>English</span>
+        </button>
+    </header>
+
+    <main class="max-w-[1600px] mx-auto p-4 lg:p-8 flex flex-col lg:flex-row gap-6">
+        
+        <div class="w-full lg:w-[60%] bg-white rounded-2xl border border-slate-200 p-4 lg:p-6 shadow-sm flex flex-col items-center">
+            <div class="w-full flex justify-between items-center mb-4">
+                <span id="canvas-tip" class="text-xs lg:text-sm bg-blue-50 text-blue-700 px-4 py-2 rounded-full font-bold">
+                    <i class="fa-solid fa-mouse-pointer mr-2"></i>點擊藍框節點查看詳細 ICT 考點
+                </span>
+            </div>
+            
+            <div class="w-full overflow-x-auto bg-slate-50 rounded-xl p-2 border border-slate-100">
+                <canvas id="workflowCanvas" width="1050" height="400" class="mx-auto block"></canvas>
+            </div>
+        </div>
+
+        <div id="info-panel" class="w-full lg:w-[40%] flex flex-col gap-4">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-lg min-h-[400px] transition-all duration-500">
+                <div id="panel-placeholder" class="h-full flex flex-col items-center justify-center text-slate-400">
+                    <i class="fa-solid fa-diagram-project text-5xl mb-4 opacity-20"></i>
+                    <p id="placeholder-text">請點擊左側流程圖中的概念節點</p>
+                </div>
+                
+                <div id="panel-actual-content" class="hidden animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
+                        <h3 id="panel-title" class="text-2xl font-bold text-indigo-900"></h3>
+                        <button onclick="closePanel()" class="text-slate-300 hover:text-slate-600 transition-colors"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+                    </div>
+                    <div id="panel-content" class="text-base lg:text-lg leading-relaxed text-slate-600 space-y-6">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentLang = 'zh';
+        let selectedNodeId = null;
+
+        // 節點定義：加入 ID 8 (伺服器檔案)
+        const nodes = [
+            { id: 1, zh: '用戶電腦', en: "User's Computer", x: 50, y: 80, w: 140, h: 60, interactive: false, icon: 'fa-laptop' },
+            { id: 2, zh: 'TCP/IP傳送要求', en: 'TCP/IP Request', x: 280, y: 80, w: 170, h: 60, interactive: true, icon: 'fa-box-open' },
+            { id: 3, zh: 'DNS伺服器', en: 'DNS Server', x: 540, y: 80, w: 150, h: 60, interactive: true, icon: 'fa-server' },
+            { id: 4, zh: 'ISP供應商', en: 'ISP Provider', x: 780, y: 80, w: 150, h: 60, interactive: false, icon: 'fa-tower-broadcast' },
+            { id: 5, zh: 'IP協定選擇路徑', en: 'IP Routing', x: 780, y: 260, w: 160, h: 60, interactive: true, icon: 'fa-route' },
+            { id: 6, zh: 'TCP重組', en: 'TCP Reassembly', x: 540, y: 260, w: 150, h: 60, interactive: true, icon: 'fa-puzzle-piece' },
+            { id: 7, zh: '網站的伺服器', en: 'Web Server', x: 280, y: 260, w: 160, h: 60, interactive: true, icon: 'fa-gears' },
+            { id: 8, zh: '伺服器內部檔案', en: 'Server Files', x: 50, y: 260, w: 160, h: 60, interactive: true, icon: 'fa-folder-tree' }
+        ];
+
+        const conceptDetails = {
+            2: {
+                zh: {
+                    title: "TCP/IP 傳送要求",
+                    content: `<p><span class="text-indigo-600 font-bold">傳輸控制協定 (TCP)</span> 會將用戶發出的應用程式數據（如網頁請求）拆解成多個較小的<span class="text-amber-600 font-bold">數據包 (Packets)</span>。</p>
+                              <p>TCP 會在每個數據包加上<span class="text-emerald-600 font-bold">順序號碼 (Sequence Number)</span>，以便在目的地重新組裝並偵測錯誤。</p>
+                              <p>隨後，<span class="text-blue-600 font-bold">網際網路協定 (IP)</span> 負責在每個數據包貼上源頭與目的地的<span class="text-rose-600 font-bold">IP位址 (IP Address)</span> 以便傳送。</p>`
+                },
+                en: {
+                    title: "TCP/IP Transmission Request",
+                    content: `<p><span class="text-indigo-600 font-bold">Transmission Control Protocol (TCP)</span> breaks down the application data into smaller <span class="text-amber-600 font-bold">packets</span>.</p>
+                              <p>TCP adds a <span class="text-emerald-600 font-bold">Sequence Number</span> to each packet to ensure correct reassembly and error detection at the destination.</p>
+                              <p><span class="text-blue-600 font-bold">Internet Protocol (IP)</span> then labels each packet with the source and destination <span class="text-rose-600 font-bold">IP Addresses</span> for delivery.</p>`
+                    }
+            },
+           3: {
+                zh: {
+                    title: "DNS 伺服器",
+                    content: `<p><span class="text-indigo-600 font-bold">域名系統 (DNS) 伺服器</span> 充當互聯網的電話簿。</p>
+                              <p>由於人類容易記住英文字母組成的 <span class="text-amber-600 font-bold">網址 (URL)</span>（例如 www.example.com），但網絡路由器只能識別數字。因此，DNS 的核心功能就是將 URL <span class="text-emerald-600 font-bold">翻譯/解析</span> 為指定的 <span class="text-rose-600 font-bold">IP位址</span>。</p>`
+                },
+                en: {
+                    title: "DNS Server",
+                    content: `<p><span class="text-indigo-600 font-bold">Domain Name System (DNS) Server</span> acts as the phonebook of the Internet.</p>
+                              <p>Since humans prefer text-based <span class="text-amber-600 font-bold">URLs</span> but network devices communicate via numbers, DNS <span class="text-emerald-600 font-bold">translates/resolves</span> the URL into its corresponding numeric <span class="text-rose-600 font-bold">IP Address</span>.</p>`
+                }
+            },
+           5: {
+                zh: {
+                    title: "IP 協定選擇路徑",
+                    content: `<p>在互聯網這個龐大的 <span class="text-indigo-600 font-bold">廣域網 (WAN)</span> 當中，數據包必須經過多個 <span class="text-amber-600 font-bold">路由器 (Routers)</span>。</p>
+                              <p><span class="text-blue-600 font-bold">IP 協定</span> 扮演著導航員的角色。它會根據目前的網絡擁堵情況與鏈路成本，為每一個數據包動態地 <span class="text-emerald-600 font-bold">選擇最佳傳輸路徑 (Routing)</span>。注意：同一個請求的不同數據包可能會經由不同的路徑到達目的地。</p>`
+                },
+                en: {
+                    title: "IP Protocol Routing",
+                    content: `<p>Within the massive <span class="text-indigo-600 font-bold">Wide Area Network (WAN)</span>, packets pass through multiple <span class="text-amber-600 font-bold">routers</span>.</p>
+                              <p>The <span class="text-blue-600 font-bold">IP Protocol</span> acts as a navigator, dynamically selecting the <span class="text-emerald-600 font-bold">optimal routing path</span> for each packet based on network traffic. Different packets from the same request might travel through different paths.</p>`
+                }
+            },
+            6: {
+                zh: {
+                    title: "TCP 重組",
+                    content: `<p>當所有的數據包陸續到達目的地後，由於經過不同的路由，它們抵達的順序可能會錯亂。</p>
+                              <p>此時目的地的 <span class="text-indigo-600 font-bold">TCP 協定</span> 就會發揮作用，根據數據包上的 <span class="text-amber-600 font-bold">序號</span> 重新排列，並檢查是否有封包遺失。</p>
+                              <p>確認無誤後，將它們重組成一個完整的 <span class="text-emerald-600 font-bold">HTTP / HTTPS 要求</span> 並交給伺服器處理。</p>`
+                },
+                en: {
+                    title: "TCP Reassembly",
+                    content: `<p>When individual packets arrive at the destination, they may appear out of order due to different routing paths.</p>
+                              <p>The destination's <span class="text-indigo-600 font-bold">TCP layer</span> takes over, using the <span class="text-amber-600 font-bold">Sequence Numbers</span> to rearrange and check for any packet loss.</p>
+                              <p>Once validated, it reassembles them back into a complete <span class="text-emerald-600 font-bold">HTTP / HTTPS Request</span> for the server.</p>`
+                }
+            },
+            7: {
+                zh: { title: "網站伺服器與 HTTP", content: `<p>伺服器使用 <span class="text-indigo-600 font-bold">HTTP 協定</span> 處理要求：</p>
+                    <ul class="list-disc ml-5 space-y-2">
+                        <li><span class="text-emerald-600 font-bold">GET 要求</span>：從伺服器<span class="underline">獲取</span>資源（如開啟網頁）。</li>
+                        <li><span class="text-rose-600 font-bold">POST 要求</span>：向伺服器<span class="underline">傳送</span>數據（如提交表格、登入）。</li>
+                    </ul>
+                    <p>伺服器處理後會回傳 <span class="text-amber-600 font-bold">HTML 代碼</span> 或檔案資源。</p>` },
+                en: { title: "Web Server & HTTP", content: `<p>Servers handle requests using <span class="text-indigo-600 font-bold">HTTP</span>:</p>
+                    <ul class="list-disc ml-5 space-y-2">
+                        <li><span class="text-emerald-600 font-bold">GET</span>: <span class="underline">Retrieve</span> resources from server.</li>
+                        <li><span class="text-rose-600 font-bold">POST</span>: <span class="underline">Submit</span> data to server (e.g., forms).</li>
+                    </ul>` }
+            },
+            8: {
+                zh: { title: "URL 路徑與伺服器檔案", content: `<p><span class="text-indigo-600 font-bold">URL (統一資源定位符)</span> 描述了檔案在伺服器內的物理位置。</p>
+                    <p>路徑例子：</p>
+                    <div class="bg-slate-50 p-3 rounded font-mono text-sm border-l-4 border-indigo-500">
+                        www.abc.com/<span class="text-rose-500">index.html</span> (根目錄首頁)<br>
+                        www.abc.com/<span class="text-emerald-500">image/a.png</span> (圖片資料夾檔案)<br>
+                        www.abc.com/<span class="text-blue-500">image/b.png</span>
+                    </div>
+                    <p>瀏覽器透過路徑精準存取伺服器 <span class="text-amber-600 font-bold">檔案系統</span> 內的資源。</p>` },
+                en: { title: "URL Paths & Server Files", content: `<p><span class="text-indigo-600 font-bold">URL</span> describes the resource's location on the server.</p>
+                    <p>Examples:</p>
+                    <div class="bg-slate-50 p-3 rounded font-mono text-sm border-l-4 border-indigo-500">
+                        www.abc.com/<span class="text-rose-500">index.html</span> (Home)<br>
+                        www.abc.com/<span class="text-emerald-500">image/a.png</span> (Sub-folder file)
+                    </div>` }
+            }
+        };
+
+        const canvas = document.getElementById('workflowCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 繪製箭頭流程
+            ctx.setLineDash([]);
+            drawArrow(190, 110, 280, 110); 
+            drawArrow(450, 110, 540, 110);
+            drawArrow(690, 110, 780, 110);
+            drawArrow(860, 140, 860, 260); // 下降
+            drawArrow(780, 290, 690, 290);
+            drawArrow(540, 290, 440, 290);
+            
+            // 伺服器與檔案之間的連接線 (雙向虛線表示內部邏輯連接)
+            ctx.setLineDash([5, 5]);
+            drawArrow(280, 290, 210, 290, false); 
+            ctx.setLineDash([]);
+
+            nodes.forEach(node => {
+                const label = currentLang === 'zh' ? node.zh : node.en;
+                const isSelected = selectedNodeId === node.id;
+                
+                ctx.save();
+                // 節點樣式
+                ctx.shadowColor = 'rgba(0,0,0,0.05)';
+                ctx.shadowBlur = 10;
+                
+                if (node.interactive) {
+                    ctx.fillStyle = isSelected ? '#eef2ff' : '#ffffff';
+                    ctx.strokeStyle = isSelected ? '#4f46e5' : '#3b82f6';
+                    ctx.lineWidth = isSelected ? 3 : 2;
+                } else {
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 1.5;
+                }
+
+                ctx.beginPath();
+                ctx.roundRect(node.x, node.y, node.w, node.h, 12);
+                ctx.fill();
+                ctx.stroke();
+
+                // 文字
+                ctx.fillStyle = node.interactive ? '#1e3a8a' : '#64748b';
+                ctx.font = `bold ${currentLang === 'zh' ? '15px' : '13px'} 'Noto Sans HK'`;
+                ctx.textAlign = 'center';
+                ctx.fillText(label, node.x + node.w / 2, node.y + node.h / 2 + 5);
+
+                ctx.restore();
+            });
+        }
+
+        function drawArrow(fromx, fromy, tox, toy, showHead = true) {
+            ctx.save();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(fromx, fromy);
+            ctx.lineTo(tox, toy);
+            ctx.stroke();
+
+            if (showHead) {
+                const angle = Math.atan2(toy - fromy, tox - fromx);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.beginPath();
+                ctx.moveTo(tox, toy);
+                ctx.lineTo(tox - 10 * Math.cos(angle - Math.PI/6), toy - 10 * Math.sin(angle - Math.PI/6));
+                ctx.lineTo(tox - 10 * Math.cos(angle + Math.PI/6), toy - 10 * Math.sin(angle + Math.PI/6));
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+            nodes.forEach(node => {
+                if (node.interactive && x >= node.x && x <= node.x + node.w && y >= node.y && y <= node.y + node.h) {
+                    selectedNodeId = node.id;
+                    showPanel(node.id);
+                    drawCanvas();
+                }
+            });
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            let hover = false;
+            nodes.forEach(node => {
+                if (node.interactive && x >= node.x && x <= node.x + node.w && y >= node.y && y <= node.y + node.h) hover = true;
+            });
+            canvas.style.cursor = hover ? 'pointer' : 'default';
+        });
+
+        function showPanel(nodeId) {
+            document.getElementById('panel-placeholder').classList.add('hidden');
+            const actualContent = document.getElementById('panel-actual-content');
+            actualContent.classList.remove('hidden');
+
+            const data = conceptDetails[nodeId][currentLang];
+            document.getElementById('panel-title').innerText = data.title;
+            document.getElementById('panel-content').innerHTML = data.content;
+            
+            // 自動滾動到描述區 (手機版實用)
+            if (window.innerWidth < 1024) {
+                document.getElementById('info-panel').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function closePanel() {
+            document.getElementById('panel-actual-content').classList.add('hidden');
+            document.getElementById('panel-placeholder').classList.remove('hidden');
+            selectedNodeId = null;
+            drawCanvas();
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            const btn = document.getElementById('lang-btn');
+            const title = document.getElementById('main-title');
+            const placeholder = document.getElementById('placeholder-text');
+
+            if (currentLang === 'zh') {
+                btn.innerHTML = '<i class="fa-solid fa-globe"></i> <span>English</span>';
+                title.innerText = 'Core C2 - Ch2 網絡協定 Network Protocal';
+                placeholder.innerText = '請點擊左側流程圖中的概念節點';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-globe"></i> <span>中文</span>';
+                title.innerText = 'Core C2 - Ch2 網絡協定 Network Protocal';
+                placeholder.innerText = 'Please click on a concept node in the diagram';
+            }
+
+            if (selectedNodeId) showPanel(selectedNodeId);
+            drawCanvas();
+        }
+
+        window.onload = drawCanvas;
+    </script>
+</body>
+</html>
