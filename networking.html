@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core C - Ch1 網絡硬件概念 Networking Device</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&display=swap');
+        body { font-family: 'Noto Sans HK', sans-serif; }
+        .animate-fadeIn {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-md">
+        <div>
+            <h1 id="ui-title" class="text-2xl font-bold text-indigo-400">Core C - Ch1 網絡硬件概念 Networking Device</h1>
+            <p id="ui-subtitle" class="text-xs text-slate-400 mt-1">理解學校網絡連接互聯網的每一道橋樑</p>
+        </div>
+        <button id="lang-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 text-sm">
+            English
+        </button>
+    </header>
+
+    <main class="flex-grow p-6 grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-7xl mx-auto w-full">
+        
+        <div class="xl:col-span-3 bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-xl flex flex-col justify-between">
+            <div class="flex justify-between items-center mb-2 px-2">
+                <span id="ui-canvas-hint" class="text-sm text-amber-400 font-medium flex items-center gap-1">
+                    💡 提示：點擊下方的硬件節點，可於右方查看詳細 ICT 概念解析。
+                </span>
+            </div>
+            
+            <div class="overflow-x-auto bg-slate-950 rounded-lg border border-slate-900 p-2 flex justify-center items-center">
+                <canvas id="networkCanvas" width="900" height="250" class="cursor-pointer"></canvas>
+            </div>
+        </div>
+
+        <div class="xl:col-span-1 bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-xl flex flex-col">
+            <h2 id="panel-title" class="text-lg font-bold text-slate-200 border-b border-slate-700 pb-3 mb-4 flex items-center gap-2">
+                📋 <span id="ui-panel-header">概念詳解面板</span>
+            </h2>
+            <div id="panel-content" class="text-slate-300 space-y-4 overflow-y-auto max-h-[300px] xl:max-h-none flex-grow">
+                <p id="ui-default-msg" class="text-slate-400 italic text-center py-12">請在左方 Canvas 點擊任何一個網絡硬件以顯示其詳細功能與 ICT 課程重點。</p>
+            </div>
+        </div>
+    </main>
+
+    <section class="bg-slate-800 border-t border-slate-700 p-6 shadow-2xl">
+        <div class="max-w-7xl mx-auto w-full">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
+                <div>
+                    <h2 id="ui-anim-title" class="text-lg font-bold text-emerald-400">數據傳輸與防衝突模擬（單步教學）</h2>
+                    <p id="ui-anim-desc" class="text-xs text-slate-400 mt-1">展示網絡數據由 ISP 下載，通過各硬件引導並由交換器分發至多台電腦的完整過程</p>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+                    <button id="btn-prev" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-1.5 px-4 rounded-lg text-sm transition duration-150 disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                        ⬅️ <span id="ui-btn-prev-text">上一步</span>
+                    </button>
+                    <button id="btn-next" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1.5 px-5 rounded-lg text-sm shadow transition duration-150">
+                        <span id="ui-btn-next-text">下一步</span> ➡️
+                    </button>
+                    <button id="btn-reset" class="bg-slate-900 hover:bg-slate-950 text-amber-400 border border-slate-700 font-semibold py-1.5 px-4 rounded-lg text-sm transition duration-150">
+                        🔄 <span id="ui-btn-reset-text">重置</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 rounded-lg p-2 border border-slate-900 overflow-x-auto flex flex-col items-center">
+                <canvas id="animCanvas" width="900" height="160"></canvas>
+                
+                <div class="w-full mt-4 bg-slate-900/80 border border-slate-700 rounded-lg p-4 min-h-[90px] flex flex-col justify-center">
+                    <div id="anim-description-area" class="animate-fadeIn">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-slate-950 text-center py-3 text-xs text-slate-500 border-t border-slate-800">
+        HKDSE ICT @ 2526 TWH class
+    </footer>
+
+    <script>
+        // 1. 全局多語言資料庫與重點概念著色
+        let currentLang = 'zh'; 
+
+        const uiText = {
+            zh: {
+                title: "Core C - Ch1 網絡硬件概念 Networking Device",
+                subtitle: "理解學校網絡連接互聯網的每一道橋樑",
+                canvasHint: "💡 提示：點擊下方的硬件節點，可於右方查看詳細 ICT 概念解析。",
+                panelHeader: "概念詳解",
+                defaultMsg: "請在左方 Canvas 點擊任何一個網絡硬件以顯示其詳細功能與 ICT 課程重點。",
+                animTitle: "數據傳輸與防衝突模擬（單步教學）",
+                animDesc: "展示網絡數據由 ISP 下載，通過各硬件引導並由交換器分發至多台電腦的完整過程",
+                btnPrev: "上一步",
+                btnNext: "下一步",
+                btnReset: "重置",
+                pcATarget: "用戶電腦 A (目標)",
+                pcBOther: "用戶電腦 B (其他裝置)"
+            },
+            en: {
+                title: "Core C - Ch1 網絡硬件概念 Networking Device",
+                subtitle: "Understand how your school network connects to the Internet layer by layer",
+                canvasHint: "💡 Hint: Click on any hardware node below to view detailed ICT concepts on the right.",
+                panelHeader: "Hardware Detail",
+                defaultMsg: "Please click on any network hardware in the Canvas on the left to reveal its functionalities.",
+                animTitle: "Data Transmission & Collision Prevention Simulation",
+                animDesc: "Demonstrates data downloaded from ISP, guided through hardware, and distributed via Switch to multiple PCs",
+                btnPrev: "Previous",
+                btnNext: "Next Step",
+                btnReset: "Reset",
+                pcATarget: "User PC A (Target)",
+                pcBOther: "User PC B (Other Device)"
+            }
+        };
+
+        const hardwareData = {
+            pc: {
+                label_zh: "用戶電腦", label_en: "User PC",
+                title_zh: "💻 用戶電腦 (User Computer)", title_en: "💻 User Computer",
+                desc_zh: "作為網絡的**終端裝置 (End Device)**。它負責處理用戶的請求，並透過內置的**網絡介面卡 (NIC / Network Interface Card)** 將數據轉化為網絡可識別的訊號發送出去。",
+                desc_en: "Acts as an **End Device** in the network. It handles user requests and utilizes its built-in **Network Interface Card (NIC)** to convert data into signals recognizable by the network."
+            },
+            cable: {
+                label_zh: "RJ45及雙扭線", label_en: "RJ45 & Twisted Pair",
+                title_zh: "🔌 RJ45 及 雙扭線 (Twisted Pair Cable)", title_en: "🔌 RJ45 & Twisted Pair Cable",
+                desc_zh: "學校最常見的基帶傳輸媒介。使用標準 **RJ45 接頭**，其核心功能是將數據以**電訊號**（以高低電位代表 1 和 0）進行傳送。線纜內部兩兩雙扭的設計，能有效抵消和減少**電磁干擾 (EMI)**。常見規格如 **Cat 6 雙扭線** 可支援高達 1 Gbps 的傳輸速度。",
+                desc_en: "The most common guided transmission medium in schools. Utilizing standard **RJ45 connectors**, its core function is to transmit data as **electrical signals** (representing 1s and 0s via voltage levels). The pairs are twisted together to reduce **Electromagnetic Interference (EMI)**. Standard specifications like **Cat 6 cable** support speeds up to 1 Gbps."
+            },
+            switch: {
+                label_zh: "交換器", label_en: "Switch",
+                title_zh: "🎛️ 交換器 (Network Switch)", title_en: "🎛️ Network Switch",
+                desc_zh: "運作於數據鏈路層（Data Link Layer）。主要功能是在**區域網絡 (LAN)** 內連接所有電腦與硬件設備。交換器具有智能，能讀取數據幀中的目標 **MAC 位址 (MAC Address)**，並精準地將數據**封包**轉發到指定的目標埠，而非盲目廣播，大幅減少網絡碰撞並提升傳輸效率。",
+                desc_en: "Operates at the Data Link Layer. Its primary function is to connect various devices within a **Local Area Network (LAN)**. A switch is intelligent enough to read the destination **MAC Address** of incoming data frames and precisely forward the **packet** to the specific target port, avoiding collision and boosting network efficiency."
+            },
+            router: {
+                label_zh: "路由器", label_en: "Router",
+                title_zh: "🌐 路由器 (Router)", title_en: "🌐 Router",
+                desc_zh: "運作於網絡層（Network Layer）。核心功能包括：<br>1. 負責將學校的**區域網絡 (LAN)** 連接至外部的**廣域網絡 (WAN / 互聯網)**。<br>2. 讀取數據包中的 **IP 位址 (IP Address)**，並進行 **路由選擇 (Routing)**，在錯綜複雜的網絡中找出最佳路徑，將數據**封包 (Packet)** 準確送往目的地。",
+                desc_en: "Operates at the Network Layer. Key functions include:<br>1. Connecting the school's **Local Area Network (LAN)** to the external **Wide Area Network (WAN / Internet)**.<br>2. Examining the destination **IP Address** in data packets to perform **Routing**, determining the optimal path across networks to forward **packets** efficiently."
+            },
+            modem: {
+                label_zh: "數據機", label_en: "Modem",
+                title_zh: "📟 數據機 (Modem / ONT)", title_en: "📟 Modem / ONT",
+                desc_zh: "名稱源自**調製器 (Modulator)**與**解調器 (Demodulator)**的組合。由於現代學校多採用光纖上網，此處主要充當光網絡終端。其核心任務是進行**訊號轉換**：將學校內部設備發出的**數位訊號 (Digital Signal)**，與光纖傳輸線路中的**光訊號 (Optical Signal)** 進行互相轉換，達成內外網互通。",
+                desc_en: "Derived from **Modulator** and **Demodulator**. In modern school environments with fiber connection, it often serves as an Optical Network Terminal (ONT). Its main task is **signal conversion**: translating internal **digital signals** into **optical signals** for fiber transmission, and vice versa."
+            },
+            fiber: {
+                label_zh: "光纖", label_en: "Fiber Optic",
+                title_zh: "⚡ 光纖導線 (Fiber Optic Cable)", title_en: "⚡ Fiber Optic Cable",
+                desc_zh: "利用玻璃或塑料纖維，將數據調製成**光訊號**進行高速傳輸。它利用光在玻璃心線中產生的**全內反射 (Total Internal Reflection)** 原理向前傳播。**規格與好處**包括：傳輸速度極高、**頻寬 (Bandwidth)** 極大、訊號衰減極低（適合遠距離傳輸），且因不使用電能傳輸，故完全免疫**電磁干擾 (EMI)**。",
+                desc_en: "Utilizes glass or plastic fibers to transmit data as **light pulses** using the principle of **Total Internal Reflection**. **Benefits & Specs** include: Ultra-high speed, massive **bandwidth**, extremely low attenuation (perfect for long distances), and complete immunity to **Electromagnetic Interference (EMI)** as it carries light instead of electricity."
+            },
+            isp: {
+                label_zh: "ISP", label_en: "ISP",
+                title_zh: "☁️ 網際網路供應商 (ISP)", title_en: "☁️ Internet Service Provider",
+                desc_zh: "即 **網際網路服務供應商 (Internet Service Provider)**（例如香港的網上行、香港寬頻等）。它是為學校提供互聯網連接入口的核心機構，擁有大規模的骨幹網絡與**閘道器 (Gateway)**，引領用戶進入全球互聯網世界。",
+                desc_en: "**Internet Service Provider** (e.g., PCCW, HKBN). It is the commercial entity that provides internet access services to the school, equipped with giant backbone networks and **gateways** linking you to the global internet."
+            }
+        };
+
+        // 2. 初始化第一個大 Canvas (網絡拓撲圖)
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        let selectedNodeId = null;
+
+        const orderedIds = ['pc', 'cable', 'switch', 'router', 'modem', 'fiber', 'isp'];
+        const nodeLayout = {};
+        orderedIds.forEach((id, index) => {
+            nodeLayout[id] = {
+                id: id,
+                x: 45 + index * 125,
+                y: 100,
+                w: id === 'cable' ? 115 : (id === 'isp' ? 60 : 95),
+                h: 55
+            };
+        });
+
+        function drawNetwork() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < orderedIds.length - 1; i++) {
+                const startNode = nodeLayout[orderedIds[i]];
+                const endNode = nodeLayout[orderedIds[i+1]];
+                const startX = startNode.x + startNode.w;
+                const startY = startNode.y + startNode.h / 2;
+                const endX = endNode.x;
+                const endY = endNode.y + endNode.h / 2;
+
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX - 8, endY - 5);
+                ctx.lineTo(endX - 8, endY + 5);
+                ctx.fillStyle = '#64748b';
+                ctx.fill();
+            }
+
+            orderedIds.forEach(id => {
+                const node = nodeLayout[id];
+                const data = hardwareData[id];
+                const isSelected = selectedNodeId === id;
+
+                ctx.shadowBlur = isSelected ? 15 : 0;
+                ctx.shadowColor = isSelected ? '#6366f1' : 'transparent';
+                ctx.fillStyle = isSelected ? '#312e81' : '#1e293b';
+                ctx.strokeStyle = isSelected ? '#818cf8' : '#475569';
+                ctx.lineWidth = isSelected ? 3 : 1.5;
+                
+                ctx.beginPath();
+                ctx.roundRect(node.x, node.y, node.w, node.h, 8);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = isSelected ? '#e0e7ff' : '#cbd5e1';
+                ctx.font = 'bold 12px "Noto Sans HK", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const label = currentLang === 'zh' ? data.label_zh : data.label_en;
+                if (label.includes('&') || label.includes('Twisted')) {
+                    const parts = label.split(' & ');
+                    if(parts.length > 1) {
+                        ctx.fillText(parts[0] + ' &', node.x + node.w / 2, node.y + node.h / 2 - 8);
+                        ctx.fillText(parts[1], node.x + node.w / 2, node.y + node.h / 2 + 10);
+                    } else {
+                        ctx.fillText(label, node.x + node.w / 2, node.y + node.h / 2);
+                    }
+                } else {
+                    ctx.fillText(label, node.x + node.w / 2, node.y + node.h / 2);
+                }
+            });
+        }
+
+        canvas.addEventListener('click', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            let clickedOnNode = false;
+
+            orderedIds.forEach(id => {
+                const node = nodeLayout[id];
+                if (mouseX >= node.x && mouseX <= node.x + node.w &&
+                    mouseY >= node.y && mouseY <= node.y + node.h) {
+                    selectedNodeId = id;
+                    clickedOnNode = true;
+                    showDetails(id);
+                }
+            });
+            if (clickedOnNode) drawNetwork();
+        });
+
+        function showDetails(id) {
+            const data = hardwareData[id];
+            const contentPanel = document.getElementById('panel-content');
+            const title = currentLang === 'zh' ? data.title_zh : data.title_en;
+            let desc = currentLang === 'zh' ? data.desc_zh : data.desc_en;
+
+            // 關鍵字高亮替換處理
+            desc = desc.replace(/\*\*(.*?)\*\*/g, '<span class="text-amber-400 font-bold bg-slate-900/50 px-1 py-0.5 rounded border border-slate-700/30">$1</span>');
+            document.getElementById('ui-panel-header').innerText = currentLang === 'zh' ? "概念詳解" : "Hardware Detail";
+
+            contentPanel.innerHTML = `
+                <div class="animate-fadeIn">
+                    <h3 class="text-base font-bold text-indigo-300 mb-2">${title}</h3>
+                    <p class="text-sm leading-relaxed text-slate-300">${desc}</p>
+                </div>
+            `;
+        }
+
+
+        // 3. 下方新 Section：互動式單步數據傳輸動畫與多電腦防衝突邏輯
+        const animCanvas = document.getElementById('animCanvas');
+        const actx = animCanvas.getContext('2d');
+        
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnReset = document.getElementById('btn-reset');
+
+        // 定義步驟索引與動畫狀態
+        let currentStep = 0; 
+        let isMoving = false;
+        let animationFrameId = null;
+
+        // 當前封包繪製座標
+        let packet = { x: 820, y: 80 }; 
+
+        // 動畫節點幾何坐標配置（從右至左：ISP -> Fiber -> Modem -> Router -> Switch -> Branch[PC_A, PC_B]）
+        const animLayout = {
+            isp:    { x: 820, y: 80,  name_zh: "ISP", label_en: "ISP" },
+            fiber:  { x: 680, y: 80,  name_zh: "光纖", label_en: "Fiber" },
+            modem:  { x: 540, y: 80,  name_zh: "數據機", label_en: "Modem" },
+            router: { x: 400, y: 80,  name_zh: "路由器", label_en: "Router" },
+            switch: { x: 260, y: 80,  name_zh: "交換器", label_en: "Switch" },
+            pca:    { x: 80,  y: 40,  name_zh: "電腦 A (目標)", label_en: "PC A (Target)" },
+            pcb:    { x: 80,  y: 120, name_zh: "電腦 B (其他)", label_en: "PC B (Other)" }
+        };
+
+        // 定義 6 個單步暫停點的數據傳輸軌跡、作用節點及 ICT 核心描述
+        const stepSpecs = [
+            {
+                nodeId: 'isp',
+                targetPos: { x: 820, y: 80 },
+                zh: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 步驟 1：網際網路供應商 (ISP) 發送數據</h4><p class='text-sm text-slate-300 leading-relaxed'>網際網路供應商 (ISP) 一般以光纖將訊號傳送到大廈再入屋，此技術架構在 ICT 課程中稱為 **FTTH (光纖入屋)**，能提供極高頻寬與穩定性。</p>",
+                en: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 Step 1: Internet Service Provider (ISP) Source</h4><p class='text-sm text-slate-300 leading-relaxed'>ISPs generally transmit network signals via optical fibers to buildings and then directly into premises, a technology standard officially termed **FTTH (Fiber To The Home)**.</p>"
+            },
+            {
+                nodeId: 'fiber',
+                targetPos: { x: 680, y: 80 },
+                zh: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 步驟 2：光纖主幹傳輸 (Fiber Optic Propagation)</h4><p class='text-sm text-slate-300 leading-relaxed'>數據轉換為**光訊號**後在光纖內以**全內反射**原理高速前進。其規格好處是傳輸距離極遠且**完全免疫電磁干擾 (EMI)**。</p>",
+                en: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 Step 2: Fiber Optic Medium Transmission</h4><p class='text-sm text-slate-300 leading-relaxed'>Data travels inside glass cores as **optical signals** based on **Total Internal Reflection**. It features low attenuation and is **completely immune to Electromagnetic Interference (EMI)**.</p>"
+            },
+            {
+                nodeId: 'modem',
+                targetPos: { x: 540, y: 80 },
+                zh: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 步驟 3：數據機進行信號轉換 (Demodulation)</h4><p class='text-sm text-slate-300 leading-relaxed'>**數據機 (Modem)** 作為邊界轉換設備，主要功能是將從外網進入內部 **LAN (區域網絡)** 的光脈衝訊號，轉換成電腦內部硬件可以讀取的**數碼信號 (Digital Signal 1/0)**。</p>",
+                en: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 Step 3: Signal Conversion by Modem</h4><p class='text-sm text-slate-300 leading-relaxed'>The **Modem** serves as the critical translator: its primary task is converting incoming light waveforms into **digital signals (0s and 1s)** before passing them into the internal **LAN**.</p>"
+            },
+            {
+                nodeId: 'router',
+                targetPos: { x: 400, y: 80 },
+                zh: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 步驟 4：路由器尋找最佳路徑 (IP Routing)</h4><p class='text-sm text-slate-300 leading-relaxed'>運作於網絡層的**路由器 (Router)** 連接外部 WAN 與學校 LAN。它會解開數據包封裝，**基於 IP 位址 (IP Address)** 進行路由決策，將數據精確傳送到指定的網段與用戶群。</p>",
+                en: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 Step 4: Network Layer Navigation by Router</h4><p class='text-sm text-slate-300 leading-relaxed'>Operating at the Network Layer, the **Router** connects the WAN to the school network. It reads packet headers and forwards data **based on IP Addresses** to guide packets along the optimal path.</p>"
+            },
+            {
+                nodeId: 'switch',
+                targetPos: { x: 260, y: 80 },
+                zh: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 步驟 5：區域網絡中樞點 (Switch Connection)</h4><p class='text-sm text-slate-300 leading-relaxed'>在此節點，**交換器 (Switch)** 後端連接著**多台用戶電腦 (包括電腦 A 與電腦 B)**。當局域網內有多台電腦同時運作時，交換器會建立專屬的獨立微通道，**根據 MAC 位址 (MAC Address)** 將數據只發往指定的目標埠，從而**防止數據衝突 (Collision Prevention)**。</p>",
+                en: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 Step 5: LAN Hub Check by Network Switch</h4><p class='text-sm text-slate-300 leading-relaxed'>Here, **multiple user computers (PC A and PC B)** are joined. When multiple active computers exist, the switch reads the unique physical hardware identifier and forwards frames **according to MAC Addresses**, successfully **preventing data collisions**.</p>"
+            },
+            {
+                nodeId: 'pca', // 最終目標抵達終端
+                targetPos: { x: 80, y: 40 },
+                zh: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 步驟 6：數據經雙扭線精準抵達目標主機</h4><p class='text-sm text-slate-300 leading-relaxed'>數據包最終通過 RJ45 與雙扭線電訊號，順利送達**用戶電腦 A (目標)**。得益於交換器對 **MAC 地址** 的過濾與管制，**電腦 B (非目標) 避開了多餘數據**，網絡中沒有任何衝突發生，傳輸成功！</p>",
+                en: "<h4 class='text-emerald-400 font-bold text-base mb-1'>📍 Step 6: Targeted Arrival via Twisted Pair Cable</h4><p class='text-sm text-slate-300 leading-relaxed'>The data packet passes safely into **User PC A (Target)**. Due to MAC address matching, **PC B (Non-target) remains unaffected** by unwanted traffic, ensuring zero interference and zero collision.</p>"
+            }
+        ];
+
+        // 渲染動畫背景軌道、線路分支出多台電腦與節點圓圈
+        function drawAnimTrack(activeNodeId = null) {
+            actx.clearRect(0, 0, animCanvas.width, animCanvas.height);
+
+            // 1. 繪製傳輸主幹線路 (ISP -> Switch)
+            actx.beginPath();
+            actx.moveTo(animLayout.isp.x, animLayout.isp.y);
+            actx.lineTo(animLayout.switch.x, animLayout.switch.y);
+            actx.strokeStyle = '#334155';
+            actx.lineWidth = 5;
+            actx.stroke();
+
+            // 2. 核心考點：在交換器後方分支出「多台用戶電腦 A 和 B」的連線
+            actx.beginPath();
+            actx.moveTo(animLayout.switch.x, animLayout.switch.y);
+            actx.lineTo(animLayout.pca.x, animLayout.pca.y); // 到電腦 A 線路
+            actx.moveTo(animLayout.switch.x, animLayout.switch.y);
+            actx.lineTo(animLayout.pcb.x, animLayout.pcb.y); // 到電腦 B 線路
+            actx.strokeStyle = '#475569';
+            actx.lineWidth = 3;
+            actx.stroke();
+
+            // 3. 繪製每一個硬件節點圓形外觀
+            Object.keys(animLayout).forEach(key => {
+                const node = animLayout[key];
+                const isActive = activeNodeId === key;
+                
+                // 如果是最後一步且抵達電腦 A，同時將交換器與電腦 A 都亮色顯示
+                let isHighlighted = isActive;
+                if (activeNodeId === 'pca' && key === 'switch') isHighlighted = true;
+
+                actx.beginPath();
+                actx.arc(node.x, node.y, isHighlighted ? 12 : 8, 0, Math.PI * 2);
+                actx.fillStyle = isHighlighted ? '#10b981' : '#334155';
+                actx.strokeStyle = isHighlighted ? '#a7f3d0' : '#1e293b';
+                actx.lineWidth = 2;
+                actx.fill();
+                actx.stroke();
+
+                // 標記文字標籤 (支援雙語切換)
+                actx.fillStyle = isHighlighted ? '#34d399' : '#94a3b8';
+                actx.font = isHighlighted ? 'bold 11px "Noto Sans HK", sans-serif' : '10px "Noto Sans HK", sans-serif';
+                actx.textAlign = 'center';
+                
+                let label = currentLang === 'zh' ? node.name_zh : node.label_en;
+                // 電腦分支的文字稍微側移避免遮擋
+                if (key === 'pca') {
+                    actx.fillText(label, node.x - 5, node.y - 15);
+                } else if (key === 'pcb') {
+                    actx.fillText(label, node.x - 5, node.y + 22);
+                } else {
+                    actx.fillText(label, node.x, node.y + 24);
+                }
+            });
+        }
+
+        // 更新下方區塊的考點描述字卡文字（加入重點著色）
+        function updateAnimDescriptionCard() {
+            const descArea = document.getElementById('anim-description-area');
+            const spec = stepSpecs[currentStep];
+            let rawHtml = currentLang === 'zh' ? spec.zh : spec.en;
+            
+            // 替換雙星號標記為高亮著色樣式
+            rawHtml = rawHtml.replace(/\*\*(.*?)\*\*/g, '<span class="text-amber-400 font-bold bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">$1</span>');
+            descArea.innerHTML = rawHtml;
+        }
+
+        // 平滑漸變過渡移動動畫邏輯
+        function movePacketTo(targetX, targetY, callback) {
+            isMoving = true;
+            btnNext.disabled = true;
+            btnPrev.disabled = true;
+
+            function stepAnimation() {
+                const dx = targetX - packet.x;
+                const dy = targetY - packet.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const speed = 6; // 數據包移動像素速度
+
+                if (distance <= speed) {
+                    packet.x = targetX;
+                    packet.y = targetY;
+                    isMoving = false;
+                    
+                    // 恢復按鈕狀態控制
+                    btnNext.disabled = (currentStep === stepSpecs.length - 1);
+                    btnPrev.disabled = (currentStep === 0);
+                    
+                    if (callback) callback();
+                } else {
+                    packet.x += (dx / distance) * speed;
+                    packet.y += (dy / distance) * speed;
+                    
+                    // 重新重繪線路與動態黃色數據封包
+                    drawAnimTrack(stepSpecs[currentStep].nodeId);
+                    
+                    actx.beginPath();
+                    actx.arc(packet.x, packet.y, 7, 0, Math.PI * 2);
+                    actx.fillStyle = '#fbbf24'; // 金黃色封包表示主體
+                    actx.shadowBlur = 12;
+                    actx.shadowColor = '#fbbf24';
+                    actx.fill();
+                    actx.shadowBlur = 0; // 還原陰影
+
+                    animationFrameId = requestAnimationFrame(stepAnimation);
+                }
+            }
+            stepAnimation();
+        }
+
+        // 下一步按鈕點擊觸發
+        btnNext.addEventListener('click', () => {
+            if (isMoving || currentStep >= stepSpecs.length - 1) return;
+            cancelAnimationFrame(animationFrameId);
+            currentStep++;
+            const nextTarget = stepSpecs[currentStep].targetPos;
+            
+            movePacketTo(nextTarget.x, nextTarget.y, () => {
+                updateAnimDescriptionCard();
+                drawAnimTrack(stepSpecs[currentStep].nodeId);
+            });
+        });
+
+        // 上一步按鈕點擊觸發
+        btnPrev.addEventListener('click', () => {
+            if (isMoving || currentStep <= 0) return;
+            cancelAnimationFrame(animationFrameId);
+            currentStep--;
+            const prevTarget = stepSpecs[currentStep].targetPos;
+            
+            movePacketTo(prevTarget.x, prevTarget.y, () => {
+                updateAnimDescriptionCard();
+                drawAnimTrack(stepSpecs[currentStep].nodeId);
+            });
+        });
+
+        // 重置模擬狀態
+        function resetSim() {
+            cancelAnimationFrame(animationFrameId);
+            currentStep = 0;
+            isMoving = false;
+            packet.x = animLayout.isp.x;
+            packet.y = animLayout.isp.y;
+            
+            btnNext.disabled = false;
+            btnPrev.disabled = true;
+            
+            drawAnimTrack('isp');
+            updateAnimDescriptionCard();
+            
+            // 在重繪後的初起點畫出封包
+            actx.beginPath();
+            actx.arc(packet.x, packet.y, 7, 0, Math.PI * 2);
+            actx.fillStyle = '#fbbf24';
+            actx.fill();
+        }
+        btnReset.addEventListener('click', resetSim);
+
+
+        // 4. 一鍵轉換英文/中文功能
+        const langBtn = document.getElementById('lang-btn');
+        langBtn.addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            langBtn.innerText = currentLang === 'zh' ? 'English' : '中文';
+            
+            // 更新通用靜態 UI 的多語言文本
+            document.getElementById('ui-title').innerText = uiText[currentLang].title;
+            document.getElementById('ui-subtitle').innerText = uiText[currentLang].subtitle;
+            document.getElementById('ui-canvas-hint').innerText = uiText[currentLang].canvasHint;
+            document.getElementById('ui-anim-title').innerText = uiText[currentLang].animTitle;
+            document.getElementById('ui-anim-desc').innerText = uiText[currentLang].animDesc;
+            document.getElementById('ui-btn-prev-text').innerText = uiText[currentLang].btnPrev;
+            document.getElementById('ui-btn-next-text').innerText = uiText[currentLang].btnNext;
+            document.getElementById('ui-btn-reset-text').innerText = uiText[currentLang].btnReset;
+            
+            // 重新整理詳解面板
+            if (selectedNodeId) {
+                showDetails(selectedNodeId);
+            } else {
+                document.getElementById('panel-content').innerHTML = `
+                    <p class="text-slate-400 italic text-center py-12">${uiText[currentLang].defaultMsg}</p>
+                `;
+            }
+
+            // 同步刷新上半部拓撲圖與下半部單步動態區
+            drawNetwork();
+            drawAnimTrack(stepSpecs[currentStep].nodeId);
+            updateAnimDescriptionCard();
+            
+            // 維持當前位置畫出金黃色封包
+            actx.beginPath();
+            actx.arc(packet.x, packet.y, 7, 0, Math.PI * 2);
+            actx.fillStyle = '#fbbf24';
+            actx.fill();
+        });
+
+        // 頁面首次加載初試化
+        window.onload = () => {
+            drawNetwork();
+            resetSim();
+        };
+    </script>
+</body>
+</html>
