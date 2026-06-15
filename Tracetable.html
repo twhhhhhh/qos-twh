@@ -149,7 +149,7 @@
                 return {
                     answer: s.toString(), traceData: traceData,
                     cols: { zh: ["次數", `J < ${cond}`, "J", "S"], en: ["Iteration", `J < ${cond}`, "J", "S"] },
-                    code: { zh: `S ← 1\n設 J 由 1 到 ${limit}\n如果 J < ${cond}\n則 S ← S * 2\n否則 S ← S + 3\n輸出 S`, en: `S ← 1\nFOR J FROM 1 TO ${limit}\n  IF J < ${cond} THEN\n    S ← S * 2\n  ELSE\n    S ← S + 3\n  END IF\nNEXT J\nPRINT S` }, promptType: 'promptOutput'
+                    code: { zh: `S ← 1\n設 J 由 1 到 ${limit}\n如果 J < ${cond}\n  則 S ← S * 2\n否則 S ← S + 3\n輸出 S`, en: `S ← 1\nFOR J FROM 1 TO ${limit}\n  IF J < ${cond} THEN\n    S ← S * 2\n  ELSE\n    S ← S + 3\n  END IF\nNEXT J\nPRINT S` }, promptType: 'promptOutput'
                 };
             },
             () => {
