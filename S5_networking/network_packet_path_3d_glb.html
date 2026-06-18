@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>數據封包由 NIC 前往互聯網（GLB 模型版）| Packet Journey — GLB Models</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(9, 20, 36, 0.88);
+      --panel-strong: rgba(12, 29, 52, 0.94);
+      --text: #e9f4ff;
+      --muted: #9fb4c9;
+      --cyan: #38d5ff;
+      --green: #5cffb1;
+      --amber: #ffd166;
+      --danger: #ff6b8a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      color: var(--text);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(56, 213, 255, 0.18), transparent 32%),
+        radial-gradient(circle at 85% 20%, rgba(92, 255, 177, 0.13), transparent 28%),
+        linear-gradient(180deg, #07111f 0%, #081827 54%, #050a13 100%);
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      max-width: 680px;
+      padding: 16px 18px;
+      border: 1px solid rgba(96, 214, 255, 0.25);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar h1 {
+      margin: 0 0 6px;
+      font-size: clamp(18px, 2.2vw, 28px);
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+    }
+
+    .topbar p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      max-width: calc(100vw - 390px);
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      color: #06101b;
+      font-weight: 800;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      box-shadow: 0 8px 22px rgba(56, 213, 255, 0.2);
+      transition: transform 0.18s ease, filter 0.18s ease;
+    }
+
+    button.secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: none;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    .info-panel {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 36px));
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid rgba(96, 214, 255, 0.24);
+      border-radius: 20px;
+      background: var(--panel-strong);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(14px);
+    }
+
+    .info-panel h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      color: #ffffff;
+    }
+
+    .info-panel .subtitle {
+      margin: 0 0 14px;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .info-panel h3 {
+      margin: 16px 0 6px;
+      font-size: 15px;
+      color: var(--amber);
+      letter-spacing: 0.04em;
+    }
+
+    .info-panel p {
+      margin: 0;
+      color: #d8e8f7;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .hint {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--green);
+      border-radius: 10px;
+      color: var(--muted);
+      background: rgba(92, 255, 177, 0.08);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .label {
+      position: fixed;
+      z-index: 4;
+      min-width: 92px;
+      padding: 7px 10px;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(56, 213, 255, 0.34);
+      border-radius: 999px;
+      color: #f7fbff;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-shadow: 0 0 10px rgba(56, 213, 255, 0.9);
+      background: rgba(7, 17, 31, 0.72);
+      box-shadow: 0 0 22px rgba(56, 213, 255, 0.16);
+      backdrop-filter: blur(8px);
+    }
+
+    .label small {
+      display: block;
+      color: #a9dff2;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .legend {
+      position: fixed;
+      left: 18px;
+      top: 150px;
+      z-index: 10;
+      width: 250px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      color: var(--muted);
+      background: rgba(7, 17, 31, 0.72);
+      backdrop-filter: blur(12px);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      margin-right: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px var(--green);
+    }
+
+    @media (max-width: 780px) {
+      .info-panel {
+        top: auto;
+        right: 12px;
+        bottom: 86px;
+        width: calc(100vw - 24px);
+        max-height: 40vh;
+      }
+
+      .topbar,
+      .legend {
+        display: none;
+      }
+
+      .controls {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="topbar">
+    <h1>數據封包由電腦 NIC 前往互聯網（GLB 模型版）</h1>
+    <p>GLB model edition — computer, NIC, router, modem and server rack use uploaded 3D files. 拖曳旋轉、滾輪縮放，點擊每個裝置查看中英雙語說明。</p>
+  </section>
+
+  <aside class="legend">
+    <span class="dot"></span>綠色發光小球代表數據封包。<br />
+    已載入 GLB：computer、NIC、router、modem、server rack。<br />
+    The glowing green spheres are packets. GLB models are used where available.
+  </aside>
+
+  <main id="infoPanel" class="info-panel">
+    <h2>請點擊一個裝置</h2>
+    <p class="subtitle">Click a device</p>
+    <h3>繁體中文</h3>
+    <p>這個 3D 視覺化展示數據封包由電腦網絡介面卡出發，經過校園或家庭網絡設備，再到 ISP 和互聯網的過程。</p>
+    <h3>English</h3>
+    <p>This 3D visualization shows how data packets leave a computer network interface card, pass through local network devices, then reach the ISP and the Internet.</p>
+    <div class="hint">提示：封包接近裝置時會減速並閃光，表示裝置正在接收、檢查或轉發資料。</div>
+  </main>
+
+  <nav class="controls">
+    <button id="sendBurst">發送數據封包 Send Packets</button>
+    <button id="togglePlay" class="secondary">暫停 Pause</button>
+    <button id="resetCamera" class="secondary">重置視角 Reset View</button>
+  </nav>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x07111f);
+    scene.fog = new THREE.Fog(0x07111f, 24, 58);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 120);
+    camera.position.set(-3.5, 10, 18);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.target.set(0, 1.2, 0);
+    controls.maxDistance = 42;
+    controls.minDistance = 7;
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const loader = new GLTFLoader();
+    const clock = new THREE.Clock();
+    const deviceGroups = [];
+    const packetMeshes = [];
+    const burstPackets = [];
+    const labels = [];
+    const devicePulse = new Map();
+
+    let selectedDevice = null;
+    let running = true;
+    let packetSpeed = 0.052;
+    let burstSpeedBoost = 1;
+
+    // GLB 模型版：已設定使用者上傳的 GLB 檔案（與本 HTML 同資料夾）。
+    // 替換模型：修改 glbModels / modelFiles 檔名，並可調整 targetSize 控制自動縮放大小。
+    // 若 GLB 載入失敗，會自動改用簡易幾何體（註解：可替換為 GLB）。
+    const devices = [
+      {
+        key: "nic",
+        zh: "電腦 NIC",
+        en: "Computer NIC",
+        position: new THREE.Vector3(-15, 1.3, 0),
+        color: 0x38d5ff,
+        glbModels: [
+          { file: "computer.glb", targetSize: 2.65 },
+          {
+            file: "network_interface_card.glb",
+            targetSize: 0.9,
+            position: new THREE.Vector3(1.05, 0.55, 0.5),
+            rotationY: -0.45
+          }
+        ],
+        zhInfo: "網絡介面卡（NIC）是電腦連接網絡的硬件。當你瀏覽網頁或傳送訊息時，資料會先被分成較小的數據封包，再由 NIC 轉成電訊號、光訊號或無線訊號送出。",
+        enInfo: "A Network Interface Card, or NIC, is the hardware that connects a computer to a network. When you browse a website or send a message, data is split into packets, then the NIC sends them as electrical, optical, or wireless signals.",
+        role: "source"
+      },
+      {
+        key: "switch",
+        zh: "交換器",
+        en: "Switch",
+        position: new THREE.Vector3(-10, 1.15, -1.2),
+        color: 0x5cffb1,
+        modelFiles: [],
+        zhInfo: "交換器負責在同一個本地網絡內轉發封包。它會根據 MAC 位址，把封包送到正確的連接埠，避免把所有資料都廣播給每一部裝置。",
+        enInfo: "A switch forwards packets inside the same local network. It uses MAC addresses to send each packet to the correct port, instead of broadcasting all traffic to every device.",
+        role: "switch"
+      },
+      {
+        key: "firewall",
+        zh: "防火牆",
+        en: "Firewall",
+        position: new THREE.Vector3(-5, 1.35, 1.1),
+        color: 0xff6b8a,
+        modelFiles: [],
+        zhInfo: "防火牆像網絡的保安員，會按照規則檢查進出封包。例如它可以封鎖可疑連線、限制某些服務，或只允許已批准的流量通過。",
+        enInfo: "A firewall acts like a network security guard. It checks packets against rules, blocks suspicious connections, limits some services, and allows approved traffic to pass.",
+        role: "firewall"
+      },
+      {
+        key: "router",
+        zh: "路由器",
+        en: "Router",
+        position: new THREE.Vector3(0, 1.25, -0.9),
+        color: 0xffd166,
+        modelFiles: ["router.glb"],
+        targetSize: 2.2,
+        zhInfo: "路由器連接不同網絡，例如把家中或學校的本地網絡連接到 ISP。它會查看 IP 位址，決定封包下一步應該往哪一條路徑前進。",
+        enInfo: "A router connects different networks, such as a home or school LAN to an ISP. It reads IP addresses and decides the next path each packet should take.",
+        role: "router"
+      },
+      {
+        key: "modem",
+        zh: "數據機",
+        en: "Modem",
+        position: new THREE.Vector3(5, 1.15, 1.1),
+        color: 0xb38cff,
+        modelFiles: ["modem.glb"],
+        targetSize: 2.0,
+        zhInfo: "數據機把本地網絡的數碼資料轉換成適合寬頻線路傳輸的訊號，例如光纖、同軸電纜或電話線訊號。它是家庭或校園網絡通向 ISP 的重要橋樑。",
+        enInfo: "A modem converts local digital data into signals suitable for broadband links, such as fibre, coaxial cable, or phone lines. It is an important bridge between the local network and the ISP.",
+        role: "modem"
+      },
+      {
+        key: "isp",
+        zh: "ISP 伺服器",
+        en: "ISP Server",
+        position: new THREE.Vector3(10, 1.65, -1.2),
+        color: 0x6ea8ff,
+        modelFiles: ["server_rack.glb"],
+        targetSize: 3.0,
+        zhInfo: "ISP（互聯網服務供應商）提供連接互聯網的基礎設施。封包到達 ISP 後，會進入更大型的網絡骨幹，繼續被路由到目標網站或服務。",
+        enInfo: "An ISP, or Internet Service Provider, provides the infrastructure for Internet access. After packets reach the ISP, they enter larger backbone networks and continue toward the target website or service.",
+        role: "server"
+      },
+      {
+        key: "internet",
+        zh: "互聯網",
+        en: "Internet",
+        position: new THREE.Vector3(15, 1.9, 0),
+        color: 0x38d5ff,
+        modelFiles: [],
+        zhInfo: "互聯網不是單一裝置，而是全球互相連接的網絡。封包會經過多個網絡和路由器，最後到達目的地伺服器，再把回應封包傳回你的電腦。",
+        enInfo: "The Internet is not one device. It is a global network of connected networks. Packets may pass through many networks and routers before reaching the destination server, which then sends response packets back.",
+        role: "cloud"
+      }
+    ];
+
+    const pathPoints = devices.map((device, index) => {
+      const lift = index === 0 || index === devices.length - 1 ? 1.9 : 1.55;
+      return new THREE.Vector3(device.position.x, lift, device.position.z);
+    });
+    const packetCurve = new THREE.CatmullRomCurve3(pathPoints, false, "catmullrom", 0.28);
+
+    initLights();
+    initEnvironment();
+    createDevices();
+    createNetworkPath();
+    createPackets();
+    updateInfoPanel(devices[0]);
+    animate();
+
+    document.getElementById("sendBurst").addEventListener("click", sendBurst);
+    document.getElementById("togglePlay").addEventListener("click", togglePlay);
+    document.getElementById("resetCamera").addEventListener("click", resetCamera);
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("resize", onResize);
+
+    function initLights() {
+      scene.add(new THREE.HemisphereLight(0x9fdfff, 0x08111f, 2.1));
+
+      const keyLight = new THREE.DirectionalLight(0xffffff, 2.6);
+      keyLight.position.set(-8, 16, 10);
+      scene.add(keyLight);
+
+      const rimLight = new THREE.DirectionalLight(0x38d5ff, 1.4);
+      rimLight.position.set(12, 8, -12);
+      scene.add(rimLight);
+    }
+
+    function initEnvironment() {
+      const grid = new THREE.GridHelper(38, 38, 0x24435a, 0x142639);
+      grid.position.y = 0;
+      grid.material.transparent = true;
+      grid.material.opacity = 0.38;
+      scene.add(grid);
+
+      const floorGeo = new THREE.CircleGeometry(23, 96);
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: 0x081827,
+        roughness: 0.72,
+        metalness: 0.18,
+        transparent: true,
+        opacity: 0.55
+      });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.03;
+      scene.add(floor);
+    }
+
+    function createDevices() {
+      devices.forEach((device) => {
+        const group = new THREE.Group();
+        group.position.copy(device.position);
+        group.userData.device = device;
+        scene.add(group);
+        device.group = group;
+        deviceGroups.push(group);
+        devicePulse.set(device.key, 0);
+
+        addDeviceGlow(device, group);
+        addLabel(device);
+        loadDeviceModels(device, group);
+      });
+    }
+
+    function loadDeviceModels(device, group) {
+      if (device.glbModels?.length) {
+        let loadedCount = 0;
+        let failedCount = 0;
+        const total = device.glbModels.length;
+
+        device.glbModels.forEach((spec) => {
+          loader.load(
+            spec.file,
+            (gltf) => {
+              const model = gltf.scene;
+              model.name = `${device.en} — ${spec.file}`;
+              prepareLoadedModel(model, device, spec);
+              group.add(model);
+              loadedCount += 1;
+            },
+            undefined,
+            () => {
+              failedCount += 1;
+              console.warn(`GLB load failed: ${spec.file}`);
+              if (loadedCount === 0 && failedCount === total) {
+                createFallbackDevice(device, group);
+              }
+            }
+          );
+        });
+        return;
+      }
+
+      loadGlbOrFallback(device, group, 0);
+    }
+
+    function loadGlbOrFallback(device, group, fileIndex) {
+      const file = device.modelFiles?.[fileIndex];
+      if (!file) {
+        createFallbackDevice(device, group);
+        return;
+      }
+
+      loader.load(
+        file,
+        (gltf) => {
+          const model = gltf.scene;
+          model.name = `${device.en} GLB model`;
+          prepareLoadedModel(model, device, { targetSize: device.targetSize });
+          group.add(model);
+        },
+        undefined,
+        () => loadGlbOrFallback(device, group, fileIndex + 1)
+      );
+    }
+
+    function prepareLoadedModel(model, device, spec = {}) {
+      normalizeModel(model, device, spec);
+
+      if (spec.position) {
+        model.position.add(spec.position);
+      }
+      if (spec.rotationY) {
+        model.rotation.y = spec.rotationY;
+      }
+
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          child.userData.device = device;
+          if (child.material) {
+            child.material = child.material.clone();
+            child.material.emissive = new THREE.Color(device.color);
+            child.material.emissiveIntensity = 0.06;
+          }
+        }
+      });
+
+      if (device.role === "source") {
+        addPortGlow(model, new THREE.Vector3(1.15, 0.55, 0.72), 0x5cffb1);
+      }
+    }
+
+    function getTargetSize(device, spec = {}) {
+      if (spec.targetSize) return spec.targetSize;
+      if (device.targetSize) return device.targetSize;
+      if (device.role === "cloud") return 3.3;
+      if (device.role === "server") return 2.9;
+      if (device.role === "router" || device.role === "modem") return 2.15;
+      return 2.25;
+    }
+
+    function normalizeModel(model, device, spec = {}) {
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const targetSize = getTargetSize(device, spec);
+      const maxAxis = Math.max(size.x, size.y, size.z) || 1;
+      const scale = targetSize / maxAxis;
+
+      model.scale.setScalar(scale);
+      model.position.sub(center.clone().multiplyScalar(scale));
+      model.position.y += targetSize * 0.35;
+    }
+
+    function createFallbackDevice(device, group) {
+      // Fallback geometry: 可替換為 GLB。把模型放在同一資料夾並修改 device.modelFiles 即可。
+      const material = new THREE.MeshStandardMaterial({
+        color: device.color,
+        roughness: 0.35,
+        metalness: 0.46,
+        emissive: device.color,
+        emissiveIntensity: 0.12
+      });
+      const darkMaterial = new THREE.MeshStandardMaterial({
+        color: 0x0c1827,
+        roughness: 0.62,
+        metalness: 0.42
+      });
+
+      if (device.role === "source") {
+        const card = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 0.22), material);
+        const port = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.38, 0.16), darkMaterial);
+        const pins = new THREE.Group();
+        port.position.set(0.85, 0, 0.2);
+        for (let i = 0; i < 6; i++) {
+          const pin = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.42, 0.05), material);
+          pin.position.set(-0.82 + i * 0.18, -0.68, 0.08);
+          pins.add(pin);
+        }
+        group.add(card, port, pins);
+        addPortGlow(group, new THREE.Vector3(0.85, 0, 0.36), 0x5cffb1);
+      } else if (device.role === "switch") {
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.72, 1.55), material);
+        body.position.y = 0.16;
+        group.add(body);
+        for (let i = 0; i < 6; i++) {
+          const port = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.16, 0.1), darkMaterial);
+          port.position.set(-0.95 + i * 0.38, 0.25, 0.82);
+          group.add(port);
+          addPortGlow(group, port.position.clone().add(new THREE.Vector3(0, 0, 0.11)), i % 2 ? 0x5cffb1 : 0x38d5ff);
+        }
+      } else if (device.role === "firewall") {
+        const shield = new THREE.Mesh(new THREE.BoxGeometry(2.15, 2.25, 0.36), material);
+        shield.position.y = 0.52;
+        shield.rotation.z = Math.PI / 4;
+        group.add(shield);
+        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.44, 32), darkMaterial);
+        core.rotation.x = Math.PI / 2;
+        core.position.y = 0.52;
+        core.position.z = 0.28;
+        group.add(core);
+      } else if (device.role === "router") {
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.72, 1.55), material);
+        body.position.y = 0.15;
+        group.add(body);
+        [-0.72, 0, 0.72].forEach((x) => {
+          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.55, 12), darkMaterial);
+          antenna.position.set(x, 1.04, -0.58);
+          antenna.rotation.z = x * 0.35;
+          group.add(antenna);
+        });
+        addPortGlow(group, new THREE.Vector3(0.96, 0.24, 0.82), 0xffd166);
+      } else if (device.role === "modem") {
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.15, 1.1, 1.25), material);
+        body.position.y = 0.32;
+        group.add(body);
+        const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 20), darkMaterial);
+        cable.rotation.z = Math.PI / 2;
+        cable.position.set(1.38, 0.32, 0);
+        group.add(cable);
+        addPortGlow(group, new THREE.Vector3(-0.9, 0.32, 0.68), 0xb38cff);
+      } else if (device.role === "server") {
+        const rack = new THREE.Mesh(new THREE.BoxGeometry(1.75, 2.75, 1.25), material);
+        rack.position.y = 0.72;
+        group.add(rack);
+        for (let i = 0; i < 5; i++) {
+          const slot = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.1, 0.08), darkMaterial);
+          slot.position.set(0, -0.2 + i * 0.36, 0.66);
+          group.add(slot);
+          addPortGlow(group, new THREE.Vector3(0.62, -0.2 + i * 0.36, 0.73), i % 2 ? 0x5cffb1 : 0x6ea8ff);
+        }
+      } else {
+        const cloud = new THREE.Group();
+        [
+          [-0.9, 0, 0, 0.72],
+          [-0.25, 0.3, 0.05, 0.92],
+          [0.55, 0.1, -0.05, 0.82],
+          [1.05, -0.08, 0, 0.58],
+          [0, -0.15, 0.06, 0.72]
+        ].forEach(([x, y, z, radius]) => {
+          const puff = new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 18), material);
+          puff.position.set(x, y + 0.5, z);
+          cloud.add(puff);
+        });
+        group.add(cloud);
+      }
+    }
+
+    function addDeviceGlow(device, group) {
+      const glow = new THREE.PointLight(device.color, 1.35, 7.2);
+      glow.position.set(0, 1.7, 0);
+      glow.userData.baseIntensity = 1.35;
+      group.add(glow);
+
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(1.18, 1.32, 72),
+        new THREE.MeshBasicMaterial({
+          color: device.color,
+          transparent: true,
+          opacity: 0.4,
+          side: THREE.DoubleSide
+        })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.05;
+      ring.userData.isGlowRing = true;
+      group.add(ring);
+    }
+
+    function addPortGlow(group, position, color) {
+      const portGlow = new THREE.Mesh(
+        new THREE.SphereGeometry(0.08, 18, 12),
+        new THREE.MeshBasicMaterial({ color })
+      );
+      portGlow.position.copy(position);
+      group.add(portGlow);
+
+      const light = new THREE.PointLight(color, 1.5, 2.2);
+      light.position.copy(position);
+      group.add(light);
+    }
+
+    function addLabel(device) {
+      const label = document.createElement("div");
+      label.className = "label";
+      label.innerHTML = `${device.zh}<small>${device.en}</small>`;
+      document.body.appendChild(label);
+      labels.push({ device, element: label, world: device.position.clone().add(new THREE.Vector3(0, 2.85, 0)) });
+    }
+
+    function createNetworkPath() {
+      const pathGeometry = new THREE.BufferGeometry().setFromPoints(packetCurve.getPoints(180));
+      const pathMaterial = new THREE.LineBasicMaterial({
+        color: 0x38d5ff,
+        transparent: true,
+        opacity: 0.5
+      });
+      scene.add(new THREE.Line(pathGeometry, pathMaterial));
+
+      const tubeGeometry = new THREE.TubeGeometry(packetCurve, 180, 0.035, 12, false);
+      const tubeMaterial = new THREE.MeshBasicMaterial({
+        color: 0x38d5ff,
+        transparent: true,
+        opacity: 0.22
+      });
+      scene.add(new THREE.Mesh(tubeGeometry, tubeMaterial));
+    }
+
+    function createPackets() {
+      for (let i = 0; i < 9; i++) {
+        packetMeshes.push(createPacket(i / 9, false));
+      }
+    }
+
+    function createPacket(offset, isBurst) {
+      const packet = new THREE.Group();
+      packet.userData.progress = offset;
+      packet.userData.isBurst = isBurst;
+      packet.userData.life = isBurst ? 1 : Infinity;
+
+      const core = new THREE.Mesh(
+        new THREE.SphereGeometry(isBurst ? 0.18 : 0.14, 24, 16),
+        new THREE.MeshBasicMaterial({ color: isBurst ? 0xffd166 : 0x5cffb1 })
+      );
+      core.userData.core = true;
+
+      const halo = new THREE.Mesh(
+        new THREE.SphereGeometry(isBurst ? 0.42 : 0.32, 24, 16),
+        new THREE.MeshBasicMaterial({
+          color: isBurst ? 0xffd166 : 0x5cffb1,
+          transparent: true,
+          opacity: isBurst ? 0.24 : 0.2,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        })
+      );
+      halo.userData.halo = true;
+
+      const light = new THREE.PointLight(isBurst ? 0xffd166 : 0x5cffb1, isBurst ? 2.4 : 1.7, 4.2);
+      packet.add(halo, core, light);
+      scene.add(packet);
+      return packet;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = Math.min(clock.getDelta(), 0.05);
+      const elapsed = clock.elapsedTime;
+
+      if (running) {
+        updatePackets(delta, elapsed);
+      }
+
+      updateDeviceGlow(elapsed, delta);
+      updateLabels();
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    function updatePackets(delta, elapsed) {
+      const allPackets = [...packetMeshes, ...burstPackets];
+      for (const packet of allPackets) {
+        const nearDeviceFactor = getNearDeviceFactor(packet.userData.progress);
+        const slowDown = THREE.MathUtils.lerp(1, 0.35, nearDeviceFactor);
+        const speed = packetSpeed * burstSpeedBoost * (packet.userData.isBurst ? 1.9 : 1) * slowDown;
+        packet.userData.progress += delta * speed;
+
+        if (packet.userData.isBurst) {
+          packet.userData.life -= delta * 0.14;
+          if (packet.userData.progress > 1) packet.userData.life = 0;
+        } else {
+          packet.userData.progress %= 1;
+        }
+
+        const sampledProgress = THREE.MathUtils.clamp(packet.userData.progress, 0, 1);
+        const point = packetCurve.getPointAt(sampledProgress);
+        const tangent = packetCurve.getTangentAt(Math.min(sampledProgress, 0.999));
+        packet.position.copy(point);
+        packet.lookAt(point.clone().add(tangent));
+
+        const flash = 1 + nearDeviceFactor * (1.2 + Math.sin(elapsed * 24) * 0.45);
+        packet.scale.setScalar(flash);
+        packet.children.forEach((child) => {
+          if (child.isPointLight) child.intensity = (packet.userData.isBurst ? 2.6 : 1.7) * flash;
+          if (child.userData.halo) child.material.opacity = (packet.userData.isBurst ? 0.22 : 0.16) * flash;
+        });
+
+        if (nearDeviceFactor > 0.72) pulseNearestDevice(packet.userData.progress);
+      }
+
+      for (let i = burstPackets.length - 1; i >= 0; i--) {
+        if (burstPackets[i].userData.life <= 0) {
+          scene.remove(burstPackets[i]);
+          burstPackets.splice(i, 1);
+        }
+      }
+
+      burstSpeedBoost = THREE.MathUtils.lerp(burstSpeedBoost, 1, delta * 1.8);
+    }
+
+    function getNearDeviceFactor(progress) {
+      const count = devices.length - 1;
+      const nearest = Math.round(progress * count) / count;
+      const distance = Math.abs(progress - nearest);
+      return THREE.MathUtils.smoothstep(0.075 - distance, 0, 0.075);
+    }
+
+    function pulseNearestDevice(progress) {
+      const index = Math.min(devices.length - 1, Math.max(0, Math.round(progress * (devices.length - 1))));
+      const device = devices[index];
+      devicePulse.set(device.key, Math.min(1, devicePulse.get(device.key) + 0.08));
+    }
+
+    function updateDeviceGlow(elapsed, delta) {
+      devices.forEach((device) => {
+        const pulse = devicePulse.get(device.key);
+        device.group.traverse((child) => {
+          if (child.isPointLight && child.userData.baseIntensity) {
+            child.intensity = child.userData.baseIntensity + pulse * 3.4;
+          }
+          if (child.userData.isGlowRing) {
+            child.material.opacity = 0.28 + pulse * 0.42 + Math.sin(elapsed * 2.2) * 0.04;
+            child.scale.setScalar(1 + pulse * 0.22 + Math.sin(elapsed * 1.8) * 0.025);
+          }
+          if (child.isMesh && child.material && child.material.emissive) {
+            child.material.emissiveIntensity = 0.08 + pulse * 0.22;
+          }
+        });
+
+        if (selectedDevice?.key === device.key) {
+          device.group.scale.setScalar(1.08 + Math.sin(elapsed * 4) * 0.015);
+        } else {
+          device.group.scale.lerp(new THREE.Vector3(1, 1, 1), delta * 5);
+        }
+
+        devicePulse.set(device.key, Math.max(0, pulse - delta * 1.9));
+      });
+    }
+
+    function updateLabels() {
+      labels.forEach(({ element, world }) => {
+        const projected = world.clone().project(camera);
+        const visible = projected.z > -1 && projected.z < 1;
+        element.style.display = visible ? "block" : "none";
+        element.style.left = `${(projected.x * 0.5 + 0.5) * window.innerWidth}px`;
+        element.style.top = `${(-projected.y * 0.5 + 0.5) * window.innerHeight}px`;
+      });
+    }
+
+    function onPointerDown(event) {
+      if (event.target.closest("button") || event.target.closest(".info-panel")) return;
+
+      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+
+      const hits = raycaster.intersectObjects(deviceGroups, true);
+      if (!hits.length) return;
+
+      const device = findDeviceFromObject(hits[0].object);
+      if (!device) return;
+
+      selectedDevice = device;
+      devicePulse.set(device.key, 1);
+      updateInfoPanel(device);
+    }
+
+    function findDeviceFromObject(object) {
+      let current = object;
+      while (current) {
+        if (current.userData?.device) return current.userData.device;
+        current = current.parent;
+      }
+      return null;
+    }
+
+    function updateInfoPanel(device) {
+      const panel = document.getElementById("infoPanel");
+      panel.innerHTML = `
+        <h2>${device.zh}</h2>
+        <p class="subtitle">${device.en}</p>
+        <h3>繁體中文</h3>
+        <p>${device.zhInfo}</p>
+        <h3>English</h3>
+        <p>${device.enInfo}</p>
+        <div class="hint">在路徑中：${devices.map((item) => item.zh).join(" → ")}</div>
+      `;
+    }
+
+    function sendBurst() {
+      burstSpeedBoost = 1.7;
+      for (let i = 0; i < 10; i++) {
+        const packet = createPacket(-i * 0.018, true);
+        burstPackets.push(packet);
+      }
+      devices.forEach((device) => devicePulse.set(device.key, Math.max(devicePulse.get(device.key), 0.35)));
+    }
+
+    function togglePlay() {
+      running = !running;
+      document.getElementById("togglePlay").textContent = running ? "暫停 Pause" : "播放 Play";
+    }
+
+    function resetCamera() {
+      camera.position.set(-3.5, 10, 18);
+      controls.target.set(0, 1.2, 0);
+      controls.update();
+    }
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+  </script>
+</body>
+</html>
