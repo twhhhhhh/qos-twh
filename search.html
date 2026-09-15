@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Interactive Binary Search Learning Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #111827;
+            --line: rgba(148, 163, 184, 0.24);
+            --cyan: #22d3ee;
+            --blue: #3498db;
+            --purple: #9b59b6;
+            --yellow: #f1c40f;
+            --red: #e74c3c;
+            --green: #2ecc71;
+            --amber: #f59e0b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at top left, rgba(34, 211, 238, 0.18), transparent 36%),
+                        radial-gradient(circle at bottom right, rgba(155, 89, 182, 0.16), transparent 42%),
+                        var(--bg);
+            color: #e5e7eb;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .glass-card {
+            border: 1px solid var(--line);
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.82), rgba(17, 24, 39, 0.68));
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(14px);
+        }
+
+        .tech-grid {
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .algo-tab {
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            color: #cbd5e1;
+            transition: all 0.25s ease;
+        }
+
+        .algo-tab.active {
+            border-color: rgba(34, 211, 238, 0.84);
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.24), rgba(59, 130, 246, 0.12));
+            color: #ffffff;
+            box-shadow: 0 0 28px rgba(34, 211, 238, 0.28);
+        }
+
+        .control-btn {
+            border: 1px solid rgba(34, 211, 238, 0.22);
+            background: rgba(15, 23, 42, 0.78);
+            color: #e0f2fe;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            border-color: rgba(34, 211, 238, 0.72);
+            background: rgba(14, 116, 144, 0.36);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        #scene-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .code-line {
+            display: grid;
+            grid-template-columns: 2.25rem 1fr;
+            gap: 0.75rem;
+            border-left: 3px solid transparent;
+            padding: 0.2rem 0.55rem;
+            color: #cbd5e1;
+            transition: all 0.18s ease;
+        }
+
+        .code-line .code-text {
+            white-space: pre;
+            overflow-x: auto;
+            min-width: 0;
+            font-family: ui-monospace, "Cascadia Code", "Courier New", monospace;
+        }
+
+        .code-line .line-no {
+            color: #64748b;
+            text-align: right;
+            user-select: none;
+        }
+
+        .code-line.active {
+            border-left-color: var(--yellow);
+            background: linear-gradient(90deg, rgba(241, 196, 15, 0.24), rgba(241, 196, 15, 0.04));
+            color: #fff7cc;
+            box-shadow: inset 0 0 18px rgba(241, 196, 15, 0.1);
+        }
+
+        .kw { color: #c084fc; }
+        .fn { color: #67e8f9; }
+        .num { color: #fbbf24; }
+        .op { color: #f472b6; }
+        .cm { color: #64748b; }
+
+        .bar-mini {
+            width: 100%;
+            min-width: 6px;
+            border-radius: 999px 999px 4px 4px;
+            background: linear-gradient(180deg, #38bdf8, #2563eb);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.26);
+        }
+
+        input[type="range"],
+        input[type="number"] {
+            accent-color: var(--cyan);
+        }
+
+        #target-input {
+            width: 5.5rem;
+            border: 1px solid rgba(34, 211, 238, 0.35);
+            background: rgba(2, 6, 23, 0.72);
+            color: #e0f2fe;
+            border-radius: 0.75rem;
+            padding: 0.45rem 0.65rem;
+        }
+
+        @media (max-width: 980px) {
+            body { overflow: auto; }
+            .app-shell {
+                min-height: 100vh;
+                height: auto;
+                flex-direction: column;
+            }
+            .left-pane,
+            .right-pane {
+                width: 100% !important;
+                min-height: 620px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="app-shell flex h-screen w-screen">
+        <section class="left-pane flex h-full w-[65%] flex-col border-r border-slate-700/60 bg-slate-950/70">
+            <header class="glass-card z-10 m-4 mb-2 rounded-2xl p-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.28em] text-cyan-300">3D Search Lab</p>
+                        <h1 class="text-2xl font-black text-white md:text-3xl">3D 互動搜尋算法教學平台</h1>
+                        <p class="mt-1 text-sm text-slate-300">Interactive 3D Binary Search Learning Platform</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <label class="text-xs text-slate-300" for="target-input">Target / 搜尋數值</label>
+                        <input id="target-input" type="number" value="88">
+                        <button id="apply-target" class="control-btn rounded-xl px-4 py-2 text-sm font-semibold">套用目標 Apply</button>
+                        <div class="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-right text-xs text-cyan-100">
+                            <div>OrbitControls: rotate / zoom / pan</div>
+                            <div>拖曳旋轉、滾輪縮放、右鍵平移</div>
+                        </div>
+                    </div>
+                </div>
+                <nav id="algo-tabs" class="mt-4 grid grid-cols-2 gap-2 xl:grid-cols-4"></nav>
+            </header>
+
+            <section id="scene-wrap" class="tech-grid relative mx-4 flex-1 overflow-hidden rounded-3xl border border-slate-700/70 bg-[#0f172a]">
+                <div class="pointer-events-none absolute left-5 top-5 z-10 max-w-md rounded-2xl border border-slate-600/60 bg-slate-950/55 p-4 backdrop-blur">
+                    <p id="lesson-title" class="text-lg font-bold text-white"></p>
+                    <p id="lesson-desc" class="mt-1 text-sm leading-relaxed text-slate-300"></p>
+                    <p id="half-banner" class="mt-3 hidden rounded-xl border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-sm font-semibold text-amber-100"></p>
+                </div>
+                <div class="pointer-events-none absolute bottom-5 left-5 z-10 flex flex-wrap gap-2 text-xs">
+                    <span class="rounded-full bg-[#3498db]/20 px-3 py-1 text-[#9bd7ff]">In range 搜尋範圍</span>
+                    <span class="rounded-full bg-[#64748b]/20 px-3 py-1 text-[#cbd5e1]">Discarded 已捨棄</span>
+                    <span class="rounded-full bg-[#f1c40f]/20 px-3 py-1 text-[#ffe58b]">mid 正在查看</span>
+                    <span class="rounded-full bg-[#9b59b6]/20 px-3 py-1 text-[#d9b4ff]">first / left</span>
+                    <span class="rounded-full bg-[#e74c3c]/20 px-3 py-1 text-[#ffb4a9]">last / right</span>
+                    <span class="rounded-full bg-[#2ecc71]/20 px-3 py-1 text-[#a7f3c2]">found 找到</span>
+                </div>
+                <div id="loading-overlay" class="absolute inset-0 z-20 grid place-items-center bg-slate-950/80 text-cyan-200">
+                    <div class="text-center">
+                        <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-cyan-300/20 border-t-cyan-300"></div>
+                        <p class="font-semibold">Loading 3D engine / 載入 3D 引擎中...</p>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="glass-card m-4 mt-2 rounded-2xl p-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <button id="prev-btn" class="control-btn rounded-xl px-4 py-2 font-semibold">上一步 Previous</button>
+                    <button id="next-btn" class="control-btn rounded-xl px-4 py-2 font-semibold">下一步 Next</button>
+                    <button id="play-btn" class="control-btn rounded-xl px-4 py-2 font-semibold">自動播放 Auto Play</button>
+                    <button id="reset-btn" class="control-btn rounded-xl px-4 py-2 font-semibold">重設 Reset</button>
+                    <div class="ml-auto flex min-w-[260px] flex-1 items-center gap-3 rounded-xl border border-slate-700/70 bg-slate-950/50 px-4 py-2">
+                        <label for="speed-slider" class="whitespace-nowrap text-sm text-slate-300">速度 Speed</label>
+                        <input id="speed-slider" class="w-full" type="range" min="0.25" max="2" value="1" step="0.05">
+                        <span id="speed-value" class="w-16 text-right text-sm font-bold text-cyan-200">1.00x</span>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center gap-3">
+                    <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-800">
+                        <div id="progress-bar" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 transition-all duration-300" style="width:0%"></div>
+                    </div>
+                    <span id="step-label" class="w-32 text-right text-sm text-slate-300">Step 0 / 0</span>
+                </div>
+            </footer>
+        </section>
+
+        <aside class="right-pane flex h-full w-[35%] flex-col bg-[#0b1120]">
+            <section class="flex min-h-0 flex-1 flex-col border-b border-slate-700/70 p-4">
+                <div class="mb-3 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.24em] text-cyan-300">Line Tracing</p>
+                        <h2 class="text-xl font-black text-white">Python 程式碼同步</h2>
+                    </div>
+                    <span id="complexity-badge" class="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100"></span>
+                </div>
+                <div id="code-panel" class="min-h-0 flex-1 overflow-auto rounded-2xl border border-slate-700 bg-[#020617] p-3 font-mono text-sm leading-6 shadow-inner"></div>
+            </section>
+
+            <section class="flex min-h-0 flex-1 flex-col p-4">
+                <div class="mb-3">
+                    <p class="text-xs uppercase tracking-[0.24em] text-emerald-300">State Monitor</p>
+                    <h2 class="text-xl font-black text-white">狀態監視器</h2>
+                </div>
+                <div class="grid gap-3 overflow-auto pr-1">
+                    <div class="rounded-2xl border border-slate-700 bg-slate-950/75 p-4">
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Current Action / 當前動作</p>
+                        <p id="status-text" class="mt-2 text-sm leading-relaxed text-slate-200"></p>
+                    </div>
+                    <div id="variable-grid" class="grid grid-cols-2 gap-3"></div>
+                    <div class="rounded-2xl border border-slate-700 bg-slate-950/75 p-4">
+                        <div class="mb-3 flex items-center justify-between">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Array Snapshot / 陣列快照</p>
+                            <span id="array-length" class="text-xs text-cyan-200"></span>
+                        </div>
+                        <div id="array-snapshot" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div class="rounded-2xl border border-slate-700 bg-slate-950/75 p-4">
+                        <p class="mb-3 text-xs uppercase tracking-[0.2em] text-slate-500">Mini Chart / 簡易圖表</p>
+                        <div id="mini-chart" class="flex h-32 items-end gap-1"></div>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <script>
+        const COLORS = {
+            inRange: 0x3498db,
+            discarded: 0x475569,
+            mid: 0xf1c40f,
+            first: 0x9b59b6,
+            last: 0xe74c3c,
+            found: 0x2ecc71,
+            leftHalf: 0x38bdf8,
+            rightHalf: 0xa78bfa,
+            scan: 0xf59e0b
+        };
+
+        const COLOR_HEX = {
+            inRange: "#3498db",
+            discarded: "#64748b",
+            mid: "#f1c40f",
+            first: "#9b59b6",
+            last: "#e74c3c",
+            found: "#2ecc71",
+            scan: "#f59e0b"
+        };
+
+        const MARK = [50, 51, 64, 65, 75, 79, 88, 88, 88, 97];
+
+        const ALGORITHMS = {
+            binary: {
+                label: "Binary",
+                title: "Binary Search 二分搜尋",
+                description: "每次取中點 mid = (first + last) // 2，比較 mark[mid] 與 target，再捨棄前半或後半。Watch first / last / mid, probes, and the shrinking 3D range.",
+                complexity: "O(log n) time / O(1) space",
+                code: [
+                    "first = 0",
+                    "last = len(mark) - 1",
+                    "found = False",
+                    "while first <= last and found == False:",
+                    "    mid = (first + last) // 2",
+                    "    if mark[mid] == target:",
+                    "        found = True",
+                    "    elif mark[mid] > target:",
+                    "        last = mid - 1",
+                    "    else:",
+                    "        first = mid + 1"
+                ],
+                makeSteps: makeBinarySteps
+            },
+            linear: {
+                label: "Linear",
+                title: "Linear Search 線性搜尋",
+                description: "從 index 0 逐一比較，直到找到 target 或走完整個陣列。適合對照二分搜尋的探針次數。",
+                complexity: "O(n) time / O(1) space",
+                code: [
+                    "found = False",
+                    "i = 0",
+                    "while i < len(mark) and found == False:",
+                    "    if mark[i] == target:",
+                    "        found = True",
+                    "    else:",
+                    "        i += 1"
+                ],
+                makeSteps: makeLinearSteps
+            },
+            firstIndex: {
+                label: "First Index",
+                title: "First Index 二分搜尋",
+                description: "數值重覆時，遇到 nums[mid] >= target 就往左收縮，找出第一個等於 target 的索引。",
+                complexity: "O(log n) time / O(1) space",
+                code: [
+                    "left = 0",
+                    "right = len(nums) - 1",
+                    "while left <= right:",
+                    "    mid = (left + right) // 2",
+                    "    if nums[mid] >= target:",
+                    "        right = mid - 1",
+                    "    else:",
+                    "        left = mid + 1",
+                    "if left < len(nums) and nums[left] == target:",
+                    "    print(left)"
+                ],
+                makeSteps: makeFirstIndexSteps
+            },
+            lastIndex: {
+                label: "Last Index",
+                title: "Last Index 二分搜尋",
+                description: "數值重覆時，遇到 nums[mid] <= target 就往右收縮，找出最後一個等於 target 的索引。",
+                complexity: "O(log n) time / O(1) space",
+                code: [
+                    "left = 0",
+                    "right = len(nums) - 1",
+                    "while left <= right:",
+                    "    mid = (left + right) // 2",
+                    "    if nums[mid] <= target:",
+                    "        left = mid + 1",
+                    "    else:",
+                    "        right = mid - 1",
+                    "if right >= 0 and nums[right] == target:",
+                    "    return right"
+                ],
+                makeSteps: makeLastIndexSteps
+            }
+        };
+
+        const state = {
+            algorithm: "binary",
+            target: 88,
+            steps: [],
+            stepIndex: 0,
+            isPlaying: false,
+            speed: 1,
+            bars: [],
+            labelSprites: [],
+            pointerSprites: [],
+            rangeMesh: null,
+            scene: null,
+            camera: null,
+            renderer: null,
+            controls: null,
+            ground: null,
+            animationBusy: false,
+            timer: null
+        };
+
+        const els = {};
+
+        window.addEventListener("DOMContentLoaded", () => {
+            cacheElements();
+            buildTabs();
+            initThree();
+            bindControls();
+            switchAlgorithm("binary");
+            animate();
+            document.getElementById("loading-overlay").style.display = "none";
+        });
+
+        function cacheElements() {
+            els.tabs = document.getElementById("algo-tabs");
+            els.sceneWrap = document.getElementById("scene-wrap");
+            els.lessonTitle = document.getElementById("lesson-title");
+            els.lessonDesc = document.getElementById("lesson-desc");
+            els.halfBanner = document.getElementById("half-banner");
+            els.prev = document.getElementById("prev-btn");
+            els.next = document.getElementById("next-btn");
+            els.play = document.getElementById("play-btn");
+            els.reset = document.getElementById("reset-btn");
+            els.speed = document.getElementById("speed-slider");
+            els.speedValue = document.getElementById("speed-value");
+            els.progress = document.getElementById("progress-bar");
+            els.stepLabel = document.getElementById("step-label");
+            els.code = document.getElementById("code-panel");
+            els.complexity = document.getElementById("complexity-badge");
+            els.status = document.getElementById("status-text");
+            els.variableGrid = document.getElementById("variable-grid");
+            els.snapshot = document.getElementById("array-snapshot");
+            els.arrayLength = document.getElementById("array-length");
+            els.miniChart = document.getElementById("mini-chart");
+            els.target = document.getElementById("target-input");
+            els.applyTarget = document.getElementById("apply-target");
+        }
+
+        function buildTabs() {
+            Object.entries(ALGORITHMS).forEach(([key, config]) => {
+                const button = document.createElement("button");
+                button.className = "algo-tab rounded-2xl px-4 py-3 text-left";
+                button.dataset.algorithm = key;
+                const subtitle = config.title.replace(config.label, "").trim();
+                button.innerHTML = `<span class="block text-sm font-black">${config.label}</span><span class="text-xs opacity-75">${subtitle}</span>`;
+                button.addEventListener("click", () => switchAlgorithm(key));
+                els.tabs.appendChild(button);
+            });
+        }
+
+        function initThree() {
+            state.scene = new THREE.Scene();
+            state.scene.background = new THREE.Color(0x0f172a);
+            state.scene.fog = new THREE.Fog(0x0f172a, 18, 42);
+
+            const { width, height } = els.sceneWrap.getBoundingClientRect();
+            state.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            state.camera.position.set(0, 12, 20);
+
+            state.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            state.renderer.setSize(width, height);
+            state.renderer.shadowMap.enabled = true;
+            state.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            els.sceneWrap.appendChild(state.renderer.domElement);
+
+            state.controls = new THREE.OrbitControls(state.camera, state.renderer.domElement);
+            state.controls.enableDamping = true;
+            state.controls.dampingFactor = 0.08;
+            state.controls.target.set(0, 4, 0);
+            state.controls.maxPolarAngle = Math.PI * 0.48;
+            state.controls.minDistance = 11;
+            state.controls.maxDistance = 36;
+
+            const ambient = new THREE.AmbientLight(0xb9d7ff, 0.58);
+            state.scene.add(ambient);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.55);
+            keyLight.position.set(-8, 18, 12);
+            keyLight.castShadow = true;
+            keyLight.shadow.mapSize.width = 2048;
+            keyLight.shadow.mapSize.height = 2048;
+            keyLight.shadow.camera.near = 0.5;
+            keyLight.shadow.camera.far = 60;
+            keyLight.shadow.camera.left = -18;
+            keyLight.shadow.camera.right = 18;
+            keyLight.shadow.camera.top = 18;
+            keyLight.shadow.camera.bottom = -18;
+            state.scene.add(keyLight);
+
+            const rim = new THREE.DirectionalLight(0x22d3ee, 0.72);
+            rim.position.set(9, 10, -10);
+            state.scene.add(rim);
+
+            const groundGeo = new THREE.PlaneGeometry(48, 28);
+            const groundMat = new THREE.MeshStandardMaterial({
+                color: 0x111827,
+                metalness: 0.25,
+                roughness: 0.52,
+                transparent: true,
+                opacity: 0.88
+            });
+            state.ground = new THREE.Mesh(groundGeo, groundMat);
+            state.ground.rotation.x = -Math.PI / 2;
+            state.ground.position.y = -0.04;
+            state.ground.receiveShadow = true;
+            state.scene.add(state.ground);
+
+            const grid = new THREE.GridHelper(44, 44, 0x22d3ee, 0x334155);
+            grid.position.y = 0.01;
+            grid.material.transparent = true;
+            grid.material.opacity = 0.28;
+            state.scene.add(grid);
+
+            const rangeGeo = new THREE.BoxGeometry(1, 0.08, 1.8);
+            const rangeMat = new THREE.MeshPhysicalMaterial({
+                color: 0x22d3ee,
+                transparent: true,
+                opacity: 0.28,
+                metalness: 0.1,
+                roughness: 0.2,
+                emissive: new THREE.Color(0x22d3ee),
+                emissiveIntensity: 0.35
+            });
+            state.rangeMesh = new THREE.Mesh(rangeGeo, rangeMat);
+            state.rangeMesh.position.y = 0.05;
+            state.scene.add(state.rangeMesh);
+
+            window.addEventListener("resize", resizeRenderer);
+        }
+
+        function bindControls() {
+            els.prev.addEventListener("click", () => goToStep(state.stepIndex - 1, "reverse"));
+            els.next.addEventListener("click", () => goToStep(state.stepIndex + 1, "forward"));
+            els.reset.addEventListener("click", () => {
+                pause();
+                goToStep(0, "reset");
+            });
+            els.play.addEventListener("click", () => state.isPlaying ? pause() : play());
+            els.speed.addEventListener("input", () => {
+                state.speed = Number(els.speed.value);
+                els.speedValue.textContent = `${state.speed.toFixed(2)}x`;
+            });
+            els.applyTarget.addEventListener("click", applyTarget);
+            els.target.addEventListener("keydown", event => {
+                if (event.key === "Enter") applyTarget();
+            });
+        }
+
+        function applyTarget() {
+            const next = Number(els.target.value);
+            if (!Number.isFinite(next)) return;
+            pause();
+            state.target = next;
+            reloadCurrentAlgorithm();
+        }
+
+        function switchAlgorithm(key) {
+            pause();
+            state.algorithm = key;
+            document.querySelectorAll(".algo-tab").forEach(tab => {
+                tab.classList.toggle("active", tab.dataset.algorithm === key);
+            });
+            const config = ALGORITHMS[key];
+            els.lessonTitle.textContent = config.title;
+            els.lessonDesc.textContent = config.description;
+            els.complexity.textContent = config.complexity;
+            renderCode(config.code);
+            reloadCurrentAlgorithm();
+        }
+
+        function reloadCurrentAlgorithm() {
+            state.steps = ALGORITHMS[state.algorithm].makeSteps(state.target);
+            state.stepIndex = 0;
+            rebuildBars(state.steps[0]);
+            updateFromStep(state.steps[0], false);
+        }
+
+        function renderCode(lines) {
+            els.code.innerHTML = lines.map((line, idx) => {
+                return `<div class="code-line" data-line="${idx + 1}"><span class="line-no">${idx + 1}</span><span class="code-text">${highlightPython(line)}</span></div>`;
+            }).join("");
+        }
+
+        function highlightPython(line) {
+            const escaped = escapeHTML(line);
+            return escaped
+                .replace(/\b(for|in|range|len|if|elif|else|while|and|False|True|print|return)\b/g, '<span class="kw">$1</span>')
+                .replace(/\b([A-Za-z_]\w*)(?=\()/g, '<span class="fn">$1</span>')
+                .replace(/\b(\d+)\b/g, '<span class="num">$1</span>')
+                .replace(/&gt;=/g, '<span class="op">&gt;=</span>')
+                .replace(/&lt;=/g, '<span class="op">&lt;=</span>')
+                .replace(/==/g, '<span class="op">==</span>')
+                .replace(/&gt;/g, '<span class="op">&gt;</span>')
+                .replace(/&lt;/g, '<span class="op">&lt;</span>');
+        }
+
+        function escapeHTML(text) {
+            return text.replace(/[&<>"']/g, char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            }[char]));
+        }
+
+        function rebuildBars(step) {
+            clearBars();
+            const items = getRenderableItems(step);
+            const maxValue = Math.max(...items.map(item => item.value), 1);
+            const spacing = 1.7;
+            const totalWidth = (items.length - 1) * spacing;
+
+            items.forEach((item, visualIndex) => {
+                const h = 1 + (item.value / maxValue) * 8.5;
+                const geo = new THREE.BoxGeometry(0.95, h, 0.95);
+                const mat = makeMaterial(COLORS.inRange);
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.position.set(visualIndex * spacing - totalWidth / 2, h / 2, 0);
+                mesh.userData = {
+                    id: item.id,
+                    value: item.value,
+                    index: item.index,
+                    visualIndex,
+                    spacing,
+                    maxValue,
+                    baseHeight: h
+                };
+                state.scene.add(mesh);
+                state.bars.push(mesh);
+
+                const label = makeLabelSprite(`${item.value}\nIndex ${item.index}`, "#e0f2fe");
+                label.position.set(mesh.position.x, h + 0.72, mesh.position.z + 0.08);
+                label.userData.id = item.id;
+                state.scene.add(label);
+                state.labelSprites.push(label);
+            });
+        }
+
+        function clearBars() {
+            state.bars.forEach(mesh => {
+                state.scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            state.labelSprites.forEach(sprite => {
+                state.scene.remove(sprite);
+                sprite.material.map.dispose();
+                sprite.material.dispose();
+            });
+            state.pointerSprites.forEach(sprite => {
+                state.scene.remove(sprite);
+                sprite.material.map.dispose();
+                sprite.material.dispose();
+            });
+            state.bars = [];
+            state.labelSprites = [];
+            state.pointerSprites = [];
+        }
+
+        function makeMaterial(color) {
+            return new THREE.MeshPhysicalMaterial({
+                color,
+                metalness: 0.42,
+                roughness: 0.24,
+                clearcoat: 0.6,
+                clearcoatRoughness: 0.18,
+                transmission: 0.08,
+                transparent: true,
+                opacity: 0.94
+            });
+        }
+
+        function makeLabelSprite(text, color) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 128;
+            drawLabel(canvas, text, color);
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(2.25, 1.12, 1);
+            sprite.userData.text = text;
+            sprite.userData.color = color;
+            return sprite;
+        }
+
+        function makePointerSprite(text, color) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 96;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "rgba(2, 6, 23, 0.86)";
+            roundRect(ctx, 18, 12, 220, 72, 16);
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.font = "bold 34px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(text, 128, 58);
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(2.1, 0.82, 1);
+            return sprite;
+        }
+
+        function drawLabel(canvas, text, color) {
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(2, 6, 23, 0.78)";
+            roundRect(ctx, 18, 14, 220, 92, 18);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(34, 211, 238, 0.5)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            const parts = text.split("\n");
+            ctx.fillStyle = color;
+            ctx.font = "bold 36px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(parts[0], 128, 55);
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "22px Arial";
+            ctx.fillText(parts[1], 128, 88);
+        }
+
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.arcTo(x + width, y, x + width, y + height, radius);
+            ctx.arcTo(x + width, y + height, x, y + height, radius);
+            ctx.arcTo(x, y + height, x, y, radius);
+            ctx.arcTo(x, y, x + width, y, radius);
+            ctx.closePath();
+        }
+
+        async function goToStep(targetIndex, direction) {
+            if (state.animationBusy) return;
+            if (targetIndex < 0 || targetIndex >= state.steps.length) return;
+            const toStep = state.steps[targetIndex];
+            state.stepIndex = targetIndex;
+            await updateFromStep(toStep, true, direction);
+            if (state.stepIndex >= state.steps.length - 1) pause();
+        }
+
+        async function updateFromStep(step, animateStep = true, direction = "forward") {
+            state.animationBusy = true;
+            updateCodeHighlight(step.line);
+            updateMonitor(step);
+            updateProgress();
+            updateHalfBanner(step);
+            updateBarTargets(step);
+            updatePointers(step);
+            updateRangeMesh(step, animateStep);
+            if (animateStep) {
+                await animateBars(step, direction);
+            } else {
+                applyBarPositions(step);
+            }
+            state.animationBusy = false;
+            updateControls();
+        }
+
+        function updateCodeHighlight(line) {
+            els.code.querySelectorAll(".code-line").forEach(node => {
+                node.classList.toggle("active", Number(node.dataset.line) === line);
+                if (Number(node.dataset.line) === line) {
+                    node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                }
+            });
+        }
+
+        function updateHalfBanner(step) {
+            if (!step.half) {
+                els.halfBanner.classList.add("hidden");
+                els.halfBanner.textContent = "";
+                return;
+            }
+            els.halfBanner.classList.remove("hidden");
+            els.halfBanner.textContent = step.half === "left"
+                ? "目標在陣列前半段 / Search continues in the left half"
+                : "目標在陣列後半段 / Search continues in the right half";
+        }
+
+        function updateMonitor(step) {
+            els.status.textContent = step.message;
+            const entries = Object.entries(step.vars || {});
+            els.variableGrid.innerHTML = entries.map(([key, value]) => `
+                <div class="rounded-2xl border border-slate-700 bg-slate-950/75 p-4">
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-500">${key}</p>
+                    <p class="mt-1 text-2xl font-black text-white">${value === null || value === undefined ? "-" : value}</p>
+                </div>
+            `).join("");
+
+            const arr = step.snapshot || MARK;
+            els.arrayLength.textContent = `${arr.length} items`;
+            els.snapshot.innerHTML = arr.map((value, idx) => {
+                const color = colorForIndex(step, idx);
+                return `<span class="rounded-xl border px-3 py-2 text-sm font-bold" style="border-color:${color}; color:${color}; background:${color}1f">${idx}: ${value}</span>`;
+            }).join("");
+
+            const max = Math.max(...arr, 1);
+            els.miniChart.innerHTML = arr.map((value, idx) => {
+                const color = colorForIndex(step, idx);
+                const height = Math.max(8, (value / max) * 100);
+                return `<div class="bar-mini" title="index ${idx}: ${value}" style="height:${height}%; background:linear-gradient(180deg, ${color}, #1e293b)"></div>`;
+            }).join("");
+        }
+
+        function colorForIndex(step, idx) {
+            if (step.foundIndex === idx) return COLOR_HEX.found;
+            if (step.mid === idx) return COLOR_HEX.mid;
+            if (step.i === idx) return COLOR_HEX.scan;
+            if (step.first === idx || step.left === idx) return COLOR_HEX.first;
+            if (step.last === idx || step.right === idx) return COLOR_HEX.last;
+            if ((step.discarded || []).includes(idx)) return COLOR_HEX.discarded;
+            return COLOR_HEX.inRange;
+        }
+
+        function updateProgress() {
+            const max = Math.max(state.steps.length - 1, 1);
+            const pct = (state.stepIndex / max) * 100;
+            els.progress.style.width = `${pct}%`;
+            els.stepLabel.textContent = `Step ${state.stepIndex} / ${state.steps.length - 1}`;
+        }
+
+        function updateControls() {
+            els.prev.disabled = state.stepIndex === 0 || state.animationBusy;
+            els.next.disabled = state.stepIndex >= state.steps.length - 1 || state.animationBusy;
+            els.reset.disabled = state.animationBusy;
+            els.play.disabled = state.animationBusy && !state.isPlaying;
+            els.play.textContent = state.isPlaying ? "暫停 Pause" : "自動播放 Auto Play";
+        }
+
+        function getRenderableItems(step) {
+            const source = step.snapshot || MARK;
+            return source.map((value, index) => ({ id: `main-${index}`, value, index }));
+        }
+
+        function rangeBounds(step) {
+            const n = (step.snapshot || MARK).length;
+            let lo = 0;
+            let hi = n - 1;
+            if (Number.isInteger(step.first) && Number.isInteger(step.last)) {
+                lo = step.first;
+                hi = step.last;
+            } else if (Number.isInteger(step.left) && Number.isInteger(step.right)) {
+                lo = step.left;
+                hi = step.right;
+            }
+            if (step.i !== undefined && step.i !== null && state.algorithm === "linear") {
+                lo = step.i;
+                hi = n - 1;
+            }
+            return { lo: Math.max(0, lo), hi: Math.min(n - 1, hi) };
+        }
+
+        function updateBarTargets(step) {
+            const items = getRenderableItems(step);
+            const maxValue = Math.max(...items.map(item => item.value), 1);
+            const spacing = 1.7;
+            const totalWidth = (items.length - 1) * spacing;
+
+            items.forEach((item, visualIndex) => {
+                const mesh = state.bars.find(bar => bar.userData.id === item.id);
+                if (!mesh) return;
+                const h = 1 + (item.value / maxValue) * 8.5;
+                const role = roleForIndex(step, item.index);
+                const z = role === "discarded" ? -2.4 : role === "mid" || role === "found" || role === "scan" ? 1.8 : 0;
+                const yBoost = role === "mid" || role === "found" || role === "scan" ? 0.55 : 0;
+                mesh.userData.target = {
+                    x: visualIndex * spacing - totalWidth / 2,
+                    y: h / 2 + yBoost,
+                    z,
+                    height: h,
+                    opacity: role === "discarded" ? 0.32 : 0.94,
+                    value: item.value,
+                    index: item.index,
+                    role
+                };
+                const statusColor = colorHexForRole(role);
+                mesh.material.color.setHex(statusColor);
+                mesh.material.emissive = new THREE.Color(statusColor);
+                mesh.material.emissiveIntensity = role === "inRange" ? 0.02 : 0.18;
+            });
+        }
+
+        function roleForIndex(step, idx) {
+            if (step.foundIndex === idx) return "found";
+            if (step.mid === idx) return "mid";
+            if (step.i === idx) return "scan";
+            if (step.first === idx || step.left === idx) return "first";
+            if (step.last === idx || step.right === idx) return "last";
+            if ((step.discarded || []).includes(idx)) return "discarded";
+            return "inRange";
+        }
+
+        function colorHexForRole(role) {
+            if (role === "found") return COLORS.found;
+            if (role === "mid") return COLORS.mid;
+            if (role === "scan") return COLORS.scan;
+            if (role === "first") return COLORS.first;
+            if (role === "last") return COLORS.last;
+            if (role === "discarded") return COLORS.discarded;
+            return COLORS.inRange;
+        }
+
+        function updateRangeMesh(step, animateStep) {
+            const { lo, hi } = rangeBounds(step);
+            if (lo > hi) {
+                gsap.to(state.rangeMesh.material, { opacity: 0.06, duration: 0.3 / state.speed });
+                return;
+            }
+            state.rangeMesh.material.opacity = 0.28;
+            const spacing = 1.7;
+            const n = MARK.length;
+            const totalWidth = (n - 1) * spacing;
+            const xLo = lo * spacing - totalWidth / 2;
+            const xHi = hi * spacing - totalWidth / 2;
+            const width = Math.max(1.1, (hi - lo) * spacing + 1.2);
+            const x = (xLo + xHi) / 2;
+            const color = step.half === "left" ? 0x38bdf8 : step.half === "right" ? 0xa78bfa : 0x22d3ee;
+            state.rangeMesh.material.color.setHex(color);
+            state.rangeMesh.material.emissive.setHex(color);
+            const payload = { x, z: 0, scaleX: width, scaleZ: 1.9 };
+            if (!animateStep) {
+                state.rangeMesh.position.x = payload.x;
+                state.rangeMesh.position.z = payload.z;
+                state.rangeMesh.scale.x = payload.scaleX;
+                state.rangeMesh.scale.z = payload.scaleZ;
+                return;
+            }
+            gsap.to(state.rangeMesh.position, { x: payload.x, z: payload.z, duration: 0.55 / state.speed, ease: "power2.inOut" });
+            gsap.to(state.rangeMesh.scale, { x: payload.scaleX, z: payload.scaleZ, duration: 0.55 / state.speed, ease: "power2.inOut" });
+        }
+
+        function updatePointers(step) {
+            state.pointerSprites.forEach(sprite => {
+                state.scene.remove(sprite);
+                sprite.material.map.dispose();
+                sprite.material.dispose();
+            });
+            state.pointerSprites = [];
+
+            const markers = [];
+            if (Number.isInteger(step.first)) markers.push({ index: step.first, text: "first", color: "#d8b4fe" });
+            if (Number.isInteger(step.last)) markers.push({ index: step.last, text: "last", color: "#fca5a5" });
+            if (Number.isInteger(step.left)) markers.push({ index: step.left, text: "left", color: "#d8b4fe" });
+            if (Number.isInteger(step.right)) markers.push({ index: step.right, text: "right", color: "#fca5a5" });
+            if (Number.isInteger(step.mid)) markers.push({ index: step.mid, text: "mid", color: "#fde68a" });
+            if (Number.isInteger(step.i)) markers.push({ index: step.i, text: "i", color: "#fdba74" });
+
+            const offsetY = { first: 1.35, last: 2.05, left: 1.35, right: 2.05, mid: 2.75, i: 2.4 };
+            markers.forEach(marker => {
+                const mesh = state.bars.find(bar => bar.userData.index === marker.index);
+                if (!mesh) return;
+                const sprite = makePointerSprite(marker.text, marker.color);
+                const height = mesh.geometry.parameters.height * mesh.scale.y;
+                sprite.position.set(mesh.position.x, height + (offsetY[marker.text] || 1.6), mesh.position.z);
+                sprite.userData.index = marker.index;
+                sprite.userData.kind = marker.text;
+                state.scene.add(sprite);
+                state.pointerSprites.push(sprite);
+            });
+        }
+
+        function applyBarPositions(step) {
+            state.bars.forEach(mesh => {
+                const target = mesh.userData.target;
+                if (!target) return;
+                setMeshHeight(mesh, target.height);
+                mesh.position.set(target.x, target.y, target.z);
+                mesh.material.opacity = target.opacity;
+                syncLabel(mesh);
+            });
+            pulseHighlighted(step);
+        }
+
+        function setMeshHeight(mesh, height) {
+            mesh.scale.y = height / mesh.geometry.parameters.height;
+            mesh.position.y = height / 2;
+        }
+
+        async function animateBars(step, direction) {
+            const duration = 0.85 / state.speed;
+            await Promise.all(state.bars.map(mesh => {
+                const target = mesh.userData.target;
+                if (!target) return Promise.resolve();
+                return new Promise(resolve => {
+                    const tl = gsap.timeline({ onUpdate: () => syncLabel(mesh), onComplete: resolve });
+                    const lift = target.role === "mid" || target.role === "found" || target.role === "scan";
+                    if (lift && direction !== "reverse") {
+                        tl.to(mesh.position, { z: 2.4, y: target.y + 0.4, duration: duration * 0.32, ease: "back.out(1.7)" })
+                          .to(mesh.position, { x: target.x, y: target.y, z: target.z, duration: duration * 0.48, ease: "power2.inOut" });
+                    } else {
+                        tl.to(mesh.position, { x: target.x, y: target.y, z: target.z, duration: duration * 0.78, ease: "power2.inOut" });
+                    }
+                    tl.to(mesh.material, { opacity: target.opacity, duration: duration * 0.45 }, 0);
+                    tl.to(mesh.scale, { y: target.height / mesh.geometry.parameters.height, duration: duration * 0.35, ease: "power2.out" }, 0);
+                });
+            }));
+            pulseHighlighted(step);
+        }
+
+        function syncLabel(mesh) {
+            const sprite = state.labelSprites.find(label => label.userData.id === mesh.userData.id);
+            if (!sprite) return;
+            const height = mesh.geometry.parameters.height * mesh.scale.y;
+            sprite.position.set(mesh.position.x, height + 0.72, mesh.position.z + 0.08);
+            const pointer = state.pointerSprites.find(item => item.userData.index === mesh.userData.index);
+            if (pointer) {
+                const extra = { first: 1.35, last: 2.05, left: 1.35, right: 2.05, mid: 2.75, i: 2.4 }[pointer.userData.kind] || 1.6;
+                pointer.position.set(mesh.position.x, height + extra, mesh.position.z);
+            }
+        }
+
+        function pulseHighlighted(step) {
+            state.bars.forEach(mesh => {
+                const role = mesh.userData.target && mesh.userData.target.role;
+                const active = role && role !== "inRange" && role !== "discarded";
+                gsap.to(mesh.scale, {
+                    x: active ? 1.12 : 1,
+                    z: active ? 1.12 : 1,
+                    duration: 0.22 / state.speed,
+                    ease: "power2.out",
+                    onUpdate: () => syncLabel(mesh)
+                });
+            });
+        }
+
+        function play() {
+            if (state.stepIndex >= state.steps.length - 1) return;
+            state.isPlaying = true;
+            els.play.textContent = "暫停 Pause";
+            const tick = async () => {
+                if (!state.isPlaying) return;
+                if (state.stepIndex >= state.steps.length - 1) {
+                    pause();
+                    return;
+                }
+                await goToStep(state.stepIndex + 1, "forward");
+                state.timer = setTimeout(tick, 520 / state.speed);
+            };
+            tick();
+        }
+
+        function pause() {
+            state.isPlaying = false;
+            if (state.timer) clearTimeout(state.timer);
+            state.timer = null;
+            if (els.play) els.play.textContent = "自動播放 Auto Play";
+        }
+
+        function resizeRenderer() {
+            const { width, height } = els.sceneWrap.getBoundingClientRect();
+            state.camera.aspect = width / height;
+            state.camera.updateProjectionMatrix();
+            state.renderer.setSize(width, height);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            state.controls.update();
+            state.renderer.render(state.scene, state.camera);
+        }
+
+        function discardedOutside(lo, hi, n) {
+            const discarded = [];
+            for (let idx = 0; idx < n; idx++) {
+                if (idx < lo || idx > hi) discarded.push(idx);
+            }
+            return discarded;
+        }
+
+        function makeStep(overrides) {
+            const snapshot = [...MARK];
+            return {
+                type: "search",
+                action: "scan",
+                line: 1,
+                snapshot,
+                vars: {},
+                discarded: [],
+                message: "",
+                ...overrides
+            };
+        }
+
+        function makeBinarySteps(target) {
+            const mark = [...MARK];
+            const n = mark.length;
+            let first = 0;
+            let last = n - 1;
+            let found = false;
+            let probes = 0;
+            let mid = null;
+            const steps = [makeStep({
+                line: 1,
+                first,
+                last,
+                vars: { target, first, last, found: "False", probes, mid: "-" },
+                discarded: [],
+                message: `Initial array mark = [${mark.join(", ")}]. first = 0，準備搜尋 ${target}。`
+            })];
+            steps.push(makeStep({
+                line: 2,
+                first,
+                last,
+                vars: { target, first, last, found: "False", probes, "len(mark)-1": n - 1 },
+                discarded: [],
+                message: `Set last = len(mark) - 1 = ${last}. 右指針指向最後一個索引。`
+            }));
+            steps.push(makeStep({
+                line: 3,
+                first,
+                last,
+                vars: { target, first, last, found: "False", probes },
+                discarded: [],
+                message: "found = False. 尚未找到目標。"
+            }));
+
+            while (first <= last && found === false) {
+                steps.push(makeStep({
+                    line: 4,
+                    first,
+                    last,
+                    mid,
+                    vars: { target, first, last, found: "False", probes, condition: "True" },
+                    discarded: discardedOutside(first, last, n),
+                    message: `Loop: first (${first}) <= last (${last}) and found == False.`
+                }));
+                mid = Math.floor((first + last) / 2);
+                probes += 1;
+                steps.push(makeStep({
+                    line: 5,
+                    action: "probe",
+                    first,
+                    last,
+                    mid,
+                    vars: { target, first, last, mid, "mark[mid]": mark[mid], found: "False", probes },
+                    discarded: discardedOutside(first, last, n),
+                    message: `Compute mid = (first + last) // 2 = ${mid}. 3D 中點柱被抬起，這是目前查看的索引。`
+                }));
+                steps.push(makeStep({
+                    line: 6,
+                    action: "probe",
+                    first,
+                    last,
+                    mid,
+                    vars: { target, first, last, mid, "mark[mid]": mark[mid], found: String(mark[mid] === target), probes },
+                    discarded: discardedOutside(first, last, n),
+                    message: `Compare mark[${mid}] = ${mark[mid]} with target ${target}.`
+                }));
+                if (mark[mid] === target) {
+                    found = true;
+                    steps.push(makeStep({
+                        line: 7,
+                        action: "found",
+                        first,
+                        last,
+                        mid,
+                        foundIndex: mid,
+                        vars: { target, first, last, mid, found: "True", probes, result: mid },
+                        discarded: discardedOutside(first, last, n),
+                        message: `found = True. 在 index ${mid} 找到 ${target}，共探針 ${probes} 次。`
+                    }));
+                } else if (mark[mid] > target) {
+                    const oldLast = last;
+                    last = mid - 1;
+                    steps.push(makeStep({
+                        line: 9,
+                        action: "shrink",
+                        first,
+                        last,
+                        mid,
+                        half: "left",
+                        vars: { target, first, last, mid, found: "False", probes, moved: `last ${oldLast} → ${last}` },
+                        discarded: discardedOutside(first, last, n),
+                        message: `mark[mid] > target，目標在前半段。last = mid - 1 = ${last}，後半段被捨棄並後退。`
+                    }));
+                } else {
+                    const oldFirst = first;
+                    first = mid + 1;
+                    steps.push(makeStep({
+                        line: 11,
+                        action: "shrink",
+                        first,
+                        last,
+                        mid,
+                        half: "right",
+                        vars: { target, first, last, mid, found: "False", probes, moved: `first ${oldFirst} → ${first}` },
+                        discarded: discardedOutside(first, last, n),
+                        message: `mark[mid] < target，目標在後半段。first = mid + 1 = ${first}，前半段被捨棄並後退。`
+                    }));
+                }
+            }
+
+            if (!found) {
+                steps.push(makeStep({
+                    line: 4,
+                    first,
+                    last,
+                    mid,
+                    vars: { target, first, last, found: "False", probes, result: "not found" },
+                    discarded: discardedOutside(Math.max(0, first), Math.max(-1, last), n),
+                    message: `Loop ends. 沒有找到 ${target}，共探針 ${probes} 次。`
+                }));
+            }
+            return steps;
+        }
+
+        function makeLinearSteps(target) {
+            const mark = [...MARK];
+            const n = mark.length;
+            let found = false;
+            let i = 0;
+            let probes = 0;
+            const steps = [makeStep({
+                line: 1,
+                i: 0,
+                vars: { target, i: 0, found: "False", probes },
+                discarded: [],
+                message: `Linear search starts at index 0. 從最左開始找 ${target}。`
+            })];
+            steps.push(makeStep({
+                line: 2,
+                i: 0,
+                vars: { target, i: 0, found: "False", probes },
+                discarded: [],
+                message: "Set i = 0. 線性指針指向第一個元素。"
+            }));
+
+            while (i < n && found === false) {
+                steps.push(makeStep({
+                    line: 3,
+                    i,
+                    vars: { target, i, found: "False", probes, "len(mark)": n },
+                    discarded: discardedOutside(i, n - 1, n),
+                    message: `Loop: i (${i}) < ${n} and found == False.`
+                }));
+                probes += 1;
+                steps.push(makeStep({
+                    line: 4,
+                    action: "probe",
+                    i,
+                    vars: { target, i, "mark[i]": mark[i], found: String(mark[i] === target), probes },
+                    discarded: discardedOutside(i, n - 1, n),
+                    message: `Compare mark[${i}] = ${mark[i]} with target ${target}.`
+                }));
+                if (mark[i] === target) {
+                    found = true;
+                    steps.push(makeStep({
+                        line: 5,
+                        action: "found",
+                        i,
+                        foundIndex: i,
+                        vars: { target, i, found: "True", probes, result: i },
+                        discarded: discardedOutside(i, n - 1, n),
+                        message: `found = True. 線性搜尋在 index ${i} 找到目標，共比較 ${probes} 次。`
+                    }));
+                } else {
+                    const old = i;
+                    i += 1;
+                    steps.push(makeStep({
+                        line: 7,
+                        i,
+                        vars: { target, i, found: "False", probes, moved: `${old} → ${i}` },
+                        discarded: discardedOutside(i, n - 1, n),
+                        message: `Not equal. i += 1，指針移到 ${i}。已檢查過的柱體後退。`
+                    }));
+                }
+            }
+
+            if (!found) {
+                steps.push(makeStep({
+                    line: 3,
+                    i,
+                    vars: { target, i, found: "False", probes, result: "not found" },
+                    discarded: discardedOutside(n, n - 1, n),
+                    message: `End of array. 沒有找到 ${target}，共比較 ${probes} 次。`
+                }));
+            }
+            return steps;
+        }
+
+        function makeFirstIndexSteps(target) {
+            const nums = [...MARK];
+            const n = nums.length;
+            let left = 0;
+            let right = n - 1;
+            let probes = 0;
+            let mid = null;
+            const steps = [makeStep({
+                line: 1,
+                left,
+                right,
+                vars: { target, left, right, probes, mid: "-" },
+                discarded: [],
+                message: `First-index search. 即使有重覆值，也要找到第一個 ${target}。`
+            })];
+            steps.push(makeStep({
+                line: 2,
+                left,
+                right,
+                vars: { target, left, right, probes, "len(nums)-1": n - 1 },
+                discarded: [],
+                message: `Set right = len(nums) - 1 = ${right}.`
+            }));
+
+            while (left <= right) {
+                steps.push(makeStep({
+                    line: 3,
+                    left,
+                    right,
+                    mid,
+                    vars: { target, left, right, probes, condition: "True" },
+                    discarded: discardedOutside(left, right, n),
+                    message: `Loop: left (${left}) <= right (${right}).`
+                }));
+                mid = Math.floor((left + right) / 2);
+                probes += 1;
+                steps.push(makeStep({
+                    line: 4,
+                    action: "probe",
+                    left,
+                    right,
+                    mid,
+                    vars: { target, left, right, mid, "nums[mid]": nums[mid], probes },
+                    discarded: discardedOutside(left, right, n),
+                    message: `mid = (left + right) // 2 = ${mid}. 查看索引 ${mid}。`
+                }));
+                steps.push(makeStep({
+                    line: 5,
+                    action: "probe",
+                    left,
+                    right,
+                    mid,
+                    vars: { target, left, right, mid, "nums[mid]": nums[mid], probes, ">= target": String(nums[mid] >= target) },
+                    discarded: discardedOutside(left, right, n),
+                    message: `Check nums[${mid}] = ${nums[mid]} >= ${target}.`
+                }));
+                if (nums[mid] >= target) {
+                    const old = right;
+                    right = mid - 1;
+                    steps.push(makeStep({
+                        line: 6,
+                        action: "shrink",
+                        left,
+                        right,
+                        mid,
+                        half: "left",
+                        vars: { target, left, right, mid, probes, moved: `right ${old} → ${right}` },
+                        discarded: discardedOutside(left, right, n),
+                        message: `nums[mid] >= target，答案可能在左側（含 mid）。right = mid - 1 = ${right}。`
+                    }));
+                } else {
+                    const old = left;
+                    left = mid + 1;
+                    steps.push(makeStep({
+                        line: 8,
+                        action: "shrink",
+                        left,
+                        right,
+                        mid,
+                        half: "right",
+                        vars: { target, left, right, mid, probes, moved: `left ${old} → ${left}` },
+                        discarded: discardedOutside(left, right, n),
+                        message: `nums[mid] < target，第一個目標一定在右側。left = mid + 1 = ${left}。`
+                    }));
+                }
+            }
+
+            steps.push(makeStep({
+                line: 9,
+                left,
+                right,
+                vars: { target, left, right, probes, check: left < n ? `nums[${left}]=${nums[left]}` : "left out of range" },
+                discarded: discardedOutside(Math.max(0, left), Math.min(n - 1, left), n),
+                message: `Loop ends. 驗證 left = ${left} 是否仍指向 target。`
+            }));
+            if (left < n && nums[left] === target) {
+                steps.push(makeStep({
+                    line: 10,
+                    action: "found",
+                    left,
+                    right,
+                    foundIndex: left,
+                    vars: { target, left, right, probes, result: left, print: left },
+                    discarded: discardedOutside(left, left, n),
+                    message: `print(left) → ${left}. 第一個 ${target} 在 index ${left}，共探針 ${probes} 次。`
+                }));
+            } else {
+                steps.push(makeStep({
+                    line: 9,
+                    left,
+                    right,
+                    vars: { target, left, right, probes, result: "not found" },
+                    discarded: Array.from({ length: n }, (_, idx) => idx),
+                    message: `Condition fails. 陣列中沒有 ${target}。`
+                }));
+            }
+            return steps;
+        }
+
+        function makeLastIndexSteps(target) {
+            const nums = [...MARK];
+            const n = nums.length;
+            let left = 0;
+            let right = n - 1;
+            let probes = 0;
+            let mid = null;
+            const steps = [makeStep({
+                line: 1,
+                left,
+                right,
+                vars: { target, left, right, probes, mid: "-" },
+                discarded: [],
+                message: `Last-index search. 即使有重覆值，也要找到最後一個 ${target}。`
+            })];
+            steps.push(makeStep({
+                line: 2,
+                left,
+                right,
+                vars: { target, left, right, probes, "len(nums)-1": n - 1 },
+                discarded: [],
+                message: `Set right = len(nums) - 1 = ${right}.`
+            }));
+
+            while (left <= right) {
+                steps.push(makeStep({
+                    line: 3,
+                    left,
+                    right,
+                    mid,
+                    vars: { target, left, right, probes, condition: "True" },
+                    discarded: discardedOutside(left, right, n),
+                    message: `Loop: left (${left}) <= right (${right}).`
+                }));
+                mid = Math.floor((left + right) / 2);
+                probes += 1;
+                steps.push(makeStep({
+                    line: 4,
+                    action: "probe",
+                    left,
+                    right,
+                    mid,
+                    vars: { target, left, right, mid, "nums[mid]": nums[mid], probes },
+                    discarded: discardedOutside(left, right, n),
+                    message: `mid = (left + right) // 2 = ${mid}. 查看索引 ${mid}。`
+                }));
+                steps.push(makeStep({
+                    line: 5,
+                    action: "probe",
+                    left,
+                    right,
+                    mid,
+                    vars: { target, left, right, mid, "nums[mid]": nums[mid], probes, "<= target": String(nums[mid] <= target) },
+                    discarded: discardedOutside(left, right, n),
+                    message: `Check nums[${mid}] = ${nums[mid]} <= ${target}.`
+                }));
+                if (nums[mid] <= target) {
+                    const old = left;
+                    left = mid + 1;
+                    steps.push(makeStep({
+                        line: 6,
+                        action: "shrink",
+                        left,
+                        right,
+                        mid,
+                        half: "right",
+                        vars: { target, left, right, mid, probes, moved: `left ${old} → ${left}` },
+                        discarded: discardedOutside(left, right, n),
+                        message: `nums[mid] <= target，答案可能在右側（含 mid）。left = mid + 1 = ${left}。`
+                    }));
+                } else {
+                    const old = right;
+                    right = mid - 1;
+                    steps.push(makeStep({
+                        line: 8,
+                        action: "shrink",
+                        left,
+                        right,
+                        mid,
+                        half: "left",
+                        vars: { target, left, right, mid, probes, moved: `right ${old} → ${right}` },
+                        discarded: discardedOutside(left, right, n),
+                        message: `nums[mid] > target，最後一個目標一定在左側。right = mid - 1 = ${right}。`
+                    }));
+                }
+            }
+
+            steps.push(makeStep({
+                line: 9,
+                left,
+                right,
+                vars: { target, left, right, probes, check: right >= 0 ? `nums[${right}]=${nums[right]}` : "right < 0" },
+                discarded: discardedOutside(Math.max(0, right), Math.max(0, right), n),
+                message: `Loop ends. 驗證 right = ${right} 是否仍指向 target。`
+            }));
+            if (right >= 0 && nums[right] === target) {
+                steps.push(makeStep({
+                    line: 10,
+                    action: "found",
+                    left,
+                    right,
+                    foundIndex: right,
+                    vars: { target, left, right, probes, result: right, return: right },
+                    discarded: discardedOutside(right, right, n),
+                    message: `return right → ${right}. 最後一個 ${target} 在 index ${right}，共探針 ${probes} 次。`
+                }));
+            } else {
+                steps.push(makeStep({
+                    line: 9,
+                    left,
+                    right,
+                    vars: { target, left, right, probes, result: "not found" },
+                    discarded: Array.from({ length: n }, (_, idx) => idx),
+                    message: `Condition fails. 陣列中沒有 ${target}。`
+                }));
+            }
+            return steps;
+        }
+    </script>
+</body>
+</html>
