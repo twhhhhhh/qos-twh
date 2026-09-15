@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Interactive Sorting Algorithm Learning Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #111827;
+            --panel-soft: rgba(15, 23, 42, 0.72);
+            --line: rgba(148, 163, 184, 0.24);
+            --cyan: #22d3ee;
+            --blue: #3498db;
+            --purple: #9b59b6;
+            --yellow: #f1c40f;
+            --red: #e74c3c;
+            --green: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at top left, rgba(34, 211, 238, 0.18), transparent 36%),
+                        radial-gradient(circle at bottom right, rgba(155, 89, 182, 0.16), transparent 42%),
+                        var(--bg);
+            color: #e5e7eb;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .glass-card {
+            border: 1px solid var(--line);
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.82), rgba(17, 24, 39, 0.68));
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(14px);
+        }
+
+        .tech-grid {
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .algo-tab {
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            color: #cbd5e1;
+            transition: all 0.25s ease;
+        }
+
+        .algo-tab.active {
+            border-color: rgba(34, 211, 238, 0.84);
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.24), rgba(59, 130, 246, 0.12));
+            color: #ffffff;
+            box-shadow: 0 0 28px rgba(34, 211, 238, 0.28);
+        }
+
+        .control-btn {
+            border: 1px solid rgba(34, 211, 238, 0.22);
+            background: rgba(15, 23, 42, 0.78);
+            color: #e0f2fe;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            border-color: rgba(34, 211, 238, 0.72);
+            background: rgba(14, 116, 144, 0.36);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        #scene-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .code-line {
+            display: grid;
+            grid-template-columns: 2.25rem 1fr;
+            gap: 0.75rem;
+            border-left: 3px solid transparent;
+            padding: 0.2rem 0.55rem;
+            color: #cbd5e1;
+            transition: all 0.18s ease;
+        }
+
+        .code-line .code-text {
+            white-space: pre;
+            overflow-x: auto;
+            min-width: 0;
+            font-family: ui-monospace, "Cascadia Code", "Courier New", monospace;
+        }
+
+        .code-line .line-no {
+            color: #64748b;
+            text-align: right;
+            user-select: none;
+        }
+
+        .code-line.active {
+            border-left-color: var(--yellow);
+            background: linear-gradient(90deg, rgba(241, 196, 15, 0.24), rgba(241, 196, 15, 0.04));
+            color: #fff7cc;
+            box-shadow: inset 0 0 18px rgba(241, 196, 15, 0.1);
+        }
+
+        .kw { color: #c084fc; }
+        .fn { color: #67e8f9; }
+        .num { color: #fbbf24; }
+        .op { color: #f472b6; }
+        .cm { color: #64748b; }
+
+        .bar-mini {
+            width: 100%;
+            min-width: 6px;
+            border-radius: 999px 999px 4px 4px;
+            background: linear-gradient(180deg, #38bdf8, #2563eb);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.26);
+        }
+
+        input[type="range"] {
+            accent-color: var(--cyan);
+        }
+
+        @media (max-width: 980px) {
+            body {
+                overflow: auto;
+            }
+
+            .app-shell {
+                min-height: 100vh;
+                height: auto;
+                flex-direction: column;
+            }
+
+            .left-pane,
+            .right-pane {
+                width: 100% !important;
+                min-height: 620px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="app-shell flex h-screen w-screen">
+        <section class="left-pane flex h-full w-[65%] flex-col border-r border-slate-700/60 bg-slate-950/70">
+            <header class="glass-card z-10 m-4 mb-2 rounded-2xl p-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.28em] text-cyan-300">3D Sorting Lab</p>
+                        <h1 class="text-2xl font-black text-white md:text-3xl">3D 互動排序算法教學平台</h1>
+                        <p class="mt-1 text-sm text-slate-300">Interactive 3D Sorting Algorithm Learning Platform</p>
+                    </div>
+                    <div class="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-right text-xs text-cyan-100">
+                        <div>OrbitControls: rotate / zoom / pan</div>
+                        <div>拖曳旋轉、滾輪縮放、右鍵平移</div>
+                    </div>
+                </div>
+                <nav id="algo-tabs" class="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4"></nav>
+
+                <section id="array-input-section" class="mt-4 rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4">
+                    <div class="mb-3 flex flex-wrap items-end justify-between gap-2">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.24em] text-cyan-300">Custom Array Input</p>
+                            <h2 class="text-base font-bold text-white">自訂排序陣列 / Load Array for Bubble · Selection · Insertion</h2>
+                            <p class="mt-1 text-xs text-slate-400">以逗號分隔輸入數字，例如：45, 32, 16, 88, 20, 11, 55, 78。建議 3–12 個元素。</p>
+                        </div>
+                        <p id="array-input-status" class="text-xs text-slate-400">Using default array / 目前使用預設陣列</p>
+                    </div>
+                    <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+                        <input
+                            id="custom-array-input"
+                            type="text"
+                            class="w-full flex-1 rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-2.5 font-mono text-sm text-cyan-100 outline-none transition focus:border-cyan-400"
+                            placeholder="e.g. 45, 32, 16, 88, 20, 11, 55, 78"
+                            spellcheck="false"
+                        >
+                        <div class="flex flex-wrap gap-2">
+                            <button id="load-array-btn" class="control-btn rounded-xl px-4 py-2.5 text-sm font-semibold" type="button">載入陣列 Load</button>
+                            <button id="restore-array-btn" class="control-btn rounded-xl px-4 py-2.5 text-sm font-semibold" type="button">還原預設 Restore Default</button>
+                        </div>
+                    </div>
+                </section>
+            </header>
+
+            <section id="scene-wrap" class="tech-grid relative mx-4 flex-1 overflow-hidden rounded-3xl border border-slate-700/70 bg-[#0f172a]">
+                <div class="pointer-events-none absolute left-5 top-5 z-10 max-w-md rounded-2xl border border-slate-600/60 bg-slate-950/55 p-4 backdrop-blur">
+                    <p id="lesson-title" class="text-lg font-bold text-white"></p>
+                    <p id="lesson-desc" class="mt-1 text-sm leading-relaxed text-slate-300"></p>
+                </div>
+                <div class="pointer-events-none absolute bottom-5 left-5 z-10 flex flex-wrap gap-2 text-xs">
+                    <span class="rounded-full bg-[#3498db]/20 px-3 py-1 text-[#9bd7ff]">Default 預設</span>
+                    <span class="rounded-full bg-[#9b59b6]/20 px-3 py-1 text-[#d9b4ff]">i 外迴圈</span>
+                    <span class="rounded-full bg-[#f1c40f]/20 px-3 py-1 text-[#ffe58b]">j 掃描</span>
+                    <span class="rounded-full bg-[#e74c3c]/20 px-3 py-1 text-[#ffb4a9]">key / min_idx</span>
+                    <span class="rounded-full bg-[#2ecc71]/20 px-3 py-1 text-[#a7f3c2]">sorted 已排序</span>
+                </div>
+                <div id="loading-overlay" class="absolute inset-0 z-20 grid place-items-center bg-slate-950/80 text-cyan-200">
+                    <div class="text-center">
+                        <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-cyan-300/20 border-t-cyan-300"></div>
+                        <p class="font-semibold">Loading 3D engine / 載入 3D 引擎中...</p>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="glass-card m-4 mt-2 rounded-2xl p-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <button id="prev-btn" class="control-btn rounded-xl px-4 py-2 font-semibold">上一步 Previous</button>
+                    <button id="next-btn" class="control-btn rounded-xl px-4 py-2 font-semibold">下一步 Next</button>
+                    <button id="play-btn" class="control-btn rounded-xl px-4 py-2 font-semibold">自動播放 Auto Play</button>
+                    <button id="reset-btn" class="control-btn rounded-xl px-4 py-2 font-semibold">重設 Reset</button>
+                    <div class="ml-auto flex min-w-[260px] flex-1 items-center gap-3 rounded-xl border border-slate-700/70 bg-slate-950/50 px-4 py-2">
+                        <label for="speed-slider" class="whitespace-nowrap text-sm text-slate-300">速度 Speed</label>
+                        <input id="speed-slider" class="w-full" type="range" min="0.25" max="2" value="1" step="0.05">
+                        <span id="speed-value" class="w-16 text-right text-sm font-bold text-cyan-200">1.00x</span>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center gap-3">
+                    <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-800">
+                        <div id="progress-bar" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 transition-all duration-300" style="width:0%"></div>
+                    </div>
+                    <span id="step-label" class="w-32 text-right text-sm text-slate-300">Step 0 / 0</span>
+                </div>
+            </footer>
+        </section>
+
+        <aside class="right-pane flex h-full w-[35%] flex-col bg-[#0b1120]">
+            <section class="flex min-h-0 flex-1 flex-col border-b border-slate-700/70 p-4">
+                <div class="mb-3 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.24em] text-cyan-300">Line Tracing</p>
+                        <h2 class="text-xl font-black text-white">Python 程式碼同步</h2>
+                    </div>
+                    <span id="complexity-badge" class="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100"></span>
+                </div>
+                <div id="code-panel" class="min-h-0 flex-1 overflow-auto rounded-2xl border border-slate-700 bg-[#020617] p-3 font-mono text-sm leading-6 shadow-inner"></div>
+            </section>
+
+            <section class="flex min-h-0 flex-1 flex-col p-4">
+                <div class="mb-3">
+                    <p class="text-xs uppercase tracking-[0.24em] text-emerald-300">State Monitor</p>
+                    <h2 class="text-xl font-black text-white">狀態監視器</h2>
+                </div>
+                <div class="grid gap-3 overflow-auto pr-1">
+                    <div class="rounded-2xl border border-slate-700 bg-slate-950/75 p-4">
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Current Action / 當前動作</p>
+                        <p id="status-text" class="mt-2 text-sm leading-relaxed text-slate-200"></p>
+                    </div>
+                    <div id="variable-grid" class="grid grid-cols-2 gap-3"></div>
+                    <div class="rounded-2xl border border-slate-700 bg-slate-950/75 p-4">
+                        <div class="mb-3 flex items-center justify-between">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Array Snapshot / 陣列快照</p>
+                            <span id="array-length" class="text-xs text-cyan-200"></span>
+                        </div>
+                        <div id="array-snapshot" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div class="rounded-2xl border border-slate-700 bg-slate-950/75 p-4">
+                        <p class="mb-3 text-xs uppercase tracking-[0.2em] text-slate-500">Mini Chart / 簡易圖表</p>
+                        <div id="mini-chart" class="flex h-32 items-end gap-1"></div>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <script>
+        const COLORS = {
+            default: 0x3498db,
+            i: 0x9b59b6,
+            j: 0xf1c40f,
+            special: 0xe74c3c,
+            sorted: 0x2ecc71,
+            ghost: 0x64748b,
+            compare: 0xf1c40f,
+            mergeA: 0x38bdf8,
+            mergeB: 0xa78bfa
+        };
+
+        const COLOR_HEX = {
+            default: "#3498db",
+            i: "#9b59b6",
+            j: "#f1c40f",
+            special: "#e74c3c",
+            sorted: "#2ecc71",
+            ghost: "#64748b"
+        };
+
+        const BASE_ARRAY = [45, 32, 16, 88, 20, 11, 55, 78];
+        const MERGE_A = [10, 16, 20, 32, 55, 78, 88];
+        const MERGE_B = [2, 9, 11, 35, 37];
+
+        // Active array for Bubble / Selection / Insertion (defaults preserved)
+        let activeSortArray = [...BASE_ARRAY];
+
+        const ALGORITHMS = {
+            bubble: {
+                label: "Bubble",
+                title: "Bubble Sort 氣泡排序",
+                description: "Repeatedly compare adjacent elements and swap them when they are out of order. 重複比較相鄰元素，如次序錯誤便交換。",
+                complexity: "O(n²) time / O(1) space",
+                code: [
+                    "n = len(arr)",
+                    "for i in range(n):",
+                    "    for j in range(0, n-i-1):",
+                    "        if arr[j] > arr[j+1]:",
+                    "            arr[j], arr[j+1] = arr[j+1], arr[j]"
+                ],
+                makeSteps: makeBubbleSteps
+            },
+            selection: {
+                label: "Selection",
+                title: "Selection Sort 選擇排序",
+                description: "Select the smallest value from the unsorted region and lock it into position. 從未排序區尋找最小值，放到目前位置。",
+                complexity: "O(n²) time / O(1) space",
+                code: [
+                    "for i in range(len(arr)):",
+                    "    min_idx = i",
+                    "    for j in range(i+1, len(arr)):",
+                    "        if arr[j] < arr[min_idx]:",
+                    "            min_idx = j",
+                    "    arr[i], arr[min_idx] = arr[min_idx], arr[i]"
+                ],
+                makeSteps: makeSelectionSteps
+            },
+            insertion: {
+                label: "Insertion",
+                title: "Insertion Sort 插入排序",
+                description: "Lift the key, shift larger values to the right, then insert the key into its sorted place. 抽出 key，將較大元素右移，再把 key 插入正確位置。",
+                complexity: "O(n²) time / O(1) space",
+                code: [
+                    "for i in range(1, len(arr)):",
+                    "    key = arr[i]",
+                    "    j = i-1",
+                    "    while j >= 0 and key < arr[j]:",
+                    "        arr[j+1] = arr[j]",
+                    "        j -= 1",
+                    "    arr[j+1] = key"
+                ],
+                makeSteps: makeInsertionSteps
+            },
+            merge: {
+                label: "Merge",
+                title: "Merge Sorted Arrays 合併兩個已排序陣列",
+                description: "Use two pointers to merge two sorted arrays into one ordered output. 使用雙指針把兩個已排序陣列合併成一個有序結果。",
+                complexity: "O(n+m) time / O(n+m) space",
+                code: [
+                    "i = j = 0",
+                    "C = []",
+                    "while i < len(A) and j < len(B):",
+                    "    if A[i] < B[j]:",
+                    "        C.append(A[i])",
+                    "        i += 1",
+                    "    else:",
+                    "        C.append(B[j])",
+                    "        j += 1",
+                    "C.extend(A[i:])",
+                    "C.extend(B[j:])"
+                ],
+                makeSteps: makeMergeSteps
+            }
+        };
+
+        const state = {
+            algorithm: "bubble",
+            steps: [],
+            stepIndex: 0,
+            isPlaying: false,
+            speed: 1,
+            bars: [],
+            labelSprites: [],
+            scene: null,
+            camera: null,
+            renderer: null,
+            controls: null,
+            ground: null,
+            animationBusy: false,
+            timer: null
+        };
+
+        const els = {};
+
+        window.addEventListener("DOMContentLoaded", () => {
+            cacheElements();
+            buildTabs();
+            initThree();
+            bindControls();
+            switchAlgorithm("bubble");
+            animate();
+            document.getElementById("loading-overlay").style.display = "none";
+        });
+
+        function cacheElements() {
+            els.tabs = document.getElementById("algo-tabs");
+            els.sceneWrap = document.getElementById("scene-wrap");
+            els.lessonTitle = document.getElementById("lesson-title");
+            els.lessonDesc = document.getElementById("lesson-desc");
+            els.prev = document.getElementById("prev-btn");
+            els.next = document.getElementById("next-btn");
+            els.play = document.getElementById("play-btn");
+            els.reset = document.getElementById("reset-btn");
+            els.speed = document.getElementById("speed-slider");
+            els.speedValue = document.getElementById("speed-value");
+            els.progress = document.getElementById("progress-bar");
+            els.stepLabel = document.getElementById("step-label");
+            els.code = document.getElementById("code-panel");
+            els.complexity = document.getElementById("complexity-badge");
+            els.status = document.getElementById("status-text");
+            els.variableGrid = document.getElementById("variable-grid");
+            els.snapshot = document.getElementById("array-snapshot");
+            els.arrayLength = document.getElementById("array-length");
+            els.miniChart = document.getElementById("mini-chart");
+            els.customArrayInput = document.getElementById("custom-array-input");
+            els.loadArrayBtn = document.getElementById("load-array-btn");
+            els.restoreArrayBtn = document.getElementById("restore-array-btn");
+            els.arrayInputStatus = document.getElementById("array-input-status");
+        }
+
+        function buildTabs() {
+            Object.entries(ALGORITHMS).forEach(([key, config]) => {
+                const button = document.createElement("button");
+                button.className = "algo-tab rounded-2xl px-4 py-3 text-left";
+                button.dataset.algorithm = key;
+                button.innerHTML = `<span class="block text-sm font-black">${config.label}</span><span class="text-xs opacity-75">${config.title.split(" ").slice(1).join(" ")}</span>`;
+                button.addEventListener("click", () => switchAlgorithm(key));
+                els.tabs.appendChild(button);
+            });
+        }
+
+        function initThree() {
+            state.scene = new THREE.Scene();
+            state.scene.background = new THREE.Color(0x0f172a);
+            state.scene.fog = new THREE.Fog(0x0f172a, 18, 42);
+
+            const { width, height } = els.sceneWrap.getBoundingClientRect();
+            state.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            state.camera.position.set(0, 12, 20);
+
+            state.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            state.renderer.setSize(width, height);
+            state.renderer.shadowMap.enabled = true;
+            state.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            els.sceneWrap.appendChild(state.renderer.domElement);
+
+            state.controls = new THREE.OrbitControls(state.camera, state.renderer.domElement);
+            state.controls.enableDamping = true;
+            state.controls.dampingFactor = 0.08;
+            state.controls.target.set(0, 4, 0);
+            state.controls.maxPolarAngle = Math.PI * 0.48;
+            state.controls.minDistance = 11;
+            state.controls.maxDistance = 36;
+
+            const ambient = new THREE.AmbientLight(0xb9d7ff, 0.58);
+            state.scene.add(ambient);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.55);
+            keyLight.position.set(-8, 18, 12);
+            keyLight.castShadow = true;
+            keyLight.shadow.mapSize.width = 2048;
+            keyLight.shadow.mapSize.height = 2048;
+            keyLight.shadow.camera.near = 0.5;
+            keyLight.shadow.camera.far = 60;
+            keyLight.shadow.camera.left = -18;
+            keyLight.shadow.camera.right = 18;
+            keyLight.shadow.camera.top = 18;
+            keyLight.shadow.camera.bottom = -18;
+            state.scene.add(keyLight);
+
+            const rim = new THREE.DirectionalLight(0x22d3ee, 0.72);
+            rim.position.set(9, 10, -10);
+            state.scene.add(rim);
+
+            const groundGeo = new THREE.PlaneGeometry(48, 28);
+            const groundMat = new THREE.MeshStandardMaterial({
+                color: 0x111827,
+                metalness: 0.25,
+                roughness: 0.52,
+                transparent: true,
+                opacity: 0.88
+            });
+            state.ground = new THREE.Mesh(groundGeo, groundMat);
+            state.ground.rotation.x = -Math.PI / 2;
+            state.ground.position.y = -0.04;
+            state.ground.receiveShadow = true;
+            state.scene.add(state.ground);
+
+            addGridLines();
+            window.addEventListener("resize", resizeRenderer);
+        }
+
+        function addGridLines() {
+            const grid = new THREE.GridHelper(44, 44, 0x22d3ee, 0x334155);
+            grid.position.y = 0.01;
+            grid.material.transparent = true;
+            grid.material.opacity = 0.28;
+            state.scene.add(grid);
+        }
+
+        function bindControls() {
+            els.prev.addEventListener("click", () => goToStep(state.stepIndex - 1, "reverse"));
+            els.next.addEventListener("click", () => goToStep(state.stepIndex + 1, "forward"));
+            els.reset.addEventListener("click", () => {
+                pause();
+                goToStep(0, "reset");
+            });
+            els.play.addEventListener("click", () => state.isPlaying ? pause() : play());
+            els.speed.addEventListener("input", () => {
+                state.speed = Number(els.speed.value);
+                els.speedValue.textContent = `${state.speed.toFixed(2)}x`;
+            });
+
+            els.customArrayInput.value = activeSortArray.join(", ");
+            els.loadArrayBtn.addEventListener("click", loadCustomArray);
+            els.restoreArrayBtn.addEventListener("click", restoreDefaultArray);
+            els.customArrayInput.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    loadCustomArray();
+                }
+            });
+        }
+
+        function parseArrayInput(raw) {
+            const parts = String(raw || "")
+                .split(/[,，\s]+/)
+                .map(part => part.trim())
+                .filter(Boolean);
+
+            if (parts.length < 2) {
+                throw new Error("Please enter at least 2 numbers. / 請至少輸入 2 個數字。");
+            }
+            if (parts.length > 16) {
+                throw new Error("Please enter at most 16 numbers. / 最多輸入 16 個數字。");
+            }
+
+            const values = parts.map(part => {
+                const num = Number(part);
+                if (!Number.isFinite(num)) {
+                    throw new Error(`Invalid number: ${part} / 無效數字：${part}`);
+                }
+                return Math.round(num);
+            });
+
+            return values;
+        }
+
+        function setArrayStatus(message, isError = false) {
+            els.arrayInputStatus.textContent = message;
+            els.arrayInputStatus.className = isError
+                ? "text-xs text-rose-300"
+                : "text-xs text-emerald-300";
+        }
+
+        function loadCustomArray() {
+            try {
+                const values = parseArrayInput(els.customArrayInput.value);
+                activeSortArray = values;
+                els.customArrayInput.value = values.join(", ");
+                setArrayStatus(`Loaded [${values.join(", ")}] / 已載入自訂陣列`);
+
+                const target = ["bubble", "selection", "insertion"].includes(state.algorithm)
+                    ? state.algorithm
+                    : "bubble";
+                switchAlgorithm(target);
+            } catch (error) {
+                setArrayStatus(error.message, true);
+            }
+        }
+
+        function restoreDefaultArray() {
+            activeSortArray = [...BASE_ARRAY];
+            els.customArrayInput.value = BASE_ARRAY.join(", ");
+            setArrayStatus("Using default array / 目前使用預設陣列");
+
+            const target = ["bubble", "selection", "insertion"].includes(state.algorithm)
+                ? state.algorithm
+                : "bubble";
+            switchAlgorithm(target);
+        }
+
+        function switchAlgorithm(key) {
+            pause();
+            state.algorithm = key;
+            state.steps = ALGORITHMS[key].makeSteps();
+            state.stepIndex = 0;
+            document.querySelectorAll(".algo-tab").forEach(tab => {
+                tab.classList.toggle("active", tab.dataset.algorithm === key);
+            });
+            const config = ALGORITHMS[key];
+            els.lessonTitle.textContent = config.title;
+            els.lessonDesc.textContent = config.description;
+            els.complexity.textContent = config.complexity;
+            renderCode(config.code);
+            rebuildBars(state.steps[0]);
+            updateFromStep(state.steps[0], false);
+        }
+
+        function renderCode(lines) {
+            els.code.innerHTML = lines.map((line, idx) => {
+                return `<div class="code-line" data-line="${idx + 1}"><span class="line-no">${idx + 1}</span><span class="code-text">${highlightPython(line)}</span></div>`;
+            }).join("");
+        }
+
+        function highlightPython(line) {
+            const escaped = escapeHTML(line);
+            return escaped
+                .replace(/\b(for|in|range|len|if|else|while|and)\b/g, '<span class="kw">$1</span>')
+                .replace(/\b([A-Za-z_]\w*)(?=\()/g, '<span class="fn">$1</span>')
+                .replace(/\b(\d+)\b/g, '<span class="num">$1</span>')
+                .replace(/&gt;/g, '<span class="op">&gt;</span>')
+                .replace(/&lt;/g, '<span class="op">&lt;</span>');
+        }
+
+        function escapeHTML(text) {
+            return text.replace(/[&<>"']/g, char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            }[char]));
+        }
+
+        function rebuildBars(step) {
+            clearBars();
+            const items = getRenderableItems(step);
+            const maxValue = Math.max(...items.map(item => item.value), 1);
+            const spacing = step.type === "merge" ? 1.38 : 1.7;
+            const totalWidth = (items.length - 1) * spacing;
+
+            items.forEach((item, visualIndex) => {
+                const h = 1 + (item.value / maxValue) * 8.5;
+                const geo = new THREE.BoxGeometry(0.95, h, 0.95);
+                const mat = makeMaterial(COLORS.default);
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.position.set(visualIndex * spacing - totalWidth / 2, h / 2, item.rowZ || 0);
+                mesh.userData = {
+                    id: item.id,
+                    value: item.value,
+                    index: item.index,
+                    visualIndex,
+                    spacing,
+                    maxValue,
+                    rowZ: item.rowZ || 0
+                };
+                state.scene.add(mesh);
+                state.bars.push(mesh);
+
+                const label = makeLabelSprite(`${item.value}\nIndex ${item.index}`, item.labelColor || "#e0f2fe");
+                label.position.set(mesh.position.x, h + 0.72, mesh.position.z + 0.08);
+                label.userData.id = item.id;
+                state.scene.add(label);
+                state.labelSprites.push(label);
+            });
+        }
+
+        function clearBars() {
+            state.bars.forEach(mesh => {
+                state.scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            state.labelSprites.forEach(sprite => {
+                state.scene.remove(sprite);
+                sprite.material.map.dispose();
+                sprite.material.dispose();
+            });
+            state.bars = [];
+            state.labelSprites = [];
+        }
+
+        function makeMaterial(color) {
+            return new THREE.MeshPhysicalMaterial({
+                color,
+                metalness: 0.42,
+                roughness: 0.24,
+                clearcoat: 0.6,
+                clearcoatRoughness: 0.18,
+                transmission: 0.08,
+                transparent: true,
+                opacity: 0.94
+            });
+        }
+
+        function makeLabelSprite(text, color) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 128;
+            drawLabel(canvas, text, color);
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(2.25, 1.12, 1);
+            sprite.userData.text = text;
+            sprite.userData.color = color;
+            return sprite;
+        }
+
+        function drawLabel(canvas, text, color) {
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(2, 6, 23, 0.78)";
+            roundRect(ctx, 18, 14, 220, 92, 18);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(34, 211, 238, 0.5)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            const parts = text.split("\n");
+            ctx.fillStyle = color;
+            ctx.font = "bold 36px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(parts[0], 128, 55);
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "22px Arial";
+            ctx.fillText(parts[1], 128, 88);
+        }
+
+        function refreshLabel(mesh, target) {
+            const sprite = state.labelSprites.find(label => label.userData.id === mesh.userData.id);
+            if (!sprite) return;
+            const text = `${target.value}\nIndex ${target.index}`;
+            if (sprite.userData.text === text) return;
+            const canvas = sprite.material.map.image;
+            drawLabel(canvas, text, sprite.userData.color || "#e0f2fe");
+            sprite.material.map.needsUpdate = true;
+            sprite.userData.text = text;
+        }
+
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.arcTo(x + width, y, x + width, y + height, radius);
+            ctx.arcTo(x + width, y + height, x, y + height, radius);
+            ctx.arcTo(x, y + height, x, y, radius);
+            ctx.arcTo(x, y, x + width, y, radius);
+            ctx.closePath();
+        }
+
+        async function goToStep(targetIndex, direction) {
+            if (state.animationBusy) return;
+            if (targetIndex < 0 || targetIndex >= state.steps.length) return;
+            const fromStep = state.steps[state.stepIndex];
+            const toStep = state.steps[targetIndex];
+            state.stepIndex = targetIndex;
+            await updateFromStep(toStep, true, direction, fromStep);
+            if (state.stepIndex >= state.steps.length - 1) pause();
+        }
+
+        async function updateFromStep(step, animateStep = true, direction = "forward", fromStep = null) {
+            state.animationBusy = true;
+            updateCodeHighlight(step.line);
+            updateMonitor(step);
+            updateProgress();
+
+            const changedStructure = state.algorithm === "merge" && fromStep && getRenderableItems(fromStep).length !== getRenderableItems(step).length;
+            if (changedStructure || state.bars.length !== getRenderableItems(step).length) {
+                rebuildBars(step);
+                animateStep = false;
+            }
+
+            updateBarTargets(step);
+            if (animateStep) {
+                await animateBars(step, direction);
+            } else {
+                applyBarPositions(step);
+            }
+            state.animationBusy = false;
+            updateControls();
+        }
+
+        function updateCodeHighlight(line) {
+            els.code.querySelectorAll(".code-line").forEach(node => {
+                node.classList.toggle("active", Number(node.dataset.line) === line);
+                if (Number(node.dataset.line) === line) {
+                    node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                }
+            });
+        }
+
+        function updateMonitor(step) {
+            els.status.textContent = step.message;
+            const entries = Object.entries(step.vars || {});
+            els.variableGrid.innerHTML = entries.map(([key, value]) => `
+                <div class="rounded-2xl border border-slate-700 bg-slate-950/75 p-4">
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-500">${key}</p>
+                    <p class="mt-1 text-2xl font-black text-white">${value === null || value === undefined ? "-" : value}</p>
+                </div>
+            `).join("");
+
+            const arr = step.snapshot || [];
+            els.arrayLength.textContent = `${arr.length} items`;
+            els.snapshot.innerHTML = arr.map((value, idx) => {
+                const color = colorForIndex(step, idx);
+                return `<span class="rounded-xl border px-3 py-2 text-sm font-bold" style="border-color:${color}; color:${color}; background:${color}1f">${idx}: ${value}</span>`;
+            }).join("");
+
+            const max = Math.max(...arr, 1);
+            els.miniChart.innerHTML = arr.map((value, idx) => {
+                const color = colorForIndex(step, idx);
+                const height = Math.max(8, (value / max) * 100);
+                return `<div class="bar-mini" title="index ${idx}: ${value}" style="height:${height}%; background:linear-gradient(180deg, ${color}, #1e293b)"></div>`;
+            }).join("");
+        }
+
+        function colorForIndex(step, idx) {
+            if ((step.sorted || []).includes(idx)) return COLOR_HEX.sorted;
+            if (step.special === idx || (step.specials || []).includes(idx)) return COLOR_HEX.special;
+            if (step.j === idx || (step.compare || []).includes(idx)) return COLOR_HEX.j;
+            if (step.i === idx) return COLOR_HEX.i;
+            return COLOR_HEX.default;
+        }
+
+        function updateProgress() {
+            const max = Math.max(state.steps.length - 1, 1);
+            const pct = (state.stepIndex / max) * 100;
+            els.progress.style.width = `${pct}%`;
+            els.stepLabel.textContent = `Step ${state.stepIndex} / ${state.steps.length - 1}`;
+        }
+
+        function updateControls() {
+            els.prev.disabled = state.stepIndex === 0 || state.animationBusy;
+            els.next.disabled = state.stepIndex >= state.steps.length - 1 || state.animationBusy;
+            els.reset.disabled = state.animationBusy;
+            els.play.disabled = state.animationBusy && !state.isPlaying;
+            els.play.textContent = state.isPlaying ? "暫停 Pause" : "自動播放 Auto Play";
+        }
+
+        function getRenderableItems(step) {
+            if (step.type !== "merge") {
+                const source = step.items || step.snapshot.map((value, index) => ({ id: `main-${index}`, value }));
+                return source.map((item, index) => ({ id: item.id, value: item.value, index, rowZ: 0 }));
+            }
+            const items = [];
+            step.arrayA.forEach((value, index) => items.push({ id: `a-${index}`, value, index, rowZ: -3.2, labelColor: "#7dd3fc" }));
+            step.arrayB.forEach((value, index) => items.push({ id: `b-${index}`, value, index, rowZ: 0, labelColor: "#ddd6fe" }));
+            step.merged.forEach((value, index) => items.push({ id: `c-${index}`, value, index, rowZ: 3.4, labelColor: "#bbf7d0" }));
+            return items;
+        }
+
+        function updateBarTargets(step) {
+            const items = getRenderableItems(step);
+            const maxValue = Math.max(...items.map(item => item.value), 1);
+            const spacing = step.type === "merge" ? 1.38 : 1.7;
+            const rows = {};
+            items.forEach(item => {
+                const key = item.rowZ || 0;
+                rows[key] = rows[key] || [];
+                rows[key].push(item);
+            });
+
+            const targetById = {};
+            Object.entries(rows).forEach(([rowZ, rowItems]) => {
+                const totalWidth = (rowItems.length - 1) * spacing;
+                rowItems.forEach((item, visualIndex) => {
+                    const h = 1 + (item.value / maxValue) * 8.5;
+                    targetById[item.id] = {
+                        x: visualIndex * spacing - totalWidth / 2,
+                        y: h / 2,
+                        z: Number(rowZ),
+                        height: h,
+                        value: item.value,
+                        index: item.index
+                    };
+                });
+            });
+
+            state.bars.forEach(mesh => {
+                const target = targetById[mesh.userData.id];
+                if (!target) return;
+                mesh.userData.target = target;
+                mesh.userData.value = target.value;
+                mesh.userData.index = target.index;
+                const statusColor = getMeshColor(step, mesh.userData.id, target.index);
+                mesh.material.color.setHex(statusColor);
+                mesh.material.emissive = new THREE.Color(statusColor);
+                mesh.material.emissiveIntensity = statusColor === COLORS.default ? 0.02 : 0.14;
+                refreshLabel(mesh, target);
+            });
+        }
+
+        function getMeshColor(step, id, index) {
+            if (step.type === "merge") {
+                if (id.startsWith("c-")) return COLORS.sorted;
+                if (id === `a-${step.i}` || id === `b-${step.j}`) return COLORS.j;
+                if (step.sourceId === id) return COLORS.special;
+                return id.startsWith("a-") ? COLORS.mergeA : COLORS.mergeB;
+            }
+            if ((step.sorted || []).includes(index)) return COLORS.sorted;
+            if (step.special === index || (step.specials || []).includes(index)) return COLORS.special;
+            if (step.j === index || (step.compare || []).includes(index)) return COLORS.j;
+            if (step.i === index) return COLORS.i;
+            return COLORS.default;
+        }
+
+        function applyBarPositions(step) {
+            state.bars.forEach(mesh => {
+                const target = mesh.userData.target;
+                if (!target) return;
+                setMeshHeight(mesh, target.height);
+                mesh.position.set(target.x, target.y, target.z);
+                syncLabel(mesh);
+            });
+            pulseHighlighted(step);
+        }
+
+        function setMeshHeight(mesh, height) {
+            mesh.scale.y = height / mesh.geometry.parameters.height;
+            mesh.position.y = height / 2;
+        }
+
+        async function animateBars(step, direction) {
+            const duration = 0.85 / state.speed;
+            const promises = [];
+            const action = direction === "reverse" ? "rewind" : step.action;
+
+            if (step.type !== "merge" && (action === "swap" || step.action === "swap")) {
+                promises.push(animateSwap(step, duration));
+            } else if (step.action === "shift" || step.action === "insert" || step.action === "key") {
+                promises.push(animateInsertionLike(step, duration));
+            } else {
+                state.bars.forEach(mesh => {
+                    const target = mesh.userData.target;
+                    if (!target) return;
+                    promises.push(tweenMesh(mesh, target, duration));
+                });
+            }
+
+            await Promise.all(promises);
+            pulseHighlighted(step);
+        }
+
+        function animateSwap(step, duration) {
+            const ids = step.swapIds || (step.compare || step.swap || []).map(index => `main-${index}`);
+            const swapMeshes = state.bars.filter(mesh => ids.includes(mesh.userData.id));
+            return Promise.all(state.bars.map(mesh => {
+                const target = mesh.userData.target;
+                if (!target) return Promise.resolve();
+                if (swapMeshes.includes(mesh)) {
+                    const liftZ = mesh.userData.id === ids[0] ? 1.8 : -1.8;
+                    return new Promise(resolve => {
+                        const tl = gsap.timeline({ onUpdate: () => syncLabel(mesh), onComplete: resolve });
+                        tl.to(mesh.position, { z: mesh.position.z + liftZ, duration: duration * 0.35, ease: "power2.out" })
+                          .to(mesh.position, { x: target.x, duration: duration * 0.45, ease: "power2.inOut" }, "<")
+                          .to(mesh.position, { z: target.z, duration: duration * 0.45, ease: "power2.in" });
+                    });
+                }
+                return tweenMesh(mesh, target, duration * 0.72);
+            }));
+        }
+
+        function animateInsertionLike(step, duration) {
+            return Promise.all(state.bars.map(mesh => {
+                const target = mesh.userData.target;
+                if (!target) return Promise.resolve();
+                const isKey = mesh.userData.index === step.special || mesh.userData.index === step.i;
+                return new Promise(resolve => {
+                    const tl = gsap.timeline({ onUpdate: () => syncLabel(mesh), onComplete: resolve });
+                    if (isKey) {
+                        tl.to(mesh.position, { z: 2.2, duration: duration * 0.28, ease: "back.out(1.8)" })
+                          .to(mesh.position, { x: target.x, y: target.y, duration: duration * 0.5, ease: "power2.inOut" })
+                          .to(mesh.position, { z: target.z, duration: duration * 0.32, ease: "power2.in" });
+                    } else {
+                        tl.to(mesh.position, { x: target.x, y: target.y, z: target.z, duration: duration * 0.78, ease: "power2.inOut" });
+                    }
+                    tl.to(mesh.scale, { y: target.height / mesh.geometry.parameters.height, duration: duration * 0.35, ease: "power2.out" }, 0);
+                });
+            }));
+        }
+
+        function tweenMesh(mesh, target, duration) {
+            return new Promise(resolve => {
+                gsap.to(mesh.position, {
+                    x: target.x,
+                    y: target.y,
+                    z: target.z,
+                    duration,
+                    ease: "power2.inOut",
+                    onUpdate: () => syncLabel(mesh),
+                    onComplete: resolve
+                });
+                gsap.to(mesh.scale, {
+                    y: target.height / mesh.geometry.parameters.height,
+                    duration,
+                    ease: "power2.out"
+                });
+            });
+        }
+
+        function syncLabel(mesh) {
+            const sprite = state.labelSprites.find(label => label.userData.id === mesh.userData.id);
+            if (!sprite) return;
+            const height = mesh.geometry.parameters.height * mesh.scale.y;
+            sprite.position.set(mesh.position.x, height + 0.72, mesh.position.z + 0.08);
+        }
+
+        function pulseHighlighted(step) {
+            state.bars.forEach(mesh => {
+                const active = getMeshColor(step, mesh.userData.id, mesh.userData.index) !== COLORS.default;
+                gsap.to(mesh.scale, {
+                    x: active ? 1.1 : 1,
+                    z: active ? 1.1 : 1,
+                    duration: 0.22 / state.speed,
+                    ease: "power2.out",
+                    onUpdate: () => syncLabel(mesh)
+                });
+            });
+        }
+
+        function play() {
+            if (state.stepIndex >= state.steps.length - 1) return;
+            state.isPlaying = true;
+            els.play.textContent = "暫停 Pause";
+            const tick = async () => {
+                if (!state.isPlaying) return;
+                if (state.stepIndex >= state.steps.length - 1) {
+                    pause();
+                    return;
+                }
+                await goToStep(state.stepIndex + 1, "forward");
+                state.timer = setTimeout(tick, 520 / state.speed);
+            };
+            tick();
+        }
+
+        function pause() {
+            state.isPlaying = false;
+            if (state.timer) clearTimeout(state.timer);
+            state.timer = null;
+            if (els.play) els.play.textContent = "自動播放 Auto Play";
+        }
+
+        function resizeRenderer() {
+            const { width, height } = els.sceneWrap.getBoundingClientRect();
+            state.camera.aspect = width / height;
+            state.camera.updateProjectionMatrix();
+            state.renderer.setSize(width, height);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            state.controls.update();
+            state.renderer.render(state.scene, state.camera);
+        }
+
+        function makeStep(overrides) {
+            return {
+                type: "sort",
+                action: "scan",
+                line: 1,
+                snapshot: [],
+                vars: {},
+                compare: [],
+                sorted: [],
+                message: "",
+                ...overrides
+            };
+        }
+
+        function makeItems(values) {
+            return values.map((value, index) => ({ id: `item-${index}`, value }));
+        }
+
+        function cloneItems(items) {
+            return items.map(item => ({ ...item }));
+        }
+
+        function makeBubbleSteps() {
+            const arr = [...activeSortArray];
+            const items = makeItems(activeSortArray);
+            const steps = [makeStep({
+                line: 1,
+                snapshot: [...arr],
+                items: cloneItems(items),
+                vars: { i: 0, j: 0, n: arr.length },
+                message: "Initial array / 初始陣列：準備開始 Bubble Sort。"
+            })];
+            const n = arr.length;
+            for (let i = 0; i < n; i++) {
+                steps.push(makeStep({
+                    line: 2,
+                    snapshot: [...arr],
+                    items: cloneItems(items),
+                    i,
+                    vars: { i, j: "-", n },
+                    sorted: sortedTail(n, i),
+                    message: `Outer loop i = ${i}. 外迴圈 i = ${i}，右側已排序區逐步擴大。`
+                }));
+                for (let j = 0; j < n - i - 1; j++) {
+                    steps.push(makeStep({
+                        line: 3,
+                        snapshot: [...arr],
+                        items: cloneItems(items),
+                        i,
+                        j,
+                        compare: [j, j + 1],
+                        vars: { i, j, "arr[j]": arr[j], "arr[j+1]": arr[j + 1] },
+                        sorted: sortedTail(n, i),
+                        message: `Inner loop j = ${j}. 內迴圈掃描相鄰元素。`
+                    }));
+                    steps.push(makeStep({
+                        line: 4,
+                        snapshot: [...arr],
+                        items: cloneItems(items),
+                        i,
+                        j,
+                        compare: [j, j + 1],
+                        vars: { i, j, "arr[j]": arr[j], "arr[j+1]": arr[j + 1] },
+                        sorted: sortedTail(n, i),
+                        message: `Compare arr[${j}] = ${arr[j]} and arr[${j + 1}] = ${arr[j + 1]}. 比較相鄰兩項。`
+                    }));
+                    if (arr[j] > arr[j + 1]) {
+                        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                        [items[j], items[j + 1]] = [items[j + 1], items[j]];
+                        steps.push(makeStep({
+                            line: 5,
+                            action: "swap",
+                            snapshot: [...arr],
+                            items: cloneItems(items),
+                            i,
+                            j,
+                            compare: [j, j + 1],
+                            swap: [j, j + 1],
+                            swapIds: [items[j].id, items[j + 1].id],
+                            vars: { i, j, swapped: "Yes 是" },
+                            sorted: sortedTail(n, i),
+                            message: `Swap indexes ${j} and ${j + 1}. 交換兩個長方體，較大值向右冒泡。`
+                        }));
+                    }
+                }
+            }
+            steps.push(makeStep({
+                line: 5,
+                snapshot: [...arr],
+                items: cloneItems(items),
+                vars: { i: n - 1, j: "-", complete: "True" },
+                sorted: arr.map((_, idx) => idx),
+                message: "Sorting complete! 排序完成，全部位置已鎖定。"
+            }));
+            return steps;
+        }
+
+        function sortedTail(n, pass) {
+            const result = [];
+            for (let idx = n - pass; idx < n; idx++) {
+                if (idx >= 0 && idx < n) result.push(idx);
+            }
+            return result;
+        }
+
+        function makeSelectionSteps() {
+            const arr = [...activeSortArray];
+            const items = makeItems(activeSortArray);
+            const steps = [makeStep({
+                line: 1,
+                snapshot: [...arr],
+                items: cloneItems(items),
+                vars: { i: 0, j: 1, min_idx: 0 },
+                message: "Initial array / 初始陣列：準備開始 Selection Sort。"
+            })];
+            for (let i = 0; i < arr.length; i++) {
+                let minIdx = i;
+                steps.push(makeStep({
+                    line: 1,
+                    snapshot: [...arr],
+                    items: cloneItems(items),
+                    i,
+                    special: minIdx,
+                    vars: { i, min_idx: minIdx, j: "-" },
+                    sorted: prefix(i),
+                    message: `Outer loop i = ${i}. 外迴圈 i = ${i}。`
+                }));
+                steps.push(makeStep({
+                    line: 2,
+                    snapshot: [...arr],
+                    items: cloneItems(items),
+                    i,
+                    special: minIdx,
+                    vars: { i, min_idx: minIdx, j: "-" },
+                    sorted: prefix(i),
+                    message: `Set min_idx = ${i}. 假設目前位置就是未排序區最小值。`
+                }));
+                for (let j = i + 1; j < arr.length; j++) {
+                    steps.push(makeStep({
+                        line: 3,
+                        snapshot: [...arr],
+                        items: cloneItems(items),
+                        i,
+                        j,
+                        special: minIdx,
+                        compare: [j, minIdx],
+                        vars: { i, j, min_idx: minIdx, "arr[j]": arr[j], "arr[min_idx]": arr[minIdx] },
+                        sorted: prefix(i),
+                        message: `Scan j = ${j}. 掃描未排序區，檢查是否找到更小值。`
+                    }));
+                    steps.push(makeStep({
+                        line: 4,
+                        snapshot: [...arr],
+                        items: cloneItems(items),
+                        i,
+                        j,
+                        special: minIdx,
+                        compare: [j, minIdx],
+                        vars: { i, j, min_idx: minIdx, "arr[j]": arr[j], "arr[min_idx]": arr[minIdx] },
+                        sorted: prefix(i),
+                        message: `Compare arr[${j}] with arr[${minIdx}]. 比較 arr[j] 與目前最小值。`
+                    }));
+                    if (arr[j] < arr[minIdx]) {
+                        minIdx = j;
+                        steps.push(makeStep({
+                            line: 5,
+                            snapshot: [...arr],
+                            items: cloneItems(items),
+                            i,
+                            j,
+                            special: minIdx,
+                            vars: { i, j, min_idx: minIdx, newMinimum: arr[minIdx] },
+                            sorted: prefix(i),
+                            message: `New min_idx = ${minIdx}. 找到新的最小值 ${arr[minIdx]}。`
+                        }));
+                    }
+                }
+                if (minIdx !== i) {
+                    [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+                    [items[i], items[minIdx]] = [items[minIdx], items[i]];
+                }
+                steps.push(makeStep({
+                    line: 6,
+                    action: "swap",
+                    snapshot: [...arr],
+                    items: cloneItems(items),
+                    i,
+                    special: i,
+                    compare: [i, minIdx],
+                    swap: [i, minIdx],
+                    swapIds: [items[i].id, items[minIdx].id],
+                    vars: { i, min_idx: minIdx, locked: arr[i] },
+                    sorted: prefix(i + 1),
+                    message: `Place minimum at index ${i}. 將本輪最小值放到已排序區末端。`
+                }));
+            }
+            steps.push(makeStep({
+                line: 6,
+                snapshot: [...arr],
+                items: cloneItems(items),
+                vars: { complete: "True" },
+                sorted: arr.map((_, idx) => idx),
+                message: "Selection Sort complete! 選擇排序完成。"
+            }));
+            return steps;
+        }
+
+        function prefix(count) {
+            return Array.from({ length: count }, (_, idx) => idx);
+        }
+
+        function makeInsertionSteps() {
+            const arr = [...activeSortArray];
+            const steps = [makeStep({
+                line: 1,
+                snapshot: [...arr],
+                vars: { i: 1, j: 0, key: arr[1] },
+                sorted: [0],
+                message: "Initial array / 初始陣列：第一個元素視為已排序。"
+            })];
+            for (let i = 1; i < arr.length; i++) {
+                const key = arr[i];
+                let j = i - 1;
+                steps.push(makeStep({
+                    line: 1,
+                    action: "key",
+                    snapshot: [...arr],
+                    i,
+                    special: i,
+                    vars: { i, key, j },
+                    sorted: prefix(i),
+                    message: `Outer loop i = ${i}. 外迴圈 i = ${i}。`
+                }));
+                steps.push(makeStep({
+                    line: 2,
+                    action: "key",
+                    snapshot: [...arr],
+                    i,
+                    special: i,
+                    vars: { i, key, j },
+                    sorted: prefix(i),
+                    message: `Lift key = ${key} from index ${i}. 抽出 key，準備插入左側已排序區。`
+                }));
+                steps.push(makeStep({
+                    line: 3,
+                    snapshot: [...arr],
+                    i,
+                    j,
+                    special: i,
+                    vars: { i, key, j },
+                    sorted: prefix(i),
+                    message: `Set j = i - 1 = ${j}. 從 key 左邊開始向左比較。`
+                }));
+                while (j >= 0 && key < arr[j]) {
+                    steps.push(makeStep({
+                        line: 4,
+                        snapshot: [...arr],
+                        i,
+                        j,
+                        special: i,
+                        compare: [j],
+                        vars: { i, key, j, "arr[j]": arr[j] },
+                        sorted: prefix(i),
+                        message: `key ${key} < arr[${j}] ${arr[j]}, so shift right. key 較小，因此右移 arr[j]。`
+                    }));
+                    arr[j + 1] = arr[j];
+                    steps.push(makeStep({
+                        line: 5,
+                        action: "shift",
+                        snapshot: [...arr],
+                        i,
+                        j,
+                        special: j + 1,
+                        vars: { i, key, j, shiftedTo: j + 1 },
+                        sorted: prefix(i),
+                        message: `Move arr[${j}] to arr[${j + 1}]. 將元素向右平移，留出插入空位。`
+                    }));
+                    j--;
+                    steps.push(makeStep({
+                        line: 6,
+                        snapshot: [...arr],
+                        i,
+                        j,
+                        special: i,
+                        vars: { i, key, j },
+                        sorted: prefix(i),
+                        message: `Decrease j to ${j}. 指針向左移動。`
+                    }));
+                }
+                steps.push(makeStep({
+                    line: 4,
+                    snapshot: [...arr],
+                    i,
+                    j,
+                    special: i,
+                    vars: { i, key, j, condition: "False 否" },
+                    sorted: prefix(i),
+                    message: "Stop shifting. 已找到 key 的插入位置。"
+                }));
+                arr[j + 1] = key;
+                steps.push(makeStep({
+                    line: 7,
+                    action: "insert",
+                    snapshot: [...arr],
+                    i: j + 1,
+                    special: j + 1,
+                    vars: { i, key, insertAt: j + 1 },
+                    sorted: prefix(i + 1),
+                    message: `Insert key ${key} at index ${j + 1}. key 平滑滑入正確位置。`
+                }));
+            }
+            steps.push(makeStep({
+                line: 7,
+                snapshot: [...arr],
+                vars: { complete: "True" },
+                sorted: arr.map((_, idx) => idx),
+                message: "Insertion Sort complete! 插入排序完成。"
+            }));
+            return steps;
+        }
+
+        function makeMergeSteps() {
+            const A = [...MERGE_A];
+            const B = [...MERGE_B];
+            const C = [];
+            let i = 0;
+            let j = 0;
+            const steps = [{
+                type: "merge",
+                action: "init",
+                line: 1,
+                arrayA: [...A],
+                arrayB: [...B],
+                merged: [...C],
+                snapshot: [...A, ...B],
+                vars: { i, j, "len(A)": A.length, "len(B)": B.length },
+                message: "Initial sorted arrays / 初始已排序陣列：準備進行雙指針合併。"
+            }];
+
+            steps.push(mergeStep(1, "Set i = j = 0. 初始化兩個讀取指針。", A, B, C, i, j));
+            steps.push(mergeStep(2, "Create empty output C. 建立空的合併陣列。", A, B, C, i, j));
+
+            while (i < A.length && j < B.length) {
+                steps.push(mergeStep(3, `Check pointers i=${i}, j=${j}. 確認兩個陣列都還有元素。`, A, B, C, i, j));
+                steps.push(mergeStep(4, `Compare A[${i}] = ${A[i]} and B[${j}] = ${B[j]}. 比較兩個指針的值。`, A, B, C, i, j, null, [`a-${i}`, `b-${j}`]));
+                if (A[i] < B[j]) {
+                    C.push(A[i]);
+                    steps.push(mergeStep(5, `Append A[${i}] = ${A[i]} to C. 將 A 的較小值加入輸出。`, A, B, C, i, j, `a-${i}`));
+                    i++;
+                    steps.push(mergeStep(6, `Move i to ${i}. A 指針右移。`, A, B, C, i, j));
+                } else {
+                    C.push(B[j]);
+                    steps.push(mergeStep(8, `Append B[${j}] = ${B[j]} to C. 將 B 的較小值加入輸出。`, A, B, C, i, j, `b-${j}`));
+                    j++;
+                    steps.push(mergeStep(8, `Move j to ${j}. B 指針右移。`, A, B, C, i, j));
+                }
+            }
+
+            while (i < A.length) {
+                C.push(A[i]);
+                steps.push(mergeStep(10, `Extend remaining A[${i}] = ${A[i]}. 將 A 剩餘元素接到 C。`, A, B, C, i, j, `a-${i}`));
+                i++;
+            }
+            while (j < B.length) {
+                C.push(B[j]);
+                steps.push(mergeStep(11, `Extend remaining B[${j}] = ${B[j]}. 將 B 剩餘元素接到 C。`, A, B, C, i, j, `b-${j}`));
+                j++;
+            }
+            steps.push(mergeStep(11, "Merge complete! 合併完成，C 是新的排序陣列。", A, B, C, i, j));
+            return steps;
+        }
+
+        function mergeStep(line, message, A, B, C, i, j, sourceId = null, activeIds = []) {
+            return {
+                type: "merge",
+                action: sourceId ? "append" : "scan",
+                line,
+                arrayA: [...A],
+                arrayB: [...B],
+                merged: [...C],
+                snapshot: [...C],
+                i,
+                j,
+                sourceId,
+                activeIds,
+                vars: { i, j, "A[i]": A[i] ?? "-", "B[j]": B[j] ?? "-", "len(C)": C.length },
+                message
+            };
+        }
+    </script>
+</body>
+</html>
