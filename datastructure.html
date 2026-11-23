@@ -1,569 +1,847 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>數據結構測試平台</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { color: #337ab7; border-bottom: 2px solid #337ab7; padding-bottom: 5px;}
-        h3 { color: #555; }
-        input[type="text"], input[type="number"] { padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { padding: 8px 15px; background-color: #337ab7; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
-        button:hover { background-color: #286090; }
-        .output { margin-top: 15px; padding: 10px; background-color: #e9e9e9; border: 1px solid #ccc; border-radius: 4px; min-height: 50px; white-space: pre-wrap; font-family: monospace; }
-        .visualization { display: flex; flex-wrap: wrap; align-items: center; margin-top: 10px; }
-        .node { border: 1px solid #333; padding: 10px; margin: 5px; background-color: #f9f9f9; border-radius: 4px; text-align: center; min-width: 30px;}
-        .pointer { margin: 0 5px; }
-        hr { margin-top: 30px; margin-bottom: 30px; border: 0; border-top: 1px solid #eee; }
-
-        /* --- Circular Queue Specific Styles --- */
-        .queue-container {
-            display: flex;
-            border: 1px solid #ccc;
-            margin-top: 10px;
-            min-height: 100px; /* Adjusted for arrows */
-            align-items: flex-start; /* Align items (cell + arrow) at the top */
-            padding: 5px;
-            background-color: #fff; /* Background for the container itself */
-        }
-        .queue-item-container { /* Wraps each cell and its arrow */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0 2px; /* Spacing between queue items */
-        }
-        .queue-cell {
-            border: 1px dashed #aaa;
-            padding: 10px;
-            min-width: 45px; /* Slightly wider for content and label */
-            min-height: 20px; /* Ensure a minimum height for the cell content part */
-            text-align: center;
-            background-color: #f9f9f9;
-            position: relative; /* Crucial for the absolute positioned label */
-            margin-bottom: 5px; /* Space between cell and arrow-indicator */
-        }
-        .queue-cell .label {
-            font-size: 0.8em;
-            color: #555; /* Darker gray for better readability */
-            position: absolute;
-            top: -20px;      /* Position above the cell */
-            left: 0;
-            right: 0;
-            text-align: center;
-            white-space: nowrap; /* Prevent (Head, Tail) from wrapping */
-        }
-        .queue-cell .label .pointer-text { /* Class for (Head), (Tail), (Head, Tail) */
-            font-weight: bold;
-            color: red;
-        }
-        .arrow-indicator {
-            min-height: 20px; /* Space for arrows */
-            font-size: 1.1em;  /* Size of arrow characters */
-            line-height: 1;    /* Compact line height */
-            text-align: center;
-            width: 100%; /* Ensure it spans the width of the item container for centering */
-        }
-        .arrow-indicator .head-arrow { color: #d9534f; /* Bootstrap's danger red */ margin: 0 1px;}
-        .arrow-indicator .tail-arrow { color: #337ab7; /* Bootstrap's primary blue */ margin: 0 1px;}
-
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>堆疊與循環隊列視覺化學習</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', "ui-sans-serif", "system-ui", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* 高亮與進出場動畫 */
+    @keyframes flash-in {
+      0% { transform: scale(0.7); background-color: #86efac; }
+      40% { transform: scale(1.08); background-color: #4ade80; }
+      100% { transform: scale(1); }
+    }
+    @keyframes flash-out {
+      0% { transform: scale(1); background-color: #fca5a5; }
+      50% { transform: scale(1.08); background-color: #f87171; }
+      100% { transform: scale(0.85); opacity: 0.35; }
+    }
+    @keyframes pulse-pointer {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    .anim-in { animation: flash-in 0.55s ease-out; }
+    .anim-out { animation: flash-out 0.55s ease-in; }
+    .pointer-bounce { animation: pulse-pointer 1.4s ease-in-out infinite; }
+    .cell {
+      transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+    }
+    /* Python 程式碼列高亮 */
+    .code-line {
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .code-line > .ln {
+      display: inline-block;
+      width: 1.5rem;
+      margin-right: 0.6rem;
+      text-align: right;
+      color: #64748b;
+      user-select: none;
+    }
+    .code-hl-ok {
+      background-color: rgba(52, 211, 153, 0.28);
+      box-shadow: inset 3px 0 0 #34d399;
+    }
+    .code-hl-err {
+      background-color: rgba(248, 113, 113, 0.32);
+      box-shadow: inset 3px 0 0 #f87171;
+    }
+    details.code-panel > summary {
+      list-style: none;
+    }
+    details.code-panel > summary::-webkit-details-marker {
+      display: none;
+    }
+    details.code-panel[open] .code-chevron {
+      transform: rotate(90deg);
+    }
+  </style>
 </head>
-<body>
+<body class="min-h-screen bg-slate-50 text-slate-800 font-sans">
+  <!-- 頁首 -->
+  <header class="bg-indigo-700 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-6">
+      <h1 class="text-2xl md:text-3xl font-bold tracking-wide">資料結構視覺化：堆疊與循環隊列</h1>
+      <p class="mt-2 text-indigo-100 text-sm md:text-base leading-relaxed">
+        透過互動操作觀察資料如何進出。堆疊採後進先出（LIFO）；循環隊列以陣列模擬環狀結構，用 Head、Tail 與 Size 管理入隊與出隊。
+      </p>
+    </div>
+  </header>
 
-    <h1>數據結構互動測試 🧪</h1>
-
-    <div class="container">
-        <h2>1. 堆疊 (Stack) - First In Last Out (FILO)</h2>
-        <div>
-            <input type="text" id="stackValue" placeholder="輸入數值">
-            <button onclick="pushStack()">Push (推入)</button>
-            <button onclick="popStack()">Pop (彈出)</button>
-            <button onclick="peekStack()">Peek (查看頂部)</button>
-            <button onclick="clearStackDisplay()">清除顯示</button>
-        </div>
-        <h3>堆疊狀態:</h3>
-        <div id="stackOutput" class="output"></div>
-        <div id="stackVisualization" class="visualization"></div>
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <!-- 切換分頁 -->
+    <div class="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="資料結構切換">
+      <button id="tab-stack" type="button" role="tab" aria-selected="true"
+        class="tab-btn px-5 py-2.5 rounded-lg font-medium shadow-sm bg-indigo-600 text-white">
+        堆疊（Stack）
+      </button>
+      <button id="tab-queue" type="button" role="tab" aria-selected="false"
+        class="tab-btn px-5 py-2.5 rounded-lg font-medium shadow-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-100">
+        循環隊列（Circular Queue）
+      </button>
     </div>
 
-    <hr>
-
-    <div class="container">
-        <h2>2. 循環隊列 (Circular Queue)</h2>
-        <div>
-            <input type="number" id="queueSize" placeholder="設定隊列大小 (預設 5)" value="5" min="1">
-            <button onclick="initializeQueue()">初始化/重設隊列</button>
+    <!-- ========== 堆疊區塊 ========== -->
+    <section id="panel-stack" class="space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- 視覺化 -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 class="text-lg font-bold text-indigo-800">堆疊視覺化（底部為 index 1）</h2>
+            <div class="flex gap-3 text-sm">
+              <span class="px-3 py-1 rounded-full bg-indigo-50 text-indigo-800 font-medium">容量 SIZE = <span id="stack-size-label">8</span></span>
+              <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 font-medium">元素數 = <span id="stack-count-label">0</span></span>
+              <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-800 font-medium">last / top = <span id="stack-last-label">0</span></span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 mb-4">
+            規則：<code class="bg-slate-100 px-1 rounded">last == 0</code> 為空；PUSH 時 <code class="bg-slate-100 px-1 rounded">last++</code> 再寫入；POP 時取出後清空並 <code class="bg-slate-100 px-1 rounded">last--</code>。
+          </p>
+          <div class="flex justify-center overflow-x-auto py-2">
+            <div class="flex items-end gap-4">
+              <div id="stack-visual" class="flex flex-col-reverse gap-1"></div>
+              <div id="stack-pointer" class="relative w-28 min-h-[2rem]"></div>
+            </div>
+          </div>
         </div>
-        <br>
-        <div>
-            <input type="text" id="cqValue" placeholder="輸入數值">
-            <button onclick="enqueueCircular()">Enqueue (入隊)</button>
-            <button onclick="dequeueCircular()">Dequeue (出隊)</button>
-            <button onclick="peekCircular()">Peek (查看頭部)</button>
-            <button onclick="clearQueueDisplay()">清除顯示</button>
+
+        <!-- 操作區 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+          <h3 class="font-bold text-slate-800">操作</h3>
+          <label class="block text-sm">
+            <span class="text-slate-600">容量 SIZE（5～12）</span>
+            <input id="stack-capacity" type="number" min="5" max="12" value="8"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none" />
+          </label>
+          <label class="block text-sm">
+            <span class="text-slate-600">推入資料</span>
+            <input id="stack-input" type="text" maxlength="8" placeholder="例如：A 或 42"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none" />
+          </label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btn-push" type="button" class="px-3 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700">推入 (PUSH)</button>
+            <button id="btn-pop" type="button" class="px-3 py-2 rounded-lg bg-rose-600 text-white font-medium hover:bg-rose-700">彈出 (POP)</button>
+          </div>
+          <button id="btn-stack-reset" type="button" class="w-full px-3 py-2 rounded-lg bg-slate-200 text-slate-800 font-medium hover:bg-slate-300">重置 / 初始化</button>
+          <p id="stack-status" class="text-sm min-h-[1.5rem] font-medium text-slate-600"></p>
         </div>
-        <h3>隊列狀態:</h3>
-        <p>Head: <span id="cqHead">-</span> | Tail: <span id="cqTail">-</span> | Size: <span id="cqCurrentSize">-</span> | MaxSize: <span id="cqMaxSize">-</span></p>
-        <div id="cqOutput" class="output"></div>
-        <div id="cqVisualization" class="queue-container"></div>
-    </div>
+      </div>
 
-    <hr>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold mb-2">操作紀錄</h3>
+        <ul id="stack-log" class="text-sm space-y-1 max-h-40 overflow-y-auto text-slate-600"></ul>
+      </div>
 
-    <div class="container">
-        <h2>3. 鏈表 (Linked List)</h2>
-        <div>
-            <input type="text" id="llValue" placeholder="輸入數值">
-            <input type="number" id="llIndex" placeholder="索引 (可選)">
-            <button onclick="insertNode()">插入節點</button>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold mb-1">Python 程式碼（PUSH / POP）</h3>
+        <p class="text-xs text-slate-500 mb-3">點擊標題展開或收合。執行推入或彈出時，會自動開啟對應函式並著色標示正在執行的敘述。</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <details id="code-push" class="code-panel rounded-lg border border-slate-700 bg-slate-900 text-slate-100 overflow-hidden">
+            <summary class="cursor-pointer select-none px-4 py-2.5 bg-slate-800 text-sm font-medium flex items-center justify-between gap-2">
+              <span class="flex items-center gap-2">
+                <span class="code-chevron inline-block text-slate-400 transition-transform">▸</span>
+                <span class="font-mono text-emerald-300">def PUSH(data)</span>
+              </span>
+              <span class="text-xs text-slate-400">點擊展開</span>
+            </summary>
+            <div class="font-mono text-[12px] sm:text-[13px] leading-7 py-3 px-2 overflow-x-auto" data-code-body="push">
+              <div data-step="def" class="code-line px-3 rounded"><span class="ln">1</span><span class="text-purple-300">def</span> PUSH(data):</div>
+              <div data-step="global" class="code-line px-3 rounded"><span class="ln">2</span>    <span class="text-purple-300">global</span> last</div>
+              <div data-step="if" class="code-line px-3 rounded"><span class="ln">3</span>    <span class="text-purple-300">if</span> last == SIZE:</div>
+              <div data-step="full" class="code-line px-3 rounded"><span class="ln">4</span>        print(<span class="text-amber-200">"堆疊已滿"</span>)</div>
+              <div data-step="ret-full" class="code-line px-3 rounded"><span class="ln">5</span>        <span class="text-purple-300">return</span></div>
+              <div data-step="inc" class="code-line px-3 rounded"><span class="ln">6</span>    last += <span class="text-sky-300">1</span></div>
+              <div data-step="assign" class="code-line px-3 rounded"><span class="ln">7</span>    stack[last] = data</div>
+            </div>
+          </details>
+          <details id="code-pop" class="code-panel rounded-lg border border-slate-700 bg-slate-900 text-slate-100 overflow-hidden">
+            <summary class="cursor-pointer select-none px-4 py-2.5 bg-slate-800 text-sm font-medium flex items-center justify-between gap-2">
+              <span class="flex items-center gap-2">
+                <span class="code-chevron inline-block text-slate-400 transition-transform">▸</span>
+                <span class="font-mono text-rose-300">def POP()</span>
+              </span>
+              <span class="text-xs text-slate-400">點擊展開</span>
+            </summary>
+            <div class="font-mono text-[12px] sm:text-[13px] leading-7 py-3 px-2 overflow-x-auto" data-code-body="pop">
+              <div data-step="def" class="code-line px-3 rounded"><span class="ln">1</span><span class="text-purple-300">def</span> POP():</div>
+              <div data-step="global" class="code-line px-3 rounded"><span class="ln">2</span>    <span class="text-purple-300">global</span> last</div>
+              <div data-step="if" class="code-line px-3 rounded"><span class="ln">3</span>    <span class="text-purple-300">if</span> last == <span class="text-sky-300">0</span>:  <span class="text-slate-500"># isEmpty</span></div>
+              <div data-step="empty" class="code-line px-3 rounded"><span class="ln">4</span>        print(<span class="text-amber-200">"堆疊為空"</span>)</div>
+              <div data-step="ret-empty" class="code-line px-3 rounded"><span class="ln">5</span>        <span class="text-purple-300">return</span> <span class="text-purple-300">None</span></div>
+              <div data-step="get" class="code-line px-3 rounded"><span class="ln">6</span>    value = stack[last]</div>
+              <div data-step="clear" class="code-line px-3 rounded"><span class="ln">7</span>    stack[last] = <span class="text-amber-200">""</span></div>
+              <div data-step="dec" class="code-line px-3 rounded"><span class="ln">8</span>    last -= <span class="text-sky-300">1</span></div>
+              <div data-step="ret" class="code-line px-3 rounded"><span class="ln">9</span>    <span class="text-purple-300">return</span> value</div>
+            </div>
+          </details>
         </div>
-        <br>
-        <div>
-            <input type="text" id="llDeleteValue" placeholder="輸入要刪除的數值">
-            <button onclick="deleteNodeByValue()">刪除節點 (按數值)</button>
+      </div>
+    </section>
+
+    <!-- ========== 循環隊列區塊 ========== -->
+    <section id="panel-queue" class="space-y-5 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 class="text-lg font-bold text-teal-800">循環隊列視覺化</h2>
+            <div class="flex flex-wrap gap-2 text-sm">
+              <span class="px-3 py-1 rounded-full bg-teal-50 text-teal-800 font-medium">N = <span id="queue-n-label">8</span></span>
+              <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 font-medium">Size = <span id="queue-size-label">0</span></span>
+              <span class="px-3 py-1 rounded-full bg-sky-50 text-sky-800 font-medium">Head = <span id="queue-head-label">0</span></span>
+              <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-800 font-medium">Tail = <span id="queue-tail-label">7</span></span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-500 mb-4">
+            初始化：Head = 0、Tail = N−1、Size = 0。ENQ：<code class="bg-slate-100 px-1 rounded">Tail = (Tail+1) % N</code> 再寫入。DEQ：取出 Head 後 <code class="bg-slate-100 px-1 rounded">Head = (Head+1) % N</code>。
+          </p>
+
+          <!-- 圓形排列 -->
+          <div class="flex justify-center mb-6">
+            <div id="queue-circle" class="relative w-[320px] h-[320px] sm:w-[380px] sm:h-[380px]"></div>
+          </div>
+
+          <!-- 水平陣列 -->
+          <h4 class="text-sm font-semibold text-slate-700 mb-2">線性陣列檢視 Q[0 … N−1]</h4>
+          <div id="queue-linear" class="flex flex-wrap justify-center gap-2"></div>
         </div>
-        <div>
-            <input type="number" id="llDeleteIndex" placeholder="輸入要刪除的索引">
-            <button onclick="deleteNodeByIndex()">刪除節點 (按索引)</button>
-             <button onclick="clearLinkedListDisplay()">清除顯示</button>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+          <h3 class="font-bold text-slate-800">操作</h3>
+          <label class="block text-sm">
+            <span class="text-slate-600">陣列大小 N（5～12）</span>
+            <input id="queue-capacity" type="number" min="5" max="12" value="8"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-teal-400 focus:outline-none" />
+          </label>
+          <label class="block text-sm">
+            <span class="text-slate-600">入隊資料</span>
+            <input id="queue-input" type="text" maxlength="8" placeholder="例如：B 或 17"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-teal-400 focus:outline-none" />
+          </label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btn-enq" type="button" class="px-3 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700">入隊 (ENQ)</button>
+            <button id="btn-deq" type="button" class="px-3 py-2 rounded-lg bg-rose-600 text-white font-medium hover:bg-rose-700">出隊 (DEQ)</button>
+          </div>
+          <button id="btn-queue-reset" type="button" class="w-full px-3 py-2 rounded-lg bg-slate-200 text-slate-800 font-medium hover:bg-slate-300">重置 / 初始化</button>
+          <p id="queue-status" class="text-sm min-h-[1.5rem] font-medium text-slate-600"></p>
+          <div class="text-xs text-slate-500 bg-slate-50 rounded-lg p-3 leading-relaxed">
+            <p class="font-semibold text-slate-700 mb-1">圖例</p>
+            <p><span class="inline-block w-3 h-3 rounded bg-sky-500 align-middle"></span> Head（出隊端）</p>
+            <p><span class="inline-block w-3 h-3 rounded bg-amber-500 align-middle"></span> Tail（入隊端）</p>
+            <p><span class="inline-block w-3 h-3 rounded bg-emerald-400 align-middle"></span> 已佔用</p>
+          </div>
         </div>
-        <h3>鏈表狀態:</h3>
-        <div id="llOutput" class="output"></div>
-        <div id="llVisualization" class="visualization"></div>
-    </div>
+      </div>
 
-    <script>
-        // --- 堆疊 (Stack) ---
-        let stack = [];
-        const stackOutput = document.getElementById('stackOutput');
-        const stackVisualization = document.getElementById('stackVisualization');
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold mb-2">操作紀錄</h3>
+        <ul id="queue-log" class="text-sm space-y-1 max-h-40 overflow-y-auto text-slate-600"></ul>
+      </div>
 
-        function updateStackVisual() {
-            stackVisualization.innerHTML = '';
-            if (stack.length === 0) {
-                stackVisualization.innerHTML = '堆疊為空';
-                return;
-            }
-            for (let i = 0; i < stack.length; i++) {
-                const nodeDiv = document.createElement('div');
-                nodeDiv.className = 'node';
-                nodeDiv.textContent = stack[i];
-                if (i === stack.length - 1) {
-                    nodeDiv.innerHTML += ' <span style="color: green; font-weight: bold;">&lt;-- TOP</span>';
-                }
-                stackVisualization.prepend(nodeDiv);
-            }
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold mb-1">Python 程式碼（ENQ / DEQ）</h3>
+        <p class="text-xs text-slate-500 mb-3">點擊標題展開或收合。執行入隊或出隊時，會自動開啟對應函式並著色標示正在執行的敘述。</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <details id="code-enq" class="code-panel rounded-lg border border-slate-700 bg-slate-900 text-slate-100 overflow-hidden">
+            <summary class="cursor-pointer select-none px-4 py-2.5 bg-slate-800 text-sm font-medium flex items-center justify-between gap-2">
+              <span class="flex items-center gap-2">
+                <span class="code-chevron inline-block text-slate-400 transition-transform">▸</span>
+                <span class="font-mono text-emerald-300">def ENQ(item)</span>
+              </span>
+              <span class="text-xs text-slate-400">點擊展開</span>
+            </summary>
+            <div class="font-mono text-[12px] sm:text-[13px] leading-7 py-3 px-2 overflow-x-auto" data-code-body="enq">
+              <div data-step="def" class="code-line px-3 rounded"><span class="ln">1</span><span class="text-purple-300">def</span> ENQ(item):</div>
+              <div data-step="global" class="code-line px-3 rounded"><span class="ln">2</span>    <span class="text-purple-300">global</span> Tail, Size</div>
+              <div data-step="if" class="code-line px-3 rounded"><span class="ln">3</span>    <span class="text-purple-300">if</span> Size == N:</div>
+              <div data-step="full" class="code-line px-3 rounded"><span class="ln">4</span>        print(<span class="text-amber-200">"隊列已滿"</span>)</div>
+              <div data-step="ret-full" class="code-line px-3 rounded"><span class="ln">5</span>        <span class="text-purple-300">return</span></div>
+              <div data-step="tail" class="code-line px-3 rounded"><span class="ln">6</span>    Tail = (Tail + <span class="text-sky-300">1</span>) % N</div>
+              <div data-step="assign" class="code-line px-3 rounded"><span class="ln">7</span>    Q[Tail] = item</div>
+              <div data-step="inc" class="code-line px-3 rounded"><span class="ln">8</span>    Size += <span class="text-sky-300">1</span></div>
+            </div>
+          </details>
+          <details id="code-deq" class="code-panel rounded-lg border border-slate-700 bg-slate-900 text-slate-100 overflow-hidden">
+            <summary class="cursor-pointer select-none px-4 py-2.5 bg-slate-800 text-sm font-medium flex items-center justify-between gap-2">
+              <span class="flex items-center gap-2">
+                <span class="code-chevron inline-block text-slate-400 transition-transform">▸</span>
+                <span class="font-mono text-rose-300">def DEQ()</span>
+              </span>
+              <span class="text-xs text-slate-400">點擊展開</span>
+            </summary>
+            <div class="font-mono text-[12px] sm:text-[13px] leading-7 py-3 px-2 overflow-x-auto" data-code-body="deq">
+              <div data-step="def" class="code-line px-3 rounded"><span class="ln">1</span><span class="text-purple-300">def</span> DEQ():</div>
+              <div data-step="global" class="code-line px-3 rounded"><span class="ln">2</span>    <span class="text-purple-300">global</span> Head, Size</div>
+              <div data-step="if" class="code-line px-3 rounded"><span class="ln">3</span>    <span class="text-purple-300">if</span> Size == <span class="text-sky-300">0</span>:</div>
+              <div data-step="empty" class="code-line px-3 rounded"><span class="ln">4</span>        print(<span class="text-amber-200">"隊列為空"</span>)</div>
+              <div data-step="ret-empty" class="code-line px-3 rounded"><span class="ln">5</span>        <span class="text-purple-300">return</span> <span class="text-purple-300">None</span></div>
+              <div data-step="get" class="code-line px-3 rounded"><span class="ln">6</span>    value = Q[Head]</div>
+              <div data-step="clear" class="code-line px-3 rounded"><span class="ln">7</span>    Q[Head] = <span class="text-amber-200">""</span></div>
+              <div data-step="dec" class="code-line px-3 rounded"><span class="ln">8</span>    Size -= <span class="text-sky-300">1</span></div>
+              <div data-step="head" class="code-line px-3 rounded"><span class="ln">9</span>    Head = (Head + <span class="text-sky-300">1</span>) % N</div>
+              <div data-step="ret" class="code-line px-3 rounded"><span class="ln">10</span>    <span class="text-purple-300">return</span> value</div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center text-xs text-slate-400 py-6">
+    教學用單頁應用程式 · Tailwind CSS + Vanilla JavaScript
+  </footer>
+
+  <script>
+    /**
+     * 堆疊與循環隊列視覺化學習 SPA
+     * ------------------------------------------------
+     * 堆疊：1-based 陣列，last == 0 表示空，last == SIZE 表示滿。
+     * 循環隊列：Head / Tail / Size；滿當 Size == N，空當 Size == 0。
+     */
+
+    const MAX_LOG = 12;
+    const CODE_TRACE_MS = 240;
+    let codeTraceTimers = [];
+
+    /** 各操作實際會走到的程式列（對應 data-step） */
+    const CODE_PATHS = {
+      push_ok:   { panel: "code-push", steps: ["def", "global", "if", "inc", "assign"], errorSteps: [] },
+      push_full: { panel: "code-push", steps: ["def", "global", "if", "full", "ret-full"], errorSteps: ["full", "ret-full"] },
+      pop_ok:    { panel: "code-pop",  steps: ["def", "global", "if", "get", "clear", "dec", "ret"], errorSteps: [] },
+      pop_empty: { panel: "code-pop",  steps: ["def", "global", "if", "empty", "ret-empty"], errorSteps: ["empty", "ret-empty"] },
+      enq_ok:    { panel: "code-enq",  steps: ["def", "global", "if", "tail", "assign", "inc"], errorSteps: [] },
+      enq_full:  { panel: "code-enq",  steps: ["def", "global", "if", "full", "ret-full"], errorSteps: ["full", "ret-full"] },
+      deq_ok:    { panel: "code-deq",  steps: ["def", "global", "if", "get", "clear", "dec", "head", "ret"], errorSteps: [] },
+      deq_empty: { panel: "code-deq",  steps: ["def", "global", "if", "empty", "ret-empty"], errorSteps: ["empty", "ret-empty"] },
+    };
+
+    function clearCodeHighlights(panelId) {
+      const root = panelId ? document.getElementById(panelId) : document;
+      root.querySelectorAll(".code-line").forEach((el) => {
+        el.classList.remove("code-hl-ok", "code-hl-err");
+      });
+    }
+
+    function clearCodeTraceTimers() {
+      codeTraceTimers.forEach(clearTimeout);
+      codeTraceTimers = [];
+    }
+
+    /**
+     * 展開對應函式，並依執行路徑逐列著色。
+     * 失敗路徑（已滿／為空）用紅色，其餘用綠色。
+     */
+    function traceCode(pathKey) {
+      const spec = CODE_PATHS[pathKey];
+      if (!spec) return;
+      const panel = document.getElementById(spec.panel);
+      if (!panel) return;
+
+      clearCodeTraceTimers();
+      clearCodeHighlights();
+      panel.open = true;
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+      spec.steps.forEach((step, i) => {
+        const t = setTimeout(() => {
+          const line = panel.querySelector(`[data-step="${step}"]`);
+          if (!line) return;
+          const isErr = spec.errorSteps.includes(step);
+          line.classList.add(isErr ? "code-hl-err" : "code-hl-ok");
+        }, i * CODE_TRACE_MS);
+        codeTraceTimers.push(t);
+      });
+    }
+
+    // ========== 共用工具 ==========
+    function clampCapacity(value, fallback) {
+      const n = parseInt(value, 10);
+      if (Number.isNaN(n)) return fallback;
+      return Math.min(12, Math.max(5, n));
+    }
+
+    function addLog(listEl, message, type) {
+      const li = document.createElement("li");
+      const time = new Date().toLocaleTimeString("zh-TW", { hour12: false });
+      const color =
+        type === "error" ? "text-rose-600" :
+        type === "ok" ? "text-emerald-700" : "text-slate-600";
+      li.className = color;
+      li.textContent = `[${time}] ${message}`;
+      listEl.prepend(li);
+      while (listEl.children.length > MAX_LOG) listEl.removeChild(listEl.lastChild);
+    }
+
+    function setStatus(el, message, type) {
+      el.textContent = message;
+      el.className =
+        "text-sm min-h-[1.5rem] font-medium " +
+        (type === "error" ? "text-rose-600" : type === "ok" ? "text-emerald-700" : "text-slate-600");
+    }
+
+    function tabStyle(active, color) {
+      if (active) {
+        return `tab-btn px-5 py-2.5 rounded-lg font-medium shadow-sm ${color} text-white`;
+      }
+      return "tab-btn px-5 py-2.5 rounded-lg font-medium shadow-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-100";
+    }
+
+    // ========== 分頁切換 ==========
+    const tabStack = document.getElementById("tab-stack");
+    const tabQueue = document.getElementById("tab-queue");
+    const panelStack = document.getElementById("panel-stack");
+    const panelQueue = document.getElementById("panel-queue");
+
+    function showStack() {
+      panelStack.classList.remove("hidden");
+      panelQueue.classList.add("hidden");
+      tabStack.setAttribute("aria-selected", "true");
+      tabQueue.setAttribute("aria-selected", "false");
+      tabStack.className = tabStyle(true, "bg-indigo-600");
+      tabQueue.className = tabStyle(false);
+    }
+
+    function showQueue() {
+      panelStack.classList.add("hidden");
+      panelQueue.classList.remove("hidden");
+      tabStack.setAttribute("aria-selected", "false");
+      tabQueue.setAttribute("aria-selected", "true");
+      tabStack.className = tabStyle(false);
+      tabQueue.className = tabStyle(true, "bg-teal-600");
+      renderQueue();
+    }
+
+    tabStack.addEventListener("click", showStack);
+    tabQueue.addEventListener("click", showQueue);
+
+    // ============================================================
+    // 堆疊（Stack）
+    // stack[1..SIZE] 使用；stack[0] 不存放資料。
+    // last == 0 → 空；last == SIZE → 滿。
+    // ============================================================
+    const stackState = {
+      SIZE: 8,
+      stack: [],
+      last: 0,
+      highlightIndex: null,
+      highlightType: null, // "in" | "out"
+    };
+
+    function initStack(size) {
+      stackState.SIZE = clampCapacity(size, 8);
+      stackState.stack = Array(stackState.SIZE + 1).fill("");
+      stackState.last = 0;
+      stackState.highlightIndex = null;
+      stackState.highlightType = null;
+      document.getElementById("stack-capacity").value = stackState.SIZE;
+    }
+
+    function isStackEmpty() {
+      return stackState.last === 0;
+    }
+
+    /** PUSH：若 last == SIZE 則滿；否則 last++，stack[last] = data */
+    function push(data) {
+      if (stackState.last === stackState.SIZE) {
+        return { ok: false, message: "堆疊已滿" };
+      }
+      stackState.last++;
+      stackState.stack[stackState.last] = data;
+      stackState.highlightIndex = stackState.last;
+      stackState.highlightType = "in";
+      return { ok: true, message: `PUSH「${data}」成功，last = ${stackState.last}` };
+    }
+
+    /** POP：若 last == 0 則空；否則取出並清空，last-- */
+    function pop() {
+      if (isStackEmpty()) {
+        return { ok: false, message: "堆疊為空" };
+      }
+      const value = stackState.stack[stackState.last];
+      stackState.stack[stackState.last] = "";
+      const removedAt = stackState.last;
+      stackState.last--;
+      stackState.highlightIndex = removedAt;
+      stackState.highlightType = "out";
+      return { ok: true, message: `POP 取出「${value}」，last = ${stackState.last}`, value };
+    }
+
+    function renderStack() {
+      const vis = document.getElementById("stack-visual");
+      const ptr = document.getElementById("stack-pointer");
+      vis.innerHTML = "";
+      ptr.innerHTML = "";
+
+      document.getElementById("stack-size-label").textContent = stackState.SIZE;
+      document.getElementById("stack-count-label").textContent = stackState.last;
+      document.getElementById("stack-last-label").textContent = stackState.last;
+
+      // flex-col-reverse：先加入的在底部（index 1）
+      for (let i = 1; i <= stackState.SIZE; i++) {
+        const occupied = stackState.stack[i] !== "";
+        const isTop = i === stackState.last && stackState.last > 0;
+        const cell = document.createElement("div");
+        cell.className =
+          "cell flex items-center w-48 sm:w-56 h-12 rounded-lg border-2 px-3 " +
+          (isTop
+            ? "border-indigo-600 bg-indigo-100"
+            : occupied
+              ? "border-indigo-300 bg-indigo-50"
+              : "border-slate-200 bg-slate-50");
+
+        if (stackState.highlightIndex === i) {
+          cell.classList.add(stackState.highlightType === "in" ? "anim-in" : "anim-out");
         }
 
-        function pushStack() {
-            const value = document.getElementById('stackValue').value;
-            if (value === "") {
-                stackOutput.textContent = "請輸入一個值。";
-                return;
-            }
-            stack.push(value);
-            stackOutput.textContent = `Push: ${value}\n目前堆疊: [${stack.join(', ')}] (頂部在右)`;
-            document.getElementById('stackValue').value = "";
-            updateStackVisual();
+        cell.innerHTML = `
+          <span class="w-8 text-xs text-slate-400 font-mono">${i}</span>
+          <span class="flex-1 text-center font-semibold ${occupied ? "text-indigo-900" : "text-slate-300"}">
+            ${occupied ? stackState.stack[i] : "空"}
+          </span>
+        `;
+        vis.appendChild(cell);
+      }
+
+      // last 指標對齊對應格子（每格 h-12 + gap-1 = 52px）
+      const cellH = 52;
+      const pointer = document.createElement("div");
+      pointer.className = "pointer-bounce absolute left-0 flex items-center gap-1 text-indigo-700 font-semibold text-sm";
+      const bottom = stackState.last === 0 ? -8 : (stackState.last - 1) * cellH + 10;
+      pointer.style.bottom = `${bottom}px`;
+      pointer.innerHTML = `
+        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M4 12h12l-4-4v3H4v2h8v3l4-4H4z" transform="scale(-1,1) translate(-24,0)" />
+        </svg>
+        <span>last / top<br/><span class="text-xs font-normal">index ${stackState.last}${stackState.last === 0 ? "（空）" : ""}</span></span>
+      `;
+      ptr.style.height = `${stackState.SIZE * cellH}px`;
+      ptr.appendChild(pointer);
+    }
+
+    document.getElementById("btn-push").addEventListener("click", () => {
+      const input = document.getElementById("stack-input");
+      const data = input.value.trim();
+      const status = document.getElementById("stack-status");
+      const log = document.getElementById("stack-log");
+      if (!data) {
+        setStatus(status, "請輸入要推入的資料", "error");
+        addLog(log, "PUSH 失敗：未輸入資料", "error");
+        return;
+      }
+      const result = push(data);
+      setStatus(status, result.message, result.ok ? "ok" : "error");
+      addLog(log, result.message, result.ok ? "ok" : "error");
+      traceCode(result.ok ? "push_ok" : "push_full");
+      if (result.ok) input.value = "";
+      renderStack();
+    });
+
+    document.getElementById("btn-pop").addEventListener("click", () => {
+      const status = document.getElementById("stack-status");
+      const log = document.getElementById("stack-log");
+      const result = pop();
+      setStatus(status, result.message, result.ok ? "ok" : "error");
+      addLog(log, result.message, result.ok ? "ok" : "error");
+      traceCode(result.ok ? "pop_ok" : "pop_empty");
+      renderStack();
+    });
+
+    document.getElementById("btn-stack-reset").addEventListener("click", () => {
+      initStack(document.getElementById("stack-capacity").value);
+      setStatus(document.getElementById("stack-status"), "堆疊已初始化", "ok");
+      addLog(document.getElementById("stack-log"), `重置：SIZE = ${stackState.SIZE}，last = 0`, "ok");
+      clearCodeTraceTimers();
+      clearCodeHighlights("code-push");
+      clearCodeHighlights("code-pop");
+      renderStack();
+    });
+
+    document.getElementById("stack-capacity").addEventListener("change", (e) => {
+      initStack(e.target.value);
+      setStatus(document.getElementById("stack-status"), `容量已設為 ${stackState.SIZE} 並重新初始化`, "ok");
+      addLog(document.getElementById("stack-log"), `調整 SIZE = ${stackState.SIZE} 並重置`, "ok");
+      renderStack();
+    });
+
+    document.getElementById("stack-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("btn-push").click();
+    });
+
+    // ============================================================
+    // 循環隊列（Circular Queue）
+    // Q[0..N-1]、Head、Tail、Size
+    // 初始化：Q 全空字串、Head = 0、Tail = N-1、Size = 0
+    // ENQ：Size == N → 滿；否則 Tail = (Tail+1)%N，Q[Tail]=item，Size++
+    // DEQ：Size == 0 → 空；否則取出 Q[Head]，清空，Size--，Head = (Head+1)%N
+    // ============================================================
+    const queueState = {
+      N: 8,
+      Q: [],
+      Head: 0,
+      Tail: 7,
+      Size: 0,
+      highlightIndex: null,
+      highlightType: null,
+    };
+
+    function initQueue(n) {
+      queueState.N = clampCapacity(n, 8);
+      queueState.Q = Array(queueState.N).fill("");
+      queueState.Head = 0;
+      queueState.Tail = queueState.N - 1;
+      queueState.Size = 0;
+      queueState.highlightIndex = null;
+      queueState.highlightType = null;
+      document.getElementById("queue-capacity").value = queueState.N;
+    }
+
+    function enqueue(item) {
+      if (queueState.Size === queueState.N) {
+        return { ok: false, message: "隊列已滿" };
+      }
+      queueState.Tail = (queueState.Tail + 1) % queueState.N;
+      queueState.Q[queueState.Tail] = item;
+      queueState.Size++;
+      queueState.highlightIndex = queueState.Tail;
+      queueState.highlightType = "in";
+      return {
+        ok: true,
+        message: `ENQ「${item}」成功，Tail = ${queueState.Tail}，Size = ${queueState.Size}`,
+      };
+    }
+
+    function dequeue() {
+      if (queueState.Size === 0) {
+        return { ok: false, message: "隊列為空" };
+      }
+      const value = queueState.Q[queueState.Head];
+      const removedAt = queueState.Head;
+      queueState.Q[queueState.Head] = "";
+      queueState.Size--;
+      queueState.Head = (queueState.Head + 1) % queueState.N;
+      queueState.highlightIndex = removedAt;
+      queueState.highlightType = "out";
+      return {
+        ok: true,
+        message: `DEQ 取出「${value}」，Head = ${queueState.Head}，Size = ${queueState.Size}`,
+        value,
+      };
+    }
+
+    function occupiedIndices() {
+      const set = new Set();
+      if (queueState.Size === 0) return set;
+      for (let k = 0; k < queueState.Size; k++) {
+        set.add((queueState.Head + k) % queueState.N);
+      }
+      return set;
+    }
+
+    function cellClasses(i, occupied, variant) {
+      const isHead = i === queueState.Head;
+      const isTail = i === queueState.Tail;
+      let border = "border-slate-200";
+      let bg = variant === "circle" ? "bg-white" : "bg-slate-50";
+      if (occupied) {
+        border = "border-teal-400";
+        bg = "bg-emerald-100";
+      }
+      if (isHead && isTail) {
+        border = "border-fuchsia-500";
+        bg = occupied ? "bg-fuchsia-100" : "bg-white";
+      } else if (isHead) {
+        border = "border-sky-500";
+        if (!occupied) bg = "bg-sky-50";
+      } else if (isTail) {
+        border = "border-amber-500";
+        if (!occupied) bg = "bg-amber-50";
+      }
+      return `cell border-2 ${border} ${bg}`;
+    }
+
+    function renderQueue() {
+      document.getElementById("queue-n-label").textContent = queueState.N;
+      document.getElementById("queue-size-label").textContent = queueState.Size;
+      document.getElementById("queue-head-label").textContent = queueState.Head;
+      document.getElementById("queue-tail-label").textContent = queueState.Tail;
+
+      const occ = occupiedIndices();
+      const circle = document.getElementById("queue-circle");
+      const linear = document.getElementById("queue-linear");
+      circle.innerHTML = "";
+      linear.innerHTML = "";
+
+      // 中心狀態
+      const center = document.createElement("div");
+      center.className = "absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none";
+      center.innerHTML = `
+        <div class="text-3xl font-bold text-teal-700">${queueState.Size}<span class="text-lg text-slate-400"> / ${queueState.N}</span></div>
+        <div class="text-xs text-slate-500 mt-1">目前 Size / N</div>
+      `;
+      circle.appendChild(center);
+
+      const N = queueState.N;
+      const radius = 132;
+
+      for (let i = 0; i < N; i++) {
+        const occupied = occ.has(i);
+        const isHead = i === queueState.Head;
+        const isTail = i === queueState.Tail;
+        const angle = (2 * Math.PI * i) / N - Math.PI / 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+
+        const wrap = document.createElement("div");
+        wrap.className = "absolute w-16 h-16 -ml-8 -mt-8";
+        wrap.style.left = `calc(50% + ${x}px)`;
+        wrap.style.top = `calc(50% + ${y}px)`;
+
+        const cell = document.createElement("div");
+        cell.className =
+          cellClasses(i, occupied, "circle") +
+          " w-16 h-16 rounded-full flex flex-col items-center justify-center shadow-sm";
+        if (queueState.highlightIndex === i) {
+          cell.classList.add(queueState.highlightType === "in" ? "anim-in" : "anim-out");
+        }
+        cell.innerHTML = `
+          <span class="text-[10px] text-slate-400 font-mono">${i}</span>
+          <span class="text-sm font-bold ${occupied ? "text-teal-900" : "text-slate-300"}">${occupied ? queueState.Q[i] : "·"}</span>
+        `;
+        wrap.appendChild(cell);
+
+        if (isHead || isTail) {
+          const tag = document.createElement("div");
+          tag.className = "absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-bold whitespace-nowrap pointer-bounce";
+          if (isHead && isTail) {
+            tag.classList.add("text-fuchsia-600");
+            tag.textContent = "Head & Tail";
+          } else if (isHead) {
+            tag.classList.add("text-sky-600");
+            tag.textContent = "↓ Head";
+          } else {
+            tag.classList.add("text-amber-600");
+            tag.textContent = "↓ Tail";
+          }
+          wrap.appendChild(tag);
         }
 
-        function popStack() {
-            if (stack.length === 0) {
-                stackOutput.textContent = "堆疊已空，無法 Pop。";
-                updateStackVisual();
-                return;
-            }
-            const value = stack.pop();
-            stackOutput.textContent = `Pop: ${value}\n目前堆疊: [${stack.join(', ')}] (頂部在右)`;
-            updateStackVisual();
+        circle.appendChild(wrap);
+      }
+
+      // 水平陣列
+      for (let i = 0; i < N; i++) {
+        const occupied = occ.has(i);
+        const isHead = i === queueState.Head;
+        const isTail = i === queueState.Tail;
+        const box = document.createElement("div");
+        box.className = "flex flex-col items-center";
+
+        const labels = document.createElement("div");
+        labels.className = "h-5 text-[10px] font-bold";
+        if (isHead && isTail) {
+          labels.className += " text-fuchsia-600";
+          labels.textContent = "H+T";
+        } else if (isHead) {
+          labels.className += " text-sky-600";
+          labels.textContent = "Head";
+        } else if (isTail) {
+          labels.className += " text-amber-600";
+          labels.textContent = "Tail";
+        } else {
+          labels.innerHTML = "&nbsp;";
         }
 
-        function peekStack() {
-            if (stack.length === 0) {
-                stackOutput.textContent = "堆疊已空。";
-                return;
-            }
-            stackOutput.textContent = `Peek (頂部元素): ${stack[stack.length - 1]}`;
+        const cell = document.createElement("div");
+        cell.className =
+          cellClasses(i, occupied, "linear") +
+          " w-14 h-14 rounded-lg flex flex-col items-center justify-center";
+        if (queueState.highlightIndex === i) {
+          cell.classList.add(queueState.highlightType === "in" ? "anim-in" : "anim-out");
         }
+        cell.innerHTML = `
+          <span class="text-[10px] text-slate-400 font-mono">${i}</span>
+          <span class="text-sm font-bold ${occupied ? "text-teal-900" : "text-slate-300"}">${occupied ? queueState.Q[i] : "空"}</span>
+        `;
 
-        function clearStackDisplay() {
-            stack = [];
-            stackOutput.textContent = "";
-            updateStackVisual();
-        }
-        updateStackVisual();
+        box.appendChild(labels);
+        box.appendChild(cell);
+        linear.appendChild(box);
+      }
+    }
 
-        // --- 循環隊列 (Circular Queue) ---
-        let cq = [];
-        let cqHead = -1;
-        let cqTail = -1;
-        let cqCurrentSize = 0;
-        let cqMaxSize = 5;
+    document.getElementById("btn-enq").addEventListener("click", () => {
+      const input = document.getElementById("queue-input");
+      const item = input.value.trim();
+      const status = document.getElementById("queue-status");
+      const log = document.getElementById("queue-log");
+      if (!item) {
+        setStatus(status, "請輸入要入隊的資料", "error");
+        addLog(log, "ENQ 失敗：未輸入資料", "error");
+        return;
+      }
+      const result = enqueue(item);
+      setStatus(status, result.message, result.ok ? "ok" : "error");
+      addLog(log, result.message, result.ok ? "ok" : "error");
+      traceCode(result.ok ? "enq_ok" : "enq_full");
+      if (result.ok) input.value = "";
+      renderQueue();
+    });
 
-        const cqOutput = document.getElementById('cqOutput');
-        const cqVisualization = document.getElementById('cqVisualization');
-        const cqHeadEl = document.getElementById('cqHead');
-        const cqTailEl = document.getElementById('cqTail');
-        const cqCurrentSizeEl = document.getElementById('cqCurrentSize');
-        const cqMaxSizeEl = document.getElementById('cqMaxSize');
+    document.getElementById("btn-deq").addEventListener("click", () => {
+      const status = document.getElementById("queue-status");
+      const log = document.getElementById("queue-log");
+      const result = dequeue();
+      setStatus(status, result.message, result.ok ? "ok" : "error");
+      addLog(log, result.message, result.ok ? "ok" : "error");
+      traceCode(result.ok ? "deq_ok" : "deq_empty");
+      renderQueue();
+    });
 
-        function updateCQVisual() {
-            cqVisualization.innerHTML = '';
-            cqHeadEl.textContent = cqHead === -1 ? '-' : cqHead;
-            cqTailEl.textContent = cqTail === -1 ? '-' : cqTail;
-            cqCurrentSizeEl.textContent = cqCurrentSize;
-            cqMaxSizeEl.textContent = cqMaxSize;
+    document.getElementById("btn-queue-reset").addEventListener("click", () => {
+      initQueue(document.getElementById("queue-capacity").value);
+      setStatus(document.getElementById("queue-status"), "隊列已初始化", "ok");
+      addLog(
+        document.getElementById("queue-log"),
+        `重置：N = ${queueState.N}，Head = 0，Tail = ${queueState.Tail}，Size = 0`,
+        "ok"
+      );
+      clearCodeTraceTimers();
+      clearCodeHighlights("code-enq");
+      clearCodeHighlights("code-deq");
+      renderQueue();
+    });
 
-            if (cqMaxSize <= 0 || cq.length !== cqMaxSize) {
-                 cqVisualization.innerHTML = '隊列未正確初始化或大小無效。請設定大小並點擊初始化。';
-                return;
-            }
+    document.getElementById("queue-capacity").addEventListener("change", (e) => {
+      initQueue(e.target.value);
+      setStatus(document.getElementById("queue-status"), `N 已設為 ${queueState.N} 並重新初始化`, "ok");
+      addLog(document.getElementById("queue-log"), `調整 N = ${queueState.N} 並重置`, "ok");
+      renderQueue();
+    });
 
-            for (let i = 0; i < cqMaxSize; i++) {
-                const itemContainer = document.createElement('div');
-                itemContainer.className = 'queue-item-container';
+    document.getElementById("queue-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("btn-enq").click();
+    });
 
-                const cell = document.createElement('div');
-                cell.className = 'queue-cell';
-                cell.textContent = cq[i] !== undefined ? cq[i] : '空';
-                if (cq[i] === undefined) cell.style.color = '#aaa';
-
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'label';
-                let labelTextContent = `Index: ${i}`;
-                let pointerAnnotations = [];
-                if (i === cqHead && cqCurrentSize > 0) {
-                    pointerAnnotations.push("Head");
-                }
-                if (i === cqTail && cqCurrentSize > 0) {
-                    pointerAnnotations.push("Tail");
-                }
-
-                if (pointerAnnotations.length > 0) {
-                    labelTextContent += ` <span class="pointer-text">(${pointerAnnotations.join(', ')})</span>`;
-                }
-                labelDiv.innerHTML = labelTextContent;
-                cell.appendChild(labelDiv);
-                itemContainer.appendChild(cell);
-
-                const arrowDiv = document.createElement('div');
-                arrowDiv.className = 'arrow-indicator';
-                let arrowsHTML = "";
-                if (i === cqHead && i === cqTail && cqCurrentSize > 0) {
-                    arrowsHTML = '<span class="head-arrow">↑H</span> <span class="tail-arrow">↑T</span>';
-                } else if (i === cqHead && cqCurrentSize > 0) {
-                    arrowsHTML = '<span class="head-arrow">↑H</span>';
-                } else if (i === cqTail && cqCurrentSize > 0) {
-                    arrowsHTML = '<span class="tail-arrow">↑T</span>';
-                } else {
-                    arrowsHTML = '&nbsp;'; // Keep space for alignment
-                }
-                arrowDiv.innerHTML = arrowsHTML;
-                itemContainer.appendChild(arrowDiv);
-
-                cqVisualization.appendChild(itemContainer);
-            }
-        }
-
-        function initializeQueue() {
-            const sizeInput = parseInt(document.getElementById('queueSize').value);
-            if (isNaN(sizeInput) || sizeInput <= 0) {
-                cqOutput.textContent = "請輸入有效的隊列大小 (正整數)。";
-                cqMaxSize = 0; // Mark as invalid
-                cq = [];
-                updateCQVisual(); // Update visual to show error or empty state
-                return;
-            }
-            cqMaxSize = sizeInput;
-            cq = new Array(cqMaxSize); // Initialize with undefined values
-            cqHead = -1;
-            cqTail = -1;
-            cqCurrentSize = 0;
-            cqOutput.textContent = `循環隊列已初始化，大小為 ${cqMaxSize}。`;
-            updateCQVisual();
-        }
-
-        function enqueueCircular() {
-            if (cqMaxSize <= 0) {
-                cqOutput.textContent = "隊列未初始化或大小無效。請先設定大小並初始化。";
-                return;
-            }
-            if (cqCurrentSize === cqMaxSize) {
-                cqOutput.textContent = "隊列已滿，無法 Enqueue。";
-                return;
-            }
-            const value = document.getElementById('cqValue').value;
-            if (value === "") {
-                cqOutput.textContent = "請輸入一個值。";
-                return;
-            }
-
-            if (cqHead === -1) {
-                cqHead = 0;
-                cqTail = 0;
-            } else {
-                cqTail = (cqTail + 1) % cqMaxSize;
-            }
-            cq[cqTail] = value;
-            cqCurrentSize++;
-            cqOutput.textContent = `Enqueue: ${value} 到索引 ${cqTail}\n目前隊列: Head=${cqHead}, Tail=${cqTail}, Size=${cqCurrentSize}`;
-            document.getElementById('cqValue').value = "";
-            updateCQVisual();
-        }
-
-        function dequeueCircular() {
-            if (cqMaxSize <= 0) {
-                cqOutput.textContent = "隊列未初始化或大小無效。";
-                return;
-            }
-            if (cqCurrentSize === 0) {
-                cqOutput.textContent = "隊列已空，無法 Dequeue。";
-                // updateCQVisual(); // Already called at the end if needed
-                return;
-            }
-            const oldHeadIndex = cqHead; // Store old head for message
-            const value = cq[oldHeadIndex];
-            cq[oldHeadIndex] = undefined;
-            cqCurrentSize--;
-
-            if (cqCurrentSize === 0) {
-                cqHead = -1;
-                cqTail = -1;
-            } else {
-                cqHead = (cqHead + 1) % cqMaxSize;
-            }
-            cqOutput.textContent = `Dequeue: ${value} 從索引 ${oldHeadIndex}\n目前隊列: Head=${cqHead === -1 ? '-' : cqHead}, Tail=${cqTail === -1 ? '-' : cqTail}, Size=${cqCurrentSize}`;
-            updateCQVisual();
-        }
-
-        function peekCircular() {
-            if (cqMaxSize <= 0) {
-                cqOutput.textContent = "隊列未初始化或大小無效。";
-                return;
-            }
-            if (cqCurrentSize === 0) {
-                cqOutput.textContent = "隊列已空。";
-                return;
-            }
-            cqOutput.textContent = `Peek (頭部元素): ${cq[cqHead]} (在索引 ${cqHead})`;
-        }
-
-        function clearQueueDisplay() {
-            // Get current size setting or default to 5 if input is invalid
-            let currentSizeSetting = parseInt(document.getElementById('queueSize').value);
-            if (isNaN(currentSizeSetting) || currentSizeSetting <= 0) {
-                document.getElementById('queueSize').value = 5; // Reset input to default
-            }
-            initializeQueue();
-            cqOutput.textContent = "隊列已清除並重設。";
-        }
-
-        initializeQueue(); // Initialize queue on load
-
-        // --- 鏈表 (Linked List) ---
-        class LLNode {
-            constructor(data) {
-                this.data = data;
-                this.next = null;
-            }
-        }
-
-        let llHead = null;
-        const llOutput = document.getElementById('llOutput');
-        const llVisualization = document.getElementById('llVisualization');
-
-        function updateLLVisual() {
-            llVisualization.innerHTML = '';
-            if (!llHead) {
-                llVisualization.textContent = '鏈表為空';
-                return;
-            }
-            let current = llHead;
-            while (current) {
-                const nodeDiv = document.createElement('div');
-                nodeDiv.className = 'node';
-                nodeDiv.textContent = current.data;
-                llVisualization.appendChild(nodeDiv);
-                if (current.next) {
-                    const arrow = document.createElement('span');
-                    arrow.className = 'pointer';
-                    arrow.textContent = '➔';
-                    llVisualization.appendChild(arrow);
-                }
-                current = current.next;
-            }
-        }
-
-        function insertNode() {
-            const value = document.getElementById('llValue').value;
-            const indexStr = document.getElementById('llIndex').value;
-            let index = indexStr === "" ? -1 : parseInt(indexStr);
-
-            if (value === "") {
-                llOutput.textContent = "請輸入節點數值。";
-                return;
-            }
-
-            const newNode = new LLNode(value);
-
-            if (index === 0 || (index === -1 && !llHead)) {
-                newNode.next = llHead;
-                llHead = newNode;
-                llOutput.textContent = `插入節點: ${value} 到頭部 (索引 0)。`;
-            }
-            else if (index === -1) {
-                if (!llHead) {
-                    llHead = newNode;
-                } else {
-                    let current = llHead;
-                    while (current.next) {
-                        current = current.next;
-                    }
-                    current.next = newNode;
-                }
-                llOutput.textContent = `插入節點: ${value} 到尾部。`;
-            }
-            else {
-                if (index < 0) {
-                    llOutput.textContent = "索引不能為負數。預設插入到尾部。";
-                     let current = llHead;
-                    if (!current) {
-                        llHead = newNode;
-                         llOutput.textContent = `鏈表為空，插入節點: ${value} 到頭部。`;
-                    } else {
-                        while (current.next) {
-                            current = current.next;
-                        }
-                        current.next = newNode;
-                    }
-                } else {
-                    let current = llHead;
-                    let prev = null;
-                    let count = 0;
-                    while (current && count < index) {
-                        prev = current;
-                        current = current.next;
-                        count++;
-                    }
-                    if (count === index) {
-                        if (prev) {
-                            prev.next = newNode;
-                        } else {
-                            llHead = newNode;
-                        }
-                        newNode.next = current;
-                        llOutput.textContent = `插入節點: ${value} 到索引 ${index}。`;
-                    } else {
-                        if (!llHead) {
-                           llHead = newNode;
-                           llOutput.textContent = `鏈表為空，插入節點: ${value} 到頭部。`;
-                        } else {
-                            current = llHead;
-                             while (current.next) {
-                                current = current.next;
-                            }
-                            current.next = newNode;
-                            llOutput.textContent = `索引 ${index} 超出範圍，已插入節點: ${value} 到尾部。`;
-                        }
-                    }
-                }
-            }
-            document.getElementById('llValue').value = "";
-            document.getElementById('llIndex').value = "";
-            updateLLVisual();
-        }
-
-        function deleteNodeByValue() {
-            const value = document.getElementById('llDeleteValue').value;
-            if (value === "") {
-                llOutput.textContent = "請輸入要刪除的數值。";
-                return;
-            }
-            if (!llHead) {
-                llOutput.textContent = "鏈表已空，無法刪除。";
-                return;
-            }
-
-            if (llHead.data === value) {
-                llHead = llHead.next;
-                llOutput.textContent = `刪除頭部節點，數值為: ${value}。`;
-                updateLLVisual();
-                document.getElementById('llDeleteValue').value = "";
-                return;
-            }
-
-            let current = llHead;
-            let prev = null;
-            while (current && current.data !== value) {
-                prev = current;
-                current = current.next;
-            }
-
-            if (current) {
-                prev.next = current.next;
-                llOutput.textContent = `刪除數值為 ${value} 的節點。`;
-            } else {
-                llOutput.textContent = `鏈表中未找到數值為 ${value} 的節點。`;
-            }
-            updateLLVisual();
-            document.getElementById('llDeleteValue').value = "";
-        }
-
-        function deleteNodeByIndex() {
-            const indexStr = document.getElementById('llDeleteIndex').value;
-            if (indexStr === "") {
-                llOutput.textContent = "請輸入要刪除的索引。";
-                return;
-            }
-            const index = parseInt(indexStr);
-
-            if (isNaN(index) || index < 0) {
-                llOutput.textContent = "請輸入有效的非負索引。";
-                return;
-            }
-            if (!llHead) {
-                llOutput.textContent = "鏈表已空，無法刪除。";
-                return;
-            }
-
-            if (index === 0) {
-                const deletedData = llHead.data;
-                llHead = llHead.next;
-                llOutput.textContent = `刪除索引 ${index} 的節點 (數值: ${deletedData})。`;
-                updateLLVisual();
-                document.getElementById('llDeleteIndex').value = "";
-                return;
-            }
-
-            let current = llHead;
-            let prev = null;
-            let count = 0;
-            while (current && count < index) {
-                prev = current;
-                current = current.next;
-                count++;
-            }
-
-            if (current && count === index) {
-                const deletedData = current.data;
-                prev.next = current.next;
-                llOutput.textContent = `刪除索引 ${index} 的節點 (數值: ${deletedData})。`;
-            } else {
-                llOutput.textContent = `索引 ${index} 超出範圍或鏈表不夠長。`;
-            }
-            updateLLVisual();
-            document.getElementById('llDeleteIndex').value = "";
-        }
-
-        function clearLinkedListDisplay() {
-            llHead = null;
-            llOutput.textContent = "";
-            updateLLVisual();
-        }
-        updateLLVisual();
-
-    </script>
+    // 啟動
+    initStack(8);
+    initQueue(8);
+    renderStack();
+    addLog(document.getElementById("stack-log"), "堆疊就緒：SIZE = 8，last = 0", "ok");
+    addLog(document.getElementById("queue-log"), "隊列就緒：N = 8，Head = 0，Tail = 7，Size = 0", "ok");
+  </script>
 </body>
 </html>
